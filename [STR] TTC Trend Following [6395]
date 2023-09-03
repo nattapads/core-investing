@@ -1,3 +1,4 @@
+//NSal
 //@version=5
 strategy("[STR] TTC Trend Following [6395]", overlay = true, margin_long = 100, margin_short = 100, pyramiding = 100, risk_free_rate = 0)
 
