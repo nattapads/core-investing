@@ -388,4 +388,12 @@ table.cell(table_data, 0, 1, str.tostring("$" + str.tostring(math.round(net_prof
 table.cell(table_data, 0, 2, str.tostring(str.tostring(math.round(percent_profitable * 100,0)) + "%"), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Percent Profitable")
 table.cell(table_data, 0, 3, str.tostring(str.tostring(math.round(OptimalPropA * 100,0)) + "%"), bgcolor = color.rgb(255, 255, 255, 85), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Dynamic Risk")
 table.cell(table_data, 0, 4, str.tostring(str.tostring(math.round(OptimalProp6A * 100,0)) + "%"), bgcolor = color.rgb(255, 255, 255, 85), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Simple Risk")
-table.cell(table_data, 0, 5, str.tostring(str.tostring(math.round(avg_position * 10,0)) + "%"), bgcolor = color.rgb(255, 255, 255, 95), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Average Position")    
+table.cell(table_data, 0, 5, str.tostring(str.tostring(math.round(avg_position * 10,0)) + "%"), bgcolor = color.rgb(255, 255, 255, 95), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Average Position")
+
+//-----------------------------------------------------------------------------}
+//Alert
+//-----------------------------------------------------------------------------{
+if Buy
+    alert("ACWI Buy Average Position: "+str.tostring(math.round(avg_position * 10,0))+"", alert.freq_once_per_bar_close)
+else if ExitBuy
+    alert("ACWI Buy Exit", alert.freq_once_per_bar_close)
