@@ -1,15 +1,17 @@
 //NSal
 //@version=5
-strategy("[STR] TTC Trend Following [6395]", overlay = true, margin_long = 100, margin_short = 100, pyramiding = 100, initial_capital = 10000, risk_free_rate = 0)
+strategy("[STR] TTC Trend Following [6395]", overlay = true, margin_long = 100, margin_short = 100, pyramiding = 100, initial_capital = 100000, risk_free_rate = 0)
 
 //------------------------------------------------------------------------------
 //Turtle Trade Channels Settings
 //-----------------------------------------------------------------------------{
 length              = input.int(20, 'Entry Length', minval=1, group="TTC Settings")
 len2                = input.int(10, 'Exit Length', minval=1, group="TTC Settings")
-Contrarian          = input(true, title="Contrarian Entry", group="TTC Settings")
-ContrarianEntry     = input(true, title="Start Investing at Reversal", group="TTC Settings")
+ShortPor            = input(0.6, 'Short Propotion %', group="TTC Settings")
+ContrarianEntry     = input(true, title="Contrarian Entry", group="TTC Settings")
+EarlyEntry          = input(true, title="Early Entry (For Stock Only)", group="TTC Settings")
 CrossExit           = input(true, title="Exit by MA Crossing", group="TTC Settings")
+AllowShort          = input(false, title="Allow Short", group="TTC Settings")
 
 //-----------------------------------------------------------------------------}
 //EMA Settings
@@ -288,34 +290,37 @@ reclot  = SimpleLot ? math.round((OptimalProp6A * 10), 0) : math.round((OptimalP
 //-----------------------------------------------------------------------------{
 var OpenTrade               = false
 var ReversalTrade           = false
-var NumTrade                = 0
 
-Buy                         = Contrarian ? (buyExit and O1 < O3[1] and Bullish) or (buyExit and O1 < O3[1] and SemiBull) : buySignal and O3 < O1[1] and Bullish
+Buy                         = ContrarianEntry ? (buyExit and O1 < O3[1] and Bullish) or (buyExit and O1 < O3[1] and SemiBull) : buySignal and O3 < O1[1] and Bullish
 Sell                        = sellSignal and O4 < O2[1] and Bearish
 
 ExitBuy                     = CrossExit ? ta.crossunder(zlema6, zlema6A) : (buyExit and O1 < O3[1] and Bearish and OpenTrade == true) or (buyExit and O1 < O3[1] and SemiBear and OpenTrade == true) or (sellExit and O2 < O4[1] and SemiBear and OpenTrade == true) or (sellExit and O2 < O4[1] and Bearish and OpenTrade == true)
 ExitSell                    = (sellExit and O2 < O4[1] and Bullish and OpenTrade == true)
 
-BuyA                        = ContrarianEntry ? ta.crossover(CLOSE,20) : na
-SellA                       = ta.crossunder(CLOSE,80)
+EarlyBuy                    = EarlyEntry ? ta.crossover(CLOSE,20) : na
+EarlySell                   = EarlyEntry ? ta.crossunder(CLOSE,80) : na
 
 //-----------------------------------------------------------------------------}
 //Open & Close Trade
 //-----------------------------------------------------------------------------{
+var NumContraTrade          = 0
+var NumTrade                = 0
+
 if Buy and OpenTrade == false
     OpenTrade               := true
     NumTrade                := NumTrade + 1
-else if BuyA and OpenTrade == false
+else if EarlyBuy and OpenTrade == false
     ReversalTrade           := true
-    NumTrade                := NumTrade + 1
+    NumContraTrade          := NumContraTrade + 1
 else if Buy and OpenTrade == true
     NumTrade                := NumTrade + 1
-else if BuyA and ReversalTrade == true
-    NumTrade                := NumTrade + 1
+else if EarlyBuy and ReversalTrade == true
+    NumContraTrade          := NumContraTrade + 1
 
 if ExitBuy and OpenTrade == true
     OpenTrade               := false
     NumTrade                := 0
+    NumContraTrade          := 0
 
 //-----------------------------------------------------------------------------}
 //Entry & Exit Signal
@@ -323,8 +328,8 @@ if ExitBuy and OpenTrade == true
 plotshape(Buy, title='Buy', text = "▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129), size=size.tiny)
 plotshape(ExitBuy, title='Buy', text = "✘", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69), size=size.tiny)
 
-plotshape(BuyA ? CLOSE : na, text = "●", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
-plotshape(SellA ? CLOSE : na, text = "●", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69, 70), size=size.tiny)
+plotshape(EarlyBuy ? CLOSE : na, text = "●", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(EarlySell ? CLOSE : na, text = "●", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69, 70), size=size.tiny)
 
 //-----------------------------------------------------------------------------}
 //Bar & Trend Line Colours
@@ -364,19 +369,36 @@ fill(plotFast, plotSlow, color = fillG, fillgaps = true)
 
 //-----------------------------------------------------------------------------}
 //Strategy
-//-----------------------------------------------------------------------------{ 
+//-----------------------------------------------------------------------------{
+//Buy Condition
+//-----------------------------------------------------------------------------{  
 if Buy
     strategy.entry("L", strategy.long, qty = reclot)
-else if BuyA
+else if EarlyBuy
     strategy.entry("L", strategy.long, qty = 10)
 else if ExitBuy
     strategy.close("L", qty_percent = 100)
-    
+
+//Sell Condition
+//-----------------------------------------------------------------------------{ 
+var float CurrentBuyLot   = 0
+
+if Buy or EarlyBuy and AllowShort == true
+    CurrentBuyLot   := CurrentBuyLot + strategy.position_size
+
+if ExitBuy and AllowShort == true
+    strategy.entry("S", strategy.short, qty = CurrentBuyLot * ShortPor)
+else if EarlyBuy and AllowShort == true
+    strategy.close("S", qty_percent = 100)
+
 // Calculate net profit and percentage profitable
+//-----------------------------------------------------------------------------{ 
 net_profit          = strategy.netprofit
 percent_profitable  = math.round(strategy.wintrades / (strategy.wintrades + strategy.losstrades), 2)
-avg_position        = strategy.position_size / NumTrade
+avg_position        = (strategy.position_size - (10 * NumContraTrade)) / NumTrade
 
+//Table Styling
+//-----------------------------------------------------------------------------{ 
 bgMColour           = color.rgb(0, 0, 0, 30)
 bgSColour           = color.rgb(0, 0, 0, 20)
     
@@ -404,7 +426,7 @@ table.cell(table_data, 0, 5, str.tostring(str.tostring(math.round(avg_position *
 //-----------------------------------------------------------------------------{
 if Buy
     alert("Buy Average Position: "+str.tostring(math.round(avg_position * 10,0))+"", alert.freq_once_per_bar_close)
-else if BuyA
+else if EarlyBuy
     alert("Buy Reversal", alert.freq_once_per_bar_close)
 else if ExitBuy
     alert("Buy Exit", alert.freq_once_per_bar_close)
