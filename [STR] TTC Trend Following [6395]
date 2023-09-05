@@ -263,25 +263,25 @@ else
 //-----------------------------------------------------------------------------{
 OptimalSize                 = CappedForc/(10 * InstRisk)
 HighOpt                     = ta.highest(OptimalSize, OptLookBack)
-OptimalProp                 = OptimalSize / HighOpt
+LowOpt                      = ta.lowest(OptimalSize, OptLookBack)
 
 // 6th Optimal position
 //-----------------------------------------------------------------------------{
 OptimalSize6                = CappedForc6/(10 * InstRisk)
 HighOpt6                    = ta.highest(OptimalSize6, OptLookBack)
-OptimalProp6                = OptimalSize6 / HighOpt6
+LowOpt6                     = ta.lowest(OptimalSize6, OptLookBack)
 
-// Negative & Positive position
+// Abosolute position
 //-----------------------------------------------------------------------------{
 var float OptimalPropA      = na
 var float OptimalProp6A     = na
 
 if Trenddiff >= 0
-    OptimalPropA            := math.abs(OptimalProp)
-    OptimalProp6A           := math.abs(OptimalProp6)
+    OptimalPropA            := math.abs(OptimalSize / HighOpt)
+    OptimalProp6A           := math.abs(OptimalSize6 / HighOpt6)
 else
-    OptimalPropA            := math.abs(OptimalProp) * -1
-    OptimalProp6A           := math.abs(OptimalProp6) * -1
+    OptimalPropA            := math.abs(OptimalSize / LowOpt)
+    OptimalProp6A           := math.abs(OptimalSize6 / LowOpt6)
 
 reclot  = SimpleLot ? math.round((OptimalProp6A * 10), 0) : math.round((OptimalPropA * 10), 0)
 
@@ -292,10 +292,10 @@ var OpenTrade               = false
 var ReversalTrade           = false
 
 Buy                         = ContrarianEntry ? (buyExit and O1 < O3[1] and Bullish) or (buyExit and O1 < O3[1] and SemiBull) : buySignal and O3 < O1[1] and Bullish
-Sell                        = sellSignal and O4 < O2[1] and Bearish
+Sell                        = ContrarianEntry ? (sellExit and O1 < O3[1] and Bearish) or (sellExit and O1 < O3[1] and SemiBear) : sellSignal and O1 < O3[1] and Bearish
 
 ExitBuy                     = CrossExit ? ta.crossunder(zlema6, zlema6A) : (buyExit and O1 < O3[1] and Bearish and OpenTrade == true) or (buyExit and O1 < O3[1] and SemiBear and OpenTrade == true) or (sellExit and O2 < O4[1] and SemiBear and OpenTrade == true) or (sellExit and O2 < O4[1] and Bearish and OpenTrade == true)
-ExitSell                    = (sellExit and O2 < O4[1] and Bullish and OpenTrade == true)
+ExitSell                    = ta.crossover(zlema6, zlema6A)
 
 EarlyBuy                    = EarlyEntry ? ta.crossover(CLOSE,20) : na
 EarlySell                   = EarlyEntry ? ta.crossunder(CLOSE,80) : na
@@ -381,14 +381,11 @@ else if ExitBuy
 
 //Sell Condition
 //-----------------------------------------------------------------------------{ 
-var float CurrentBuyLot   = 0
-
-if Buy or EarlyBuy and AllowShort == true
-    CurrentBuyLot   := CurrentBuyLot + strategy.position_size
-
-if ExitBuy and AllowShort == true
-    strategy.entry("S", strategy.short, qty = CurrentBuyLot * ShortPor)
-else if EarlyBuy and AllowShort == true
+if Sell and AllowShort == true
+    strategy.entry("S", strategy.short, qty = reclot)
+else if EarlySell and AllowShort == true
+    strategy.entry("S", strategy.short, qty = 10)
+else if ExitSell and AllowShort == true
     strategy.close("S", qty_percent = 100)
 
 // Calculate net profit and percentage profitable
