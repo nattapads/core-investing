@@ -351,7 +351,10 @@ if ExitSell and OpenSellTrade == true
 //Entry & Exit Signal
 //-----------------------------------------------------------------------------{
 plotshape(Buy, title='Buy', text = "▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129), size=size.tiny)
-plotshape(ExitBuy, title='Buy', text = "✘", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69), size=size.tiny)
+plotshape(ExitBuy, title='Exit Buy', text = "✘", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69), size=size.tiny)
+
+plotshape(Sell, title='Sell', text = "▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69), size=size.tiny)
+plotshape(ExitSell, title='Exit Sell', text = "✘", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129), size=size.tiny)
 
 plotshape(EarlyBuy ? CLOSE : na, text = "●", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
 plotshape(EarlySell ? CLOSE : na, text = "●", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69, 70), size=size.tiny)
