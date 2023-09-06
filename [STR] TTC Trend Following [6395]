@@ -288,14 +288,14 @@ reclot  = SimpleLot ? math.round((OptimalProp6A * 10), 0) : math.round((OptimalP
 //-----------------------------------------------------------------------------}
 //Entry Exit Signal
 //-----------------------------------------------------------------------------{
-var OpenTrade               = false
-var ReversalTrade           = false
+var OpenBuyTrade            = false
+var OpenSellTrade           = false
 
 Buy                         = ContrarianEntry ? (buyExit and O1 < O3[1] and Bullish) or (buyExit and O1 < O3[1] and SemiBull) : buySignal and O3 < O1[1] and Bullish
 Sell                        = ContrarianEntry ? (sellExit and O1 < O3[1] and Bearish) or (sellExit and O1 < O3[1] and SemiBear) : sellSignal and O1 < O3[1] and Bearish
 
-ExitBuy                     = CrossExit ? ta.crossunder(zlema6, zlema6A) : (buyExit and O1 < O3[1] and Bearish and OpenTrade == true) or (buyExit and O1 < O3[1] and SemiBear and OpenTrade == true) or (sellExit and O2 < O4[1] and SemiBear and OpenTrade == true) or (sellExit and O2 < O4[1] and Bearish and OpenTrade == true)
-ExitSell                    = ta.crossover(zlema6, zlema6A)
+ExitBuy                     = CrossExit ? ta.crossunder(zlema6, zlema6A) : (buyExit and O1 < O3[1] and Bearish and OpenBuyTrade == true) or (buyExit and O1 < O3[1] and SemiBear and OpenBuyTrade == true) or (sellExit and O2 < O4[1] and SemiBear and OpenBuyTrade == true) or (sellExit and O2 < O4[1] and Bearish and OpenBuyTrade == true)
+ExitSell                    = ta.crossover(zlema6, zlema6A) and OpenSellTrade == true
 
 EarlyBuy                    = EarlyEntry ? ta.crossover(CLOSE,20) : na
 EarlySell                   = EarlyEntry ? ta.crossunder(CLOSE,80) : na
@@ -303,24 +303,49 @@ EarlySell                   = EarlyEntry ? ta.crossunder(CLOSE,80) : na
 //-----------------------------------------------------------------------------}
 //Open & Close Trade
 //-----------------------------------------------------------------------------{
-var NumContraTrade          = 0
-var NumTrade                = 0
+// Buy
+//-----------------------------------------------------------------------------{
+var ReversalBuyTrade        = false
+var NumContraBuyTrade       = 0
+var NumBuyTrade             = 0
 
-if Buy and OpenTrade == false
-    OpenTrade               := true
-    NumTrade                := NumTrade + 1
-else if EarlyBuy and OpenTrade == false
-    ReversalTrade           := true
-    NumContraTrade          := NumContraTrade + 1
-else if Buy and OpenTrade == true
-    NumTrade                := NumTrade + 1
-else if EarlyBuy and ReversalTrade == true
-    NumContraTrade          := NumContraTrade + 1
+if Buy and OpenBuyTrade == false
+    OpenBuyTrade            := true
+    NumBuyTrade             := NumBuyTrade + 1
+else if EarlyBuy and OpenBuyTrade == false
+    ReversalBuyTrade           := true
+    NumContraBuyTrade       := NumContraBuyTrade + 1
+else if Buy and OpenBuyTrade == true
+    NumBuyTrade             := NumBuyTrade + 1
+else if EarlyBuy and ReversalBuyTrade == true
+    NumContraBuyTrade       = NumContraBuyTrade + 1
 
-if ExitBuy and OpenTrade == true
-    OpenTrade               := false
-    NumTrade                := 0
-    NumContraTrade          := 0
+if ExitBuy and OpenBuyTrade == true
+    OpenBuyTrade            := false
+    NumBuyTrade             := 0
+    NumContraBuyTrade       := 0
+
+// Sell
+//-----------------------------------------------------------------------------{
+var ReversalSellTrade        = false
+var NumContraSellTrade      = 0
+var NumSellTrade            = 0
+
+if Sell and OpenSellTrade == false
+    OpenSellTrade           := true
+    NumSellTrade            := NumSellTrade + 1
+else if EarlySell and OpenSellTrade == false
+    ReversalSellTrade           := true
+    NumContraSellTrade      := NumContraSellTrade + 1
+else if Sell and OpenSellTrade == true
+    NumSellTrade            := NumSellTrade + 1
+else if EarlySell and ReversalSellTrade == true
+    NumContraSellTrade      := NumContraSellTrade + 1
+
+if ExitSell and OpenSellTrade == true
+    OpenSellTrade           := false
+    NumSellTrade            := 0
+    NumContraSellTrade      := 0
 
 //-----------------------------------------------------------------------------}
 //Entry & Exit Signal
@@ -392,7 +417,13 @@ else if ExitSell and AllowShort == true
 //-----------------------------------------------------------------------------{ 
 net_profit          = strategy.netprofit
 percent_profitable  = math.round(strategy.wintrades / (strategy.wintrades + strategy.losstrades), 2)
-avg_position        = (strategy.position_size - (10 * NumContraTrade)) / NumTrade
+
+var float avg_position = na
+
+if Trenddiff >= 0
+    avg_position    := AllowShort ? strategy.position_size / NumBuyTrade : (strategy.position_size - (10 * NumContraBuyTrade)) / NumBuyTrade
+else
+    avg_position    := AllowShort ? strategy.position_size / NumSellTrade : (strategy.position_size - (10 * NumContraSellTrade)) / NumSellTrade
 
 //Table Styling
 //-----------------------------------------------------------------------------{ 
