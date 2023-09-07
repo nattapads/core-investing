@@ -27,12 +27,11 @@ zerolag             = input(true, title="Use Zero Lag", group="EMA Settings")
 src                 = close
 
 //-----------------------------------------------------------------------------}
-//Individual Asset Settings
+//Risk Settings
 //-----------------------------------------------------------------------------{
-StdLength           = input(title="Stard Deviation Length",     defval=256, group="Asset Settings")
-TrendProp           = input(title="Trend Following Propotion",  defval=0.6, group="Asset Settings")
-OptLookBack         = input(title="Optimal Sizing Lookback",    defval=128, group="Asset Settings")
-SimpleLot           = input(false, title="Simple Lot Calculation", group="Asset Settings")
+StdLength           = input.int(25, "Stard Deviation Length", group="Risk Settings")
+OptLookBack         = input.int(128, "Optimal Sizing Lookback", group="Risk Settings")
+SimpleLot           = input(false, title="Simple Lot Calculation", group="Risk Settings")
 
 //------------------------------------------------------------------------------
 //Turtle Trade Channels Variables
@@ -164,8 +163,18 @@ var float CappedForc5       = na
 var float CappedForc6       = na
 var float CappedForc        = na
 
-InstRisk                    = (ta.stdev(close, StdLength))/100
-DailyPVol                   = InstRisk / 16
+//Instrument Calculation
+//-----------------------------------------------------------------------------{
+PercentChange       = array.new_float(0)
+AdjustedLength      = StdLength - 1
+
+// Loop through the last closing prices and add them to the array
+for i = 0 to AdjustedLength
+    array.push(PercentChange, ((close[i]-close[i+1])/close[i+1]))
+
+// Calculate the standard deviation of the percent change
+InstRisk                    = math.round(array.stdev(PercentChange, false), 6)
+DailyPVol                   = math.round((InstRisk * 16), 6)
 
 //1st Forecast
 //-----------------------------------------------------------------------------{
