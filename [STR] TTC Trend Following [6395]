@@ -232,7 +232,7 @@ table_data          = table.new(position = position.top_right, columns = 1, rows
 table.cell(table_data, 0, 0, 'CM782', bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
 table.cell(table_data, 0, 1, str.tostring("$" + str.tostring(math.round(net_profit,0))), text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Net Profit")
 table.cell(table_data, 0, 2, str.tostring(str.tostring(math.round(percent_profitable * 100,0)) + "%"), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Percent Profitable")
-table.cell(table_data, 0, 3, str.tostring(str.tostring(math.round(CurrentProportion * 100,0)) + "%"), bgcolor = color.rgb(255, 255, 255, 85), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Sensitive Risk")
+table.cell(table_data, 0, 3, str.tostring(str.tostring(math.round(CurrentProportion * 100,0)) + "%"), bgcolor = color.rgb(255, 255, 255, 85), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Percent Risk")
 
 //-----------------------------------------------------------------------------}
 //Entry & Exit Signal
