@@ -5,9 +5,9 @@ strategy("[STR] Carry & MAC [6395]", overlay = true, margin_long = 50, margin_sh
 //-----------------------------------------------------------------------------}
 //Trend Settings
 //-----------------------------------------------------------------------------{
-length4             = input.int(12,         step = 1, title = 'Fast Length', group = "Trend Settings")
-length5             = input.int(25,         step = 1, title = 'Medium Length', group = "Trend Settings")
-length6             = input.int(50,         step = 1, title = 'Slow Length', group = "Trend Settings")
+length4             = input.int(16,         step = 1, title = 'Fast Length', group = "Trend Settings")
+length5             = input.int(32,         step = 1, title = 'Medium Length', group = "Trend Settings")
+length6             = input.int(64,         step = 1, title = 'Slow Length', group = "Trend Settings")
 zerolag             = input(true,           title ="Use Zero Lag", group = "Trend Settings")
 showtrend           = input(false,          title ="Show Trend Line", group = "Trend Settings")
 
