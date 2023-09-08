@@ -10,7 +10,6 @@ length5             = input.int(25,         step = 1, title = 'Medium Length', g
 length6             = input.int(50,         step = 1, title = 'Slow Length', group = "Trend Settings")
 zerolag             = input(true,           title ="Use Zero Lag", group = "Trend Settings")
 showtrend           = input(false,          title ="Show Trend Line", group = "Trend Settings")
-src                 = close
 
 //-----------------------------------------------------------------------------}
 //Risk Settings
@@ -18,7 +17,7 @@ src                 = close
 StdLength           = input.int(25,         title = "Standard Deviation Length", group="Risk Settings")
 TargetRisk          = input.float(0.12,     maxval = 1, step = 0.01, title = 'Target Risk (%)', group="Risk Settings")
 CarryProp           = input.float(0.5,      maxval = 1, step = 0.1, title = 'Carry Trade Proportion (%)', group="Risk Settings")
-DeviationPer        = input.float(0.2,      maxval = 1, step = 0.1, title = 'Momentum Change Limit (%)', group="Risk Settings")
+DeviationPer        = input.float(0.1,      maxval = 1, step = 0.1, title = 'Momentum Change Limit (%)', group="Risk Settings")
 EarlyEntry          = input(true,           title="Early Entry (For Stock Only)", group="Risk Settings")
 SimpleRisk          = input(false,          title="Simple Risk Calculation", group="Risk Settings")
 MarginCal           = input(false,          title="Margin Account", group="Risk Settings")
@@ -32,6 +31,8 @@ CLOSE               = request.security(MainAsset, "1D", close)
 //-----------------------------------------------------------------------------}
 //EMA Calculation
 //-----------------------------------------------------------------------------{
+src                 = close
+
 //Fast EMA
 lsmaR4              = ta.ema(src, length4)
 lsmaR4S             = ta.ema(lsmaR4, length4)
