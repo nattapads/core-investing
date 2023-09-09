@@ -164,7 +164,7 @@ MeanRiskAdjustedForec       = MeanRawForec / MeanSigmaP
 //Volatility Multiplier
 //-----------------------------------------------------------------------------{
 VolatilityRef               = input.symbol(title = "Primary Source", defval="S5TH", group = "Volatility Settings", inline = "source")
-Quantile                    = request.security(VolatilityRef, "D", close)
+Quantile                    = request.security(VolatilityRef, "", close)
 
 ModifiedQuantile            = 2 - (1.5 * (Quantile / 10))
 
