@@ -17,7 +17,7 @@ showtrend           = input(false,          title ="Show Trend Line", group = "T
 Equilibriumlength   = input.int(32,         step = 1, title = 'Equilibrium Average Length', group = "Mean Reversion Settings")
 Quantilelength      = input.int(64,         step = 1, title = 'Quantile Average Length', group = "Mean Reversion Settings")
 MeanForecScalar     = input.float(20,       step = 0.1, title = 'Forecast Scalar', group = "Mean Reversion Settings")
-MeanStra            = input(true,           title ="Use Mean Reversion (For Stock Only)", group = "Mean Reversion Settings")
+MeanStra            = input(true,           title ="Use Mean Reversion (Stock Only)", group = "Mean Reversion Settings")
 Meanzerolag         = input(true,           title ="Use Zero Lag", group = "Mean Reversion Settings")
 
 //-----------------------------------------------------------------------------}
