@@ -267,9 +267,9 @@ table.cell(table_data, 0, 3, str.tostring(str.tostring(math.round(CurrentProport
 //-----------------------------------------------------------------------------}
 //Entry & Exit Signal
 //-----------------------------------------------------------------------------{
-plotshape(InitialBuy,   title = "Initial Buy",  text = "▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 50), size=size.tiny)
-plotshape(AdjustBuy,    title = "Adjust Buy",   text = "△", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 50), size=size.tiny)
-plotshape(AdjustSell,   title = "Adjust Sell",  text = "✘", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69, 50), size=size.tiny)
+plotshape(InitialBuy,       title = "Initial Buy",  text = "▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129), size=size.tiny)
+plotshape(AdjustBuy,        title = "Adjust Buy",   text = "△", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 50), size=size.tiny)
+plotshape(AdjustSell,       title = "Adjust Sell",  text = "✘", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69, 50), size=size.tiny)
 
 //-----------------------------------------------------------------------------}
 //Bar & Trend Line Colours
@@ -301,10 +301,10 @@ else
     col                     := color.rgb(120, 123, 134, 100)
     fillG                   := color.rgb(120, 123, 134, 100)
 
-plotFastMA                  = plot(SlowEMA,     'Fast MA', color=col, linewidth=1) 
-plotSlowMA                  = plot(SlowSEMA,    'Slow MA', color=col, linewidth=1)
+plotFastMA                  = plot(SlowEMA,     "Fast MA", color=col, linewidth=1) 
+plotSlowMA                  = plot(SlowSEMA,    "Slow MA", color=col, linewidth=1)
 
-fill(plotFastMA, plotSlowMA, color = fillG, fillgaps = true) 
+fill(plotFastMA, plotSlowMA, color = fillG, title = "Trend Color", fillgaps = true) 
 barcolor(StrongBullish ? StrongBullColor : StrongBearish ? StrongBearishColor : Bullish ? BullColor : Bearish ? BearColor : NeutralColor)
 
 //-----------------------------------------------------------------------------}
