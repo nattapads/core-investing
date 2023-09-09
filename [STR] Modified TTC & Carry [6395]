@@ -282,9 +282,9 @@ plotshape(ExitBuy,          title = "Exit Buy",     text = "✘", textcolor = co
 //Bar & Trend Line Colours
 //-----------------------------------------------------------------------------{
 NeutralColor                = #56328f
-StrongBullColor             = color.rgb(8, 153, 129, 30)
+StrongBullColor             = color.rgb(8, 153, 129)
 BullColor                   = color.rgb(8, 153, 129, 50)
-StrongBearishColor          = color.rgb(242, 54, 69, 30)
+StrongBearishColor          = color.rgb(242, 54, 69)
 BearColor                   = color.rgb(242, 54, 69, 50)
 
 //Style Adjustment
