@@ -208,10 +208,10 @@ Quantile                    = request.security(VolatilityRef, "D", close)
 //-----------------------------------------------------------------------------}
 //Notional Exposure & Risk-Adjusted Position
 //-----------------------------------------------------------------------------{
+TrandStraProp               = (1 - CarryProp)
 InvNotionalExposure         = strategy.equity * TargetRisk * CarryProp / InstRisk
 InvSize                     = math.round(InvNotionalExposure / close, 0)
-TrandStraProp               = (1 - CarryProp)
-TrandRiskFactor             = MarginCal ? (CappedForc * TrandStraProp / 10) + (CarryCappedForc * TrandStraProp / 10) : (CappedForc * TrandStraProp / 20) + (CarryCappedForc * TrandStraProp / 10)
+TrandRiskFactor             = MarginCal ? (CappedForc * TrandStraProp / 10) + (CarryCappedForc * CarryProp / 10) : (CappedForc * TrandStraProp / 20) + (CarryCappedForc * CarryProp / 10)
 
 OptimalSizing               = (TrandRiskFactor * strategy.equity * TargetRisk) / (InstRisk * close)
 OptimalPosition             = math.round(OptimalSizing, 0)
