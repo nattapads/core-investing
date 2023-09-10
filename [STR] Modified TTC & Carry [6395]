@@ -16,7 +16,7 @@ EarlyEntry                  = input(true,           "Early Entry (Stock Only)", 
 FastLength                  = input.int(16,         step = 1, title = "Fast Length", group = "Momentum Settings")
 MediumLength                = input.int(32,         step = 1, title = "Medium Length", group = "Momentum Settings")
 SlowLength                  = input.int(64,         step = 1, title = "Slow Length", group = "Momentum Settings")
-zerolag                     = input(true,           title ="Use Zero Lag", group = "Momentum Settings")
+zerolag                     = input(true,           title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
 showtrend                   = input(false,          title ="Show Momentum Line", group = "Momentum Settings")
 
 //-----------------------------------------------------------------------------}
