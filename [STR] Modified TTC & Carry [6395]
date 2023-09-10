@@ -5,8 +5,8 @@ strategy("[STR] Modified TTC & Carry [6395]", overlay = true, margin_long = 50, 
 //------------------------------------------------------------------------------
 //Turtle Trade Channels Settings
 //-----------------------------------------------------------------------------{
-length                      = input.int(20,         "Entry Length", minval=1, group="TTC Settings")
-len2                        = input.int(10,         "Exit Length", minval=1, group="TTC Settings")
+length                      = input.int(20,         minval = 1, title = "Entry Length", group="TTC Settings")
+len2                        = input.int(10,         minval = 1, title = "Exit Length", group="TTC Settings")
 ContrarianEntry             = input(true,           "Contrarian Entry", group="TTC Settings")
 EarlyEntry                  = input(true,           "Early Entry (Stock Only)", group="TTC Settings")
 
@@ -23,9 +23,9 @@ showtrend                   = input(false,          title ="Show Momentum Line",
 //Risk Settings
 //-----------------------------------------------------------------------------{
 StdLength                   = input.int(25,         title = "Standard Deviation Length", group="Risk Settings")
-TargetRisk                  = input.float(0.16,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings")
-CarryProp                   = input.float(0.5,      maxval = 1, step = 0.1, title = "Carry Trade Proportion (%)", group="Risk Settings")
-DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Momentum Change Limit (%)", group="Risk Settings")
+TargetRisk                  = input.float(0.16,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings", tooltip = "16% is recommended for trading no maore than 3 instruments")
+CarryProp                   = input.float(0.5,      maxval = 1, step = 0.1, title = "Carry Proportion (%)", group="Risk Settings", tooltip = "Higher proportion causes higher percent risk")
+DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Change Sensitivity (%)", group="Risk Settings", tooltip = "Higher sensitivity causes more frequent trades")
 MarginCal                   = input(false,          title="Margin Account", group="Risk Settings")
 
 //------------------------------------------------------------------------------
