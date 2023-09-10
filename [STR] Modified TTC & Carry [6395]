@@ -23,7 +23,7 @@ showtrend                   = input(false,          title ="Show Momentum Line",
 //Carry Settings
 //-----------------------------------------------------------------------------{
 CarryProp                   = input.float(0.5,      maxval = 1, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
-ExpectedDiv                 = input.float(0.02,     maxval = 1, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yields or ")
+ExpectedDiv                 = input.float(0.02,     maxval = 1, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yields or Median dividend yield")
 
 //-----------------------------------------------------------------------------}
 //Risk Settings
