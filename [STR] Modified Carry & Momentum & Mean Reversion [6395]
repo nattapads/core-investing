@@ -23,7 +23,7 @@ Meanzerolag                 = input(true,           title ="Use Zero Lag", group
 //-----------------------------------------------------------------------------}
 //Carry Settings
 //-----------------------------------------------------------------------------{
-CarryProp                   = input.float(0.5,      maxval = 1, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
+CarryProp                   = input.float(0.6,      maxval = 1, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
 ExpectedDiv                 = input.float(0.03,     maxval = 1, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
 
 //-----------------------------------------------------------------------------}
@@ -137,7 +137,7 @@ if ScaledForcS <= -20
 else if ScaledForcS > -20 and ScaledForcS < 20
     CappedForcS             := ScaledForcS
 else if ScaledForcS >= 20
-    CappedForcS             := 20 
+    CappedForcS             := 20
 
 //Momentum Forecast Combination
 //-----------------------------------------------------------------------------{
