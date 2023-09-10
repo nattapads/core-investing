@@ -21,11 +21,16 @@ MeanStra                    = input(true,           title ="Use Mean Reversion (
 Meanzerolag                 = input(true,           title ="Use Zero Lag", group = "Mean Reversion Settings")
 
 //-----------------------------------------------------------------------------}
+//Carry Settings
+//-----------------------------------------------------------------------------{
+CarryProp                   = input.float(0.5,      maxval = 1, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
+ExpectedDiv                 = input.float(0.03,     maxval = 1, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
+
+//-----------------------------------------------------------------------------}
 //Risk Settings
 //-----------------------------------------------------------------------------{
 StdLength                   = input.int(25,         title = "Standard Deviation Length", group="Risk Settings")
 TargetRisk                  = input.float(0.16,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings")
-CarryProp                   = input.float(0.4,      maxval = 1, step = 0.1, title = "Carry Trade Proportion (%)", group="Risk Settings")
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Momentum Change Limit (%)", group="Risk Settings")
 MarginCal                   = input(false,          title="Margin Account", group="Risk Settings")
 
@@ -186,13 +191,28 @@ else if MeanScaledForc >= 20
     MeanCappedForc          := 20  
 
 //-----------------------------------------------------------------------------}
+//Carry Forcast Calculation
+//-----------------------------------------------------------------------------{
+var float CarryCappedForc   = na
+
+CarryScaling                = 30
+CarryScaledForc             = CarryScaling * ExpectedDiv / InstRisk
+
+if CarryScaledForc <= -20
+    CarryCappedForc         := -20
+else if CarryScaledForc > -20 and CarryScaledForc < 20
+    CarryCappedForc         := CarryScaledForc
+else if CarryScaledForc >= 20
+    CarryCappedForc         := 20
+
+//-----------------------------------------------------------------------------}
 //Notional Exposure & Risk-Adjusted Position
 //-----------------------------------------------------------------------------{
 MeanStraProp                = (1 - CarryProp) / 2
 TrandStraProp               = (1 - CarryProp)
 
-MeanRiskFactor              = MarginCal ? (CappedForc * MeanStraProp / 10) + (MeanCappedForc * MeanStraProp / 10) + CarryProp : (CappedForc * MeanStraProp / 20) + (MeanCappedForc * MeanStraProp / 20) + CarryProp 
-OnlyTrandRiskFactor         = MarginCal ? (CappedForc * TrandStraProp / 10) + CarryProp : (CappedForc * TrandStraProp / 20) + CarryProp
+MeanRiskFactor              = MarginCal ? (CappedForc * MeanStraProp / 10) + (MeanCappedForc * MeanStraProp / 10) + (CarryCappedForc * CarryProp / 10) : (CappedForc * MeanStraProp / 20) + (MeanCappedForc * MeanStraProp / 20) + (CarryCappedForc * CarryProp / 10) 
+OnlyTrandRiskFactor         = MarginCal ? (CappedForc * TrandStraProp / 10) + (CarryCappedForc * CarryProp / 10) : (CappedForc * TrandStraProp / 20) + (CarryCappedForc * CarryProp / 10)
 
 OptimalSizing               = MeanStra ? (MeanRiskFactor * strategy.equity * TargetRisk) / (InstRisk * close) : (OnlyTrandRiskFactor * strategy.equity * TargetRisk) / (InstRisk * close)
 OptimalPosition             = math.round(OptimalSizing, 0)
@@ -258,12 +278,13 @@ else
 //-----------------------------------------------------------------------------}
 //Summary Table
 //-----------------------------------------------------------------------------{ 
-table_data                  = table.new(position = position.top_right, columns = 1, rows = 5, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
+table_data                  = table.new(position = position.bottom_right, columns = 1, rows = 5, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
 
 table.cell(table_data, 0, 0, "CMR782", bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
 table.cell(table_data, 0, 1, str.tostring("$" + str.tostring(math.round(net_profit,0))), text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Net Profit")
 table.cell(table_data, 0, 2, str.tostring(str.tostring(math.round(percent_profitable * 100,0)) + "%"), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Percent Profitable")
-table.cell(table_data, 0, 3, str.tostring(str.tostring(math.round(CurrentProportion * 100,0)) + "%"), bgcolor = color.rgb(255, 255, 255, 90), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Percent Risk")
+table.cell(table_data, 0, 3, str.tostring("$" + str.tostring(math.round(strategy.max_drawdown,0))), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Max Drawdown")
+table.cell(table_data, 0, 4, str.tostring(str.tostring(math.round(CurrentProportion * 100,0)) + "%"), bgcolor = color.rgb(255, 255, 255, 90), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Percent Risk")
 
 //-----------------------------------------------------------------------------}
 //Entry & Exit Signal
