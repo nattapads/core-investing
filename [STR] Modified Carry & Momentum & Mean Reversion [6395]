@@ -8,45 +8,31 @@ strategy("[STR] Modified Carry & Momentum & Mean Reversion [6395]", overlay = tr
 FastLength                  = input.int(16,         step = 1, title = "Fast Length", group = "Momentum Settings")
 MediumLength                = input.int(32,         step = 1, title = "Medium Length", group = "Momentum Settings")
 SlowLength                  = input.int(64,         step = 1, title = "Slow Length", group = "Momentum Settings")
-zerolag                     = input(true,           title ="Use Zero Lag", group = "Momentum Settings")
+zerolag                     = input(true,           title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
 showtrend                   = input(false,          title ="Show Momentum Line", group = "Momentum Settings")
 
 //-----------------------------------------------------------------------------}
 //Mean Reversion Settings
 //-----------------------------------------------------------------------------{
-Equilibriumlength           = input.int(32,         step = 1, title = "Equilibrium Average Length", group = "Mean Reversion Settings")
-Quantilelength              = input.int(64,         step = 1, title = "Quantile Average Length", group = "Mean Reversion Settings")
-MeanForecScalar             = input.float(20,       step = 0.1, title = "Forecast Scalar", group = "Mean Reversion Settings")
-MeanStra                    = input(true,           title ="Use Mean Reversion (Stock Only)", group = "Mean Reversion Settings")
-Meanzerolag                 = input(true,           title ="Use Zero Lag", group = "Mean Reversion Settings")
+Equilibriumlength           = input.int(5,          step = 1, title = "Equilibrium Average Length", group = "Mean Reversion Settings")
+Quantilelength              = input.int(10,         step = 1, title = "Quantile Average Length", group = "Mean Reversion Settings")
+MeanForecScalar             = input.float(9.3,      step = 0.1, title = "Forecast Scalar", group = "Mean Reversion Settings")
+Meanzerolag                 = input(false,          title ="Acceleration-Adjusted Momentum", group = "Mean Reversion Settings")
+MeanStra                    = input(true,           title ="Early Entry (Stock Only)", group = "Mean Reversion Settings")
 
 //-----------------------------------------------------------------------------}
 //Carry Settings
 //-----------------------------------------------------------------------------{
-CarryProp                   = input.float(0.6,      maxval = 1, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
+CarryProp                   = input.float(0.6,      maxval = 1, step = 0.99, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
 ExpectedDiv                 = input.float(0.03,     maxval = 1, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
 
 //-----------------------------------------------------------------------------}
 //Risk Settings
 //-----------------------------------------------------------------------------{
 StdLength                   = input.int(25,         title = "Standard Deviation Length", group="Risk Settings")
-TargetRisk                  = input.float(0.16,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings")
-DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Momentum Change Limit (%)", group="Risk Settings")
+TargetRisk                  = input.float(0.16,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings", tooltip = "16% is recommended for trading no maore than 3 instruments")
+DeviationPer                = input.float(0.11,     maxval = 1, step = 0.1, title = "Change Sensitivity (%)", group="Risk Settings", tooltip = "Higher sensitivity causes less frequent trades, and lower trading costs")
 MarginCal                   = input(false,          title="Margin Account", group="Risk Settings")
-
-//-----------------------------------------------------------------------------}
-//Instrument Risk Calculation
-//-----------------------------------------------------------------------------{
-PercentChange               = array.new_float(0)
-AdjustedLength              = StdLength - 1
-
-// Loop through the last price change and add them to the array
-for i = 0 to AdjustedLength
-    array.push(PercentChange, ((close[i]-close[i+1])/close[i+1]))
-
-// Calculate the standard deviation of the percent change
-DailyPVol                   = math.round(array.stdev(PercentChange, false), 6)
-InstRisk                    = math.round((DailyPVol * 16), 6)
 
 //-----------------------------------------------------------------------------}
 //Momentum Calculation
@@ -97,52 +83,25 @@ Bullish                     = Trenddiff[0] < Trenddiff[1] and Trenddiff >= 0
 Bearish                     = Trenddiff[0] > Trenddiff[1] and Trenddiff < 0
 
 //-----------------------------------------------------------------------------}
-//Mean Reversion Forcast Calculation
-//-----------------------------------------------------------------------------{
-//Equilibrium EMA Calculation
-//-----------------------------------------------------------------------------{
-EquilibriumlsmaR            = ta.ema(close, Equilibriumlength)
-EquilibriumlsmaS            = ta.ema(EquilibriumlsmaR, Equilibriumlength)
-Eeq                         = EquilibriumlsmaR - EquilibriumlsmaS
-Equilibrium                 = Meanzerolag ? EquilibriumlsmaR + Eeq : ta.ema(close, Equilibriumlength)
-
-//Risk Adjusted Forecast Calculation
-//-----------------------------------------------------------------------------{
-MeanRawForec                = Equilibrium - close
-MeanSigmaP                  = (close * InstRisk) / 16
-MeanRiskAdjustedForec       = MeanRawForec / MeanSigmaP
-
-//Volatility Multiplier
-//-----------------------------------------------------------------------------{
-VolatilityRef               = input.symbol(title = "Primary Source", defval="S5TH", group = "Volatility Settings", inline = "source")
-Quantile                    = request.security(VolatilityRef, "", close)
-
-ModifiedQuantile            = 2 - (1.5 * (Quantile / 100))
-
-QuantilelsmaR               = ta.ema(ModifiedQuantile, Quantilelength)
-QuantilelsmaS               = ta.ema(QuantilelsmaR, Quantilelength)
-Qeq                         = QuantilelsmaR - QuantilelsmaS
-MeanVolatilitylsma          = Meanzerolag ? QuantilelsmaR + Qeq : ta.ema(ModifiedQuantile, Quantilelength)
-
-MeanModifiedRiskAdjForec    = MeanRiskAdjustedForec * MeanVolatilitylsma
-MeanScaledForc              = MeanRiskAdjustedForec * MeanForecScalar
-
-var float MeanCappedForc    = na
-
-if MeanScaledForc <= -20
-    MeanCappedForc          := -20
-else if MeanScaledForc > -20 and MeanScaledForc < 20
-    MeanCappedForc          := MeanScaledForc
-else if MeanScaledForc >= 20
-    MeanCappedForc          := 20  
-
-//-----------------------------------------------------------------------------}
 //Momentum Forcast Calculation
 //-----------------------------------------------------------------------------{
 var float CappedForc        = na
 var float CappedForcF       = na
 var float CappedForcM       = na
 var float CappedForcS       = na
+
+//Instrument Risk Calculation
+//-----------------------------------------------------------------------------{
+PercentChange               = array.new_float(0)
+AdjustedLength              = StdLength - 1
+
+// Loop through the last price change and add them to the array
+for i = 0 to AdjustedLength
+    array.push(PercentChange, ((close[i]-close[i+1])/close[i+1]))
+
+// Calculate the standard deviation of the percent change
+DailyPVol                   = math.round(array.stdev(PercentChange, false), 6)
+InstRisk                    = math.round((DailyPVol * 16), 6)
 
 //Fast Momentum Forecast
 //-----------------------------------------------------------------------------{
@@ -190,6 +149,46 @@ else if ComCappedForc > -20 and ComCappedForc < 20
     CappedForc              := ComCappedForc
 else if ComCappedForc >= 20
     CappedForc              := 20 
+
+//-----------------------------------------------------------------------------}
+//Mean Reversion Forcast Calculation
+//-----------------------------------------------------------------------------{
+//Equilibrium EMA Calculation
+//-----------------------------------------------------------------------------{
+EquilibriumlsmaR            = ta.ema(close, Equilibriumlength)
+EquilibriumlsmaS            = ta.ema(EquilibriumlsmaR, Equilibriumlength)
+Eeq                         = EquilibriumlsmaR - EquilibriumlsmaS
+Equilibrium                 = Meanzerolag ? EquilibriumlsmaR + Eeq : ta.ema(close, Equilibriumlength)
+
+//Risk Adjusted Forecast Calculation
+//-----------------------------------------------------------------------------{
+MeanRawForec                = Equilibrium - close
+MeanSigmaP                  = (close * InstRisk) / 16
+MeanRiskAdjustedForec       = MeanRawForec / MeanSigmaP
+
+//Volatility Multiplier
+//-----------------------------------------------------------------------------{
+VolatilityRef               = input.symbol(title = "Primary Source", defval="S5TH", group = "Volatility Settings", inline = "source")
+Quantile                    = request.security(VolatilityRef, "", close)
+
+ModifiedQuantile            = 2 - (1.5 * (Quantile / 10))
+
+QuantilelsmaR               = ta.ema(ModifiedQuantile, Quantilelength)
+QuantilelsmaS               = ta.ema(QuantilelsmaR, Quantilelength)
+Qeq                         = QuantilelsmaR - QuantilelsmaS
+MeanVolatilitylsma          = Meanzerolag ? QuantilelsmaR + Qeq : ta.ema(ModifiedQuantile, Quantilelength)
+
+MeanModifiedRiskAdjForec    = MeanRiskAdjustedForec * MeanVolatilitylsma
+MeanScaledForc              = MeanRiskAdjustedForec * MeanForecScalar
+
+var float MeanCappedForc    = na
+
+if MeanScaledForc <= -20
+    MeanCappedForc          := -20
+else if MeanScaledForc > -20 and MeanScaledForc < 20
+    MeanCappedForc          := MeanScaledForc
+else if MeanScaledForc >= 20
+    MeanCappedForc          := 20  
 
 //-----------------------------------------------------------------------------}
 //Carry Forcast Calculation
@@ -329,7 +328,7 @@ else
 plotFastMA                  = plot(SlowEMA,     "Fast Momentum", color=col, linewidth=1) 
 plotSlowMA                  = plot(SlowSEMA,    "Slow Momentum", color=col, linewidth=1)
 
-fill(plotFastMA, plotSlowMA, color = fillG, title = "Trend Color", fillgaps = true) 
+fill(plotFastMA, plotSlowMA, color = fillG, title = "Momentum Color", fillgaps = true) 
 barcolor(StrongBullish ? StrongBullColor : StrongBearish ? StrongBearishColor : Bullish ? BullColor : Bearish ? BearColor : NeutralColor)
 
 //-----------------------------------------------------------------------------}
