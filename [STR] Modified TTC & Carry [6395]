@@ -20,11 +20,16 @@ zerolag                     = input(true,           title ="Use Zero Lag", group
 showtrend                   = input(false,          title ="Show Momentum Line", group = "Momentum Settings")
 
 //-----------------------------------------------------------------------------}
+//Carry Settings
+//-----------------------------------------------------------------------------{
+CarryProp                   = input.float(0.5,      maxval = 1, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
+ExpectedDiv                 = input.float(0.02,     maxval = 1, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yields or ")
+
+//-----------------------------------------------------------------------------}
 //Risk Settings
 //-----------------------------------------------------------------------------{
 StdLength                   = input.int(25,         title = "Standard Deviation Length", group="Risk Settings")
 TargetRisk                  = input.float(0.16,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings", tooltip = "16% is recommended for trading no maore than 3 instruments")
-CarryProp                   = input.float(0.5,      maxval = 1, step = 0.1, title = "Carry Proportion (%)", group="Risk Settings", tooltip = "Higher proportion causes higher percent risk")
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Change Sensitivity (%)", group="Risk Settings", tooltip = "Higher sensitivity causes more frequent trades")
 MarginCal                   = input(false,          title="Margin Account", group="Risk Settings")
 
@@ -180,6 +185,21 @@ else if ComCappedForc >= 20
     CappedForc              := 20 
 
 //-----------------------------------------------------------------------------}
+//Carry Forcast Calculation
+//-----------------------------------------------------------------------------{
+var float CarryCappedForc   = na
+
+CarryScaling                = 30
+CarryScaledForc             = CarryScaling * ExpectedDiv / InstRisk
+
+if CarryScaledForc <= -20
+    CarryCappedForc         := -20
+else if CarryScaledForc > -20 and CarryScaledForc < 20
+    CarryCappedForc         := CarryScaledForc
+else if CarryScaledForc >= 20
+    CarryCappedForc         := 20
+
+//-----------------------------------------------------------------------------}
 //Mean Reversion Settings
 //-----------------------------------------------------------------------------{
 VolatilityRef               = input.symbol(title = "Primary Source", defval="S5TH", group = "Volatility Settings", inline = "source")
@@ -191,7 +211,7 @@ Quantile                    = request.security(VolatilityRef, "D", close)
 InvNotionalExposure         = strategy.equity * TargetRisk * CarryProp / InstRisk
 InvSize                     = math.round(InvNotionalExposure / close, 0)
 TrandStraProp               = (1 - CarryProp)
-TrandRiskFactor             = MarginCal ? (CappedForc * TrandStraProp / 10) + CarryProp : (CappedForc * TrandStraProp / 20) + CarryProp
+TrandRiskFactor             = MarginCal ? (CappedForc * TrandStraProp / 10) + (CarryCappedForc * TrandStraProp / 10) : (CappedForc * TrandStraProp / 20) + (CarryCappedForc * TrandStraProp / 10)
 
 OptimalSizing               = (TrandRiskFactor * strategy.equity * TargetRisk) / (InstRisk * close)
 OptimalPosition             = math.round(OptimalSizing, 0)
