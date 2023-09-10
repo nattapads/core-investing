@@ -183,7 +183,7 @@ else if ComCappedForc >= 20
 //Mean Reversion Settings
 //-----------------------------------------------------------------------------{
 VolatilityRef               = input.symbol(title = "Primary Source", defval="S5TH", group = "Volatility Settings", inline = "source")
-Quantile                    = request.security(VolatilityRef, "", close)
+Quantile                    = request.security(VolatilityRef, "D", close)
 
 //-----------------------------------------------------------------------------}
 //Notional Exposure & Risk-Adjusted Position
