@@ -18,7 +18,7 @@ Equilibriumlength           = input.int(5,          step = 1, title = "Equilibri
 Quantilelength              = input.int(10,         step = 1, title = "Quantile Average Length", group = "Mean Reversion Settings")
 MeanForecScalar             = input.float(9.3,      step = 0.1, title = "Forecast Scalar", group = "Mean Reversion Settings")
 Meanzerolag                 = input(false,          title = "Acceleration-Adjusted Momentum", group = "Mean Reversion Settings")
-MeanStra                    = input(true,           title = "Early Entry (US Stock or Index Only)", group="TTC Settings")
+MeanStra                    = input(true,           title = "Early Entry (US Stock or Index Only)", group="Mean Reversion Settings")
 
 //-----------------------------------------------------------------------------}
 //Carry Settings
