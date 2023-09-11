@@ -34,6 +34,7 @@ TargetRisk                  = input.float(0.16,     maxval = 1, step = 0.01, tit
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Change Sensitivity (%)", group="Risk Settings", tooltip = "Higher sensitivity causes less frequent trades, and lower trading costs")
 SmoothOptLength             = input.int(5,          title = "Smooth Optimal Position Length", group="Risk Settings")
 SmoothOpt                   = input(true,           title="Smooth Optimal Position", group="Risk Settings")
+Modified                    = input(true,           title="Modified Position Adjustment", group="Risk Settings")
 MarginCal                   = input(false,          title="Margin Account", group="Risk Settings")
 
 //-----------------------------------------------------------------------------}
@@ -253,13 +254,15 @@ RecSize                     = math.round(OptimalPosition - strategy.position_siz
 if RecSize <= 0
     RecSize                 := 0
 
+AdjustBuyQty                = Modified ? (UpperBuffer - CurrentSize) : (LowerBuffer - CurrentSize)
+
 //-----------------------------------------------------------------------------}
 //Strategy
 //-----------------------------------------------------------------------------{ 
 if InitialBuy
     strategy.entry("B", strategy.long, qty = RecSize)
 else if AdjustBuy
-    strategy.entry("B", strategy.long, qty = (UpperBuffer - CurrentSize))
+    strategy.entry("B", strategy.long, qty = AdjustBuyQty)
 else if AdjustSell
     strategy.close("B", qty = (CurrentSize - UpperBuffer))
 else if ExitBuy
