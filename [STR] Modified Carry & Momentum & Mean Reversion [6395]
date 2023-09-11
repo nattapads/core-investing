@@ -300,7 +300,7 @@ table.cell(table_data, 0, 4, str.tostring(str.tostring(math.round(CurrentProport
 //Entry & Exit Signal
 //-----------------------------------------------------------------------------{
 plotshape(InitialBuy,       title = "Initial Buy",  text = "▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 30), size=size.tiny)
-plotshape(ExitBuy,          title = "Exit Buy",  text = "✘", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69, 30), size=size.tiny)
+plotshape(ExitBuy,          title = "Exit Buy",     text = "✘", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69, 30), size=size.tiny)
 
 plotshape(AdjustBuy,        title = "Adjust Buy",   text = "△", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 30), size=size.tiny)
 plotshape(AdjustSell,       title = "Adjust Sell",  text = "✘", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69, 30), size=size.tiny)
