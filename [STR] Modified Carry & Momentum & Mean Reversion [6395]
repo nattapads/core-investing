@@ -8,8 +8,8 @@ strategy("[STR] Modified Carry & Momentum & Mean Reversion [6395]", overlay = tr
 FastLength                  = input.int(16,         step = 1, title = "Fast Length", group = "Momentum Settings")
 MediumLength                = input.int(32,         step = 1, title = "Medium Length", group = "Momentum Settings")
 SlowLength                  = input.int(64,         step = 1, title = "Slow Length", group = "Momentum Settings")
-zerolag                     = input(true,           title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
-showtrend                   = input(false,          title ="Show Momentum Line", group = "Momentum Settings")
+zerolag                     = input(true,           title = "Acceleration-Adjusted Momentum", group = "Momentum Settings")
+showtrend                   = input(false,          title = "Show Momentum Line", group = "Momentum Settings")
 
 //-----------------------------------------------------------------------------}
 //Mean Reversion Settings
@@ -17,8 +17,8 @@ showtrend                   = input(false,          title ="Show Momentum Line",
 Equilibriumlength           = input.int(5,          step = 1, title = "Equilibrium Average Length", group = "Mean Reversion Settings")
 Quantilelength              = input.int(10,         step = 1, title = "Quantile Average Length", group = "Mean Reversion Settings")
 MeanForecScalar             = input.float(9.3,      step = 0.1, title = "Forecast Scalar", group = "Mean Reversion Settings")
-Meanzerolag                 = input(false,          title ="Acceleration-Adjusted Momentum", group = "Mean Reversion Settings")
-MeanStra                    = input(true,           title ="Early Entry (Stock Only)", group = "Mean Reversion Settings")
+Meanzerolag                 = input(false,          title = "Acceleration-Adjusted Momentum", group = "Mean Reversion Settings")
+MeanStra                    = input(true,           title = "Early Entry (US Stock or Index Only)", group="TTC Settings")
 
 //-----------------------------------------------------------------------------}
 //Carry Settings
@@ -33,9 +33,9 @@ StdLength                   = input.int(25,         title = "Standard Deviation 
 TargetRisk                  = input.float(0.16,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings", tooltip = "16% is recommended for trading no maore than 3 instruments")
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Change Sensitivity (%)", group="Risk Settings", tooltip = "Higher sensitivity causes less frequent trades, and lower trading costs")
 SmoothOptLength             = input.int(5,          title = "Smooth Optimal Position Length", group="Risk Settings")
-SmoothOpt                   = input(true,           title="Smooth Optimal Position", group="Risk Settings")
-Modified                    = input(true,           title="Modified Position Adjustment", group="Risk Settings")
-MarginCal                   = input(false,          title="Margin Account", group="Risk Settings")
+SmoothOpt                   = input(true,           title = "Smooth Optimal Position", group="Risk Settings")
+Modified                    = input(true,           title = "Modified Position Adjustment", group="Risk Settings")
+MarginCal                   = input(false,          title = "Margin Account", group="Risk Settings")
 
 //-----------------------------------------------------------------------------}
 //Instrument Risk Calculation
