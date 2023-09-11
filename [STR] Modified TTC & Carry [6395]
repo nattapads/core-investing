@@ -31,6 +31,8 @@ ExpectedDiv                 = input.float(0.03,     maxval = 0.99, step = 0.001,
 StdLength                   = input.int(25,         title = "Standard Deviation Length", group="Risk Settings")
 TargetRisk                  = input.float(0.16,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings", tooltip = "16% is recommended for trading no maore than 3 instruments")
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Change Sensitivity (%)", group="Risk Settings", tooltip = "Higher sensitivity causes less frequent trades, and lower trading costs")
+SmoothOptLength             = input.int(5,          title = "Smooth Optimal Position Length", group="Risk Settings")
+SmoothOpt                   = input(false,          title="Smooth Optimal Position", group="Risk Settings")
 MarginCal                   = input(false,          title="Margin Account", group="Risk Settings")
 
 //------------------------------------------------------------------------------
@@ -214,7 +216,9 @@ InvSize                     = math.round(InvNotionalExposure / close, 0)
 TrandRiskFactor             = MarginCal ? (CappedForc * TrandStraProp / 10) + (CarryCappedForc * CarryProp / 10) : (CappedForc * TrandStraProp / 20) + (CarryCappedForc * CarryProp / 10)
 
 OptimalSizing               = (TrandRiskFactor * strategy.equity * TargetRisk) / (InstRisk * close)
-OptimalPosition             = math.round(OptimalSizing, 0)
+RawOptimalPosition          = math.round(OptimalSizing, 0)
+
+OptimalPosition             = SmoothOpt ? ta.ema(RawOptimalPosition, SmoothOptLength) : RawOptimalPosition
 
 //Buffer Zone
 //-----------------------------------------------------------------------------{
