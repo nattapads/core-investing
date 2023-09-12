@@ -8,7 +8,11 @@ strategy("[STR] Modified TTC & Carry [6395]", overlay = true, margin_long = 50, 
 length                      = input.int(20,         minval = 1, title = "Entry Length", group="TTC Settings")
 len2                        = input.int(10,         minval = 1, title = "Exit Length", group="TTC Settings")
 ContrarianEntry             = input(true,           title = "Contrarian Entry", group="TTC Settings")
-EarlyEntry                  = input(true,           title = "Early Entry (US Stock or Index Only)", group="TTC Settings")
+
+//------------------------------------------------------------------------------
+//Mean Reversion Settings
+//-----------------------------------------------------------------------------{
+EarlyEntry                  = input(true,           title = "Early Entry (US Stock or Index Only)", group="Mean Reversion Settings")
 
 //-----------------------------------------------------------------------------}
 //Momentum  Settings
