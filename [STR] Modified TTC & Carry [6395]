@@ -9,11 +9,6 @@ length                      = input.int(20,         minval = 1, title = "Entry L
 len2                        = input.int(10,         minval = 1, title = "Exit Length", group="TTC Settings")
 ContrarianEntry             = input(true,           title = "Contrarian Entry", group="TTC Settings")
 
-//------------------------------------------------------------------------------
-//Mean Reversion Settings
-//-----------------------------------------------------------------------------{
-EarlyEntry                  = input(true,           title = "Early Entry (US Stock or Index Only)", group="Mean Reversion Settings")
-
 //-----------------------------------------------------------------------------}
 //Momentum  Settings
 //-----------------------------------------------------------------------------{
@@ -22,6 +17,11 @@ MediumLength                = input.int(32,         step = 1, title = "Medium Le
 SlowLength                  = input.int(64,         step = 1, title = "Slow Length", group = "Momentum Settings")
 zerolag                     = input(true,           title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
 showtrend                   = input(false,          title ="Show Momentum Line", group = "Momentum Settings")
+
+//------------------------------------------------------------------------------
+//Mean Reversion Settings
+//-----------------------------------------------------------------------------{
+EarlyEntry                  = input(true,           title = "Early Entry (US Stock or Index Only)", group="Mean Reversion Settings")
 
 //-----------------------------------------------------------------------------}
 //Carry Settings
