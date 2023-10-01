@@ -236,7 +236,6 @@ CurrentSize                 = strategy.position_size
 //Position Adjustment Signal & Position
 //-----------------------------------------------------------------------------{
 InitialBuy                  = ta.crossover(SlowEMA, SlowSEMA)
-ExitBuy                     = ta.crossunder(SlowEMA, SlowSEMA)
 AdjustBuy                   = MarginCal ? CurrentSize < LowerBuffer and SlowEMA > SlowSEMA : CurrentSize < LowerBuffer and strategy.equity > (OptimalPosition * close) and SlowEMA > SlowSEMA
 AdjustSell                  = CurrentSize > UpperBuffer and CurrentSize > 0
 
@@ -260,8 +259,6 @@ else if AdjustBuy
     strategy.entry("B", strategy.long, qty = AdjustBuyQty)
 else if AdjustSell
     strategy.close("B", qty = (CurrentSize - UpperBuffer))
-else if ExitBuy
-    strategy.close("B", qty_percent = TrandStraProp * 100)
 
 // Calculate net profit and percentage profitable
 //-----------------------------------------------------------------------------{ 
@@ -295,8 +292,6 @@ table.cell(table_data, 0, 4, str.tostring(str.tostring(math.round(CurrentProport
 //Entry & Exit Signal
 //-----------------------------------------------------------------------------{
 plotshape(InitialBuy,       title = "Initial Buy",  text = "▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
-plotshape(ExitBuy,          title = "Exit Buy",     text = "✘", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69, 70), size=size.tiny)
-
 plotshape(AdjustBuy,        title = "Adjust Buy",   text = "△", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
 plotshape(AdjustSell,       title = "Adjust Sell",  text = "✘", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69, 70), size=size.tiny)
 
