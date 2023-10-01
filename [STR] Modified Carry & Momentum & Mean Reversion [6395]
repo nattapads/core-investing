@@ -18,7 +18,7 @@ Equilibriumlength           = input.int(5,          step = 1, title = "Equilibri
 Quantilelength              = input.int(10,         step = 1, title = "Quantile Average Length", group = "Mean Reversion Settings")
 MeanForecScalar             = input.float(9.3,      step = 0.1, title = "Forecast Scalar", group = "Mean Reversion Settings")
 Meanzerolag                 = input(false,          title = "Acceleration-Adjusted Momentum", group = "Mean Reversion Settings")
-MeanStra                    = input(true,           title = "Early Entry (US Stock or Index Only)", group="Mean Reversion Settings")
+MeanStra                    = input(false,          title = "Early Entry (US Stock or Index Only)", group="Mean Reversion Settings")
 
 //-----------------------------------------------------------------------------}
 //Carry Settings
@@ -237,18 +237,13 @@ CurrentSize                 = strategy.position_size
 //-----------------------------------------------------------------------------{
 InitialBuy                  = ta.crossover(SlowEMA, SlowSEMA)
 ExitBuy                     = ta.crossunder(SlowEMA, SlowSEMA)
-AdjustBuy                   = MarginCal ? ta.crossunder(CurrentSize, LowerBuffer) and SlowEMA > SlowSEMA : ta.crossunder(CurrentSize, LowerBuffer) and strategy.equity > (OptimalPosition * close) and SlowEMA > SlowSEMA
-AdjustSell                  = ta.crossover(CurrentSize, UpperBuffer) and CurrentSize > 0
+AdjustBuy                   = MarginCal ? CurrentSize < LowerBuffer and SlowEMA > SlowSEMA : CurrentSize < LowerBuffer and strategy.equity > (OptimalPosition * close) and SlowEMA > SlowSEMA
+AdjustSell                  = CurrentSize > UpperBuffer and CurrentSize > 0
 
 //Current Proportion
 //-----------------------------------------------------------------------------{
 CurrentHoldingValue         = strategy.position_size * close
 CurrentProportion           = CurrentHoldingValue / strategy.equity
-
-if CurrentProportion >= 1 and MarginCal == true
-    CurrentProportion       := CurrentProportion
-else if CurrentProportion >= 1 and MarginCal == false
-    CurrentProportion       := 1
 
 RecSize                     = math.round(OptimalPosition - strategy.position_size, 0)
 if RecSize <= 0
