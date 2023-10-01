@@ -336,5 +336,3 @@ barcolor(StrongBullish ? StrongBullColor : StrongBearish ? StrongBearishColor : 
 //-----------------------------------------------------------------------------{
 if AdjustBuy or AdjustSell
     alert("Position Adjusted", alert.freq_once_per_bar_close)
-else if ExitBuy
-    alert("Exit Buy", alert.freq_once_per_bar_close)
