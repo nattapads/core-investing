@@ -19,7 +19,7 @@ showtrend                   = input(true,           title = "Show Momentum Line"
 //-----------------------------------------------------------------------------{
 Equilibriumlength           = input.int(5,          step = 1, title = "Equilibrium Average Length", group = "Mean Reversion Settings")
 Quantilelength              = input.int(10,         step = 1, title = "Quantile Average Length", group = "Mean Reversion Settings")
-MeanForecScalar             = input.float(9.3,      step = 0.1, title = "Forecast Scalar", group = "Mean Reversion Settings")
+MeanForecScalar             = input.float(9.3,      step = 0.1, title = "Mean-Reversion Forecast Scalar", group = "Mean Reversion Settings")
 Meanzerolag                 = input(false,          title = "Acceleration-Adjusted Momentum", group = "Mean Reversion Settings")
 MeanStra                    = input(false,          title = "Early Entry (US Stock or Index Only)", group="Mean Reversion Settings")
 
@@ -28,6 +28,7 @@ MeanStra                    = input(false,          title = "Early Entry (US Sto
 //-----------------------------------------------------------------------------{
 CarryProp                   = input.float(0.6,      maxval = 0.99, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
 ExpectedDiv                 = input.float(0.03,     maxval = 0.99, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
+CarryForecScalar            = input.int(30,         step = 1, title = "Carry Forecast Scalar", group = "Carry Settings")
 
 //-----------------------------------------------------------------------------}
 //Risk Settings
@@ -204,8 +205,7 @@ else if MeanScaledForc >= 20
 //-----------------------------------------------------------------------------{
 var float CarryCappedForc   = na
 
-CarryScaling                = 30
-CarryScaledForc             = CarryScaling * ExpectedDiv / InstRisk
+CarryScaledForc             = CarryForecScalar * ExpectedDiv / InstRisk
 
 if CarryScaledForc <= -20
     CarryCappedForc         := -20
