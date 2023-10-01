@@ -204,7 +204,7 @@ else
 //Current Proportion
 //-----------------------------------------------------------------------------{
 CurrentHoldingValue         = strategy.position_size * close
-CurrentProportion           = MarginCal ? (CurrentHoldingValue / strategy.equity) * 100 : (CurrentHoldingValue / strategy.equity) * 55
+CurrentProportion           = CurrentHoldingValue / strategy.equity) * 100
 
 //-----------------------------------------------------------------------------}
 //Summary Table
