@@ -8,6 +8,9 @@ strategy("[STR] US500 Multi TF [6395]", overlay = true, margin_long = 0.5, margi
 FastLength                  = input.int(16,         step = 1, title = "Fast Length", group = "Momentum Settings")
 MediumLength                = input.int(32,         step = 1, title = "Medium Length", group = "Momentum Settings")
 SlowLength                  = input.int(64,         step = 1, title = "Slow Length", group = "Momentum Settings")
+FastScalar                  = input.float(1.90,     step = 0.01, title = "Fast Forecast Scalar", group = "Momentum Settings")
+MediumScalar                = input.float(1.98,     step = 0.01, title = "Medium Forecast Scalar", group = "Momentum Settings")
+SlowScalar                  = input.float(2.05,     step = 0.01, title = "Slow Forecast Scalar", group = "Momentum Settings")
 zerolag                     = input(false,          title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
 showtrend                   = input(false,          title ="Show Momentum Line", group = "Momentum Settings")
 
@@ -19,6 +22,7 @@ StdLength                   = input.int(25,         title = "Standard Deviation 
 TargetRisk                  = input.float(0.07,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings")
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Momentum Change Limit (%)", group="Risk Settings")
 SmoothOptLength             = input.int(1,          title = "Smooth Optimal Position Length", group="Risk Settings")
+SuggestAdjust               = input.int(55,         title = "Suggestion Adjustment", group="Risk Settings")
 SmoothOpt                   = input(true,           title="Smooth Optimal Position", group="Risk Settings")
 MarginCal                   = input(false,          title="Margin Account", group="Risk Settings")
 
@@ -85,7 +89,7 @@ InstRisk                    = math.round((DailyPVol * 16), 6)
 //Fast Momentum Forecast
 //-----------------------------------------------------------------------------{
 RiskAdjF                    = (FastEMA - FastSEMA) / DailyPVol
-ScaledForcF                 = RiskAdjF * 1.9
+ScaledForcF                 = RiskAdjF * FastScalar
 
 if ScaledForcF <= -20
     CappedForcF             := -20
@@ -97,7 +101,7 @@ else if ScaledForcF >= 20
 //Medium Momentum Forecast
 //-----------------------------------------------------------------------------{
 RiskAdjM                    = (MediumEMA - MediumSEMA) / DailyPVol
-ScaledForcM                 = RiskAdjM * 1.98
+ScaledForcM                 = RiskAdjM * MediumScalar
 
 if ScaledForcM <= -20
     CappedForcM             := -20
@@ -109,7 +113,7 @@ else if ScaledForcM >= 20
 //Slow Momentum Forecast
 //-----------------------------------------------------------------------------{
 RiskAdjS                    = (SlowEMA - SlowSEMA) / DailyPVol
-ScaledForcS                 = RiskAdjS * 2.05
+ScaledForcS                 = RiskAdjS * SlowScalar
 
 if ScaledForcS <= -20
     CappedForcS             := -20
@@ -204,7 +208,7 @@ else
 //Current Proportion
 //-----------------------------------------------------------------------------{
 CurrentHoldingValue         = strategy.position_size * close
-CurrentProportion           = CurrentHoldingValue / strategy.equity) * 100
+CurrentProportion           = (CurrentHoldingValue / strategy.equity) * 100
 
 //-----------------------------------------------------------------------------}
 //Summary Table
