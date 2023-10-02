@@ -1,6 +1,6 @@
 //NSal
 //@version=5
-strategy("[STR] US500 Multi TF [6395]", overlay = true, margin_long = 0.5, margin_short = 0.5, pyramiding = 100, initial_capital = 100000, risk_free_rate = 1, slippage = 1)
+strategy("[STR] US500 Multi TF [6395]", overlay = true, margin_long = 30, margin_short = 30, pyramiding = 100, initial_capital = 100000, risk_free_rate = 1, slippage = 1)
 
 //-----------------------------------------------------------------------------}
 //Momentum  Settings
@@ -8,9 +8,9 @@ strategy("[STR] US500 Multi TF [6395]", overlay = true, margin_long = 0.5, margi
 FastLength                  = input.int(16,         step = 1, title = "Fast Length", group = "Momentum Settings")
 MediumLength                = input.int(32,         step = 1, title = "Medium Length", group = "Momentum Settings")
 SlowLength                  = input.int(64,         step = 1, title = "Slow Length", group = "Momentum Settings")
-FastScalar                  = input.float(1.90,     step = 0.01, title = "Fast Forecast Scalar", group = "Momentum Settings")
-MediumScalar                = input.float(1.98,     step = 0.01, title = "Medium Forecast Scalar", group = "Momentum Settings")
-SlowScalar                  = input.float(2.05,     step = 0.01, title = "Slow Forecast Scalar", group = "Momentum Settings")
+FastScalar                  = input.float(4.10,     step = 0.01, title = "Fast Forecast Scalar", group = "Momentum Settings")
+MediumScalar                = input.float(2.79,     step = 0.01, title = "Medium Forecast Scalar", group = "Momentum Settings")
+SlowScalar                  = input.float(1.91,     step = 0.01, title = "Slow Forecast Scalar", group = "Momentum Settings")
 zerolag                     = input(false,          title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
 showtrend                   = input(false,          title ="Show Momentum Line", group = "Momentum Settings")
 
@@ -24,7 +24,7 @@ DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, titl
 SmoothOptLength             = input.int(1,          title = "Smooth Optimal Position Length", group="Risk Settings")
 SuggestAdjust               = input.int(55,         title = "Suggestion Adjustment", group="Risk Settings")
 SmoothOpt                   = input(true,           title="Smooth Optimal Position", group="Risk Settings")
-MarginCal                   = input(false,          title="Margin Account", group="Risk Settings")
+MarginCal                   = input(true,          title="Margin Account", group="Risk Settings")
 
 //-----------------------------------------------------------------------------}
 //Momentum Calculation
@@ -208,7 +208,7 @@ else
 //Current Proportion
 //-----------------------------------------------------------------------------{
 CurrentHoldingValue         = strategy.position_size * close
-CurrentProportion           = (CurrentHoldingValue / strategy.equity) * 100
+CurrentProportion           = MarginCal ? (CurrentHoldingValue / strategy.equity) * 100 : (CurrentHoldingValue / strategy.equity) * SuggestAdjust
 
 //-----------------------------------------------------------------------------}
 //Summary Table
