@@ -1,6 +1,6 @@
 //NSal
 //@version=5
-strategy("[STR] US500 Multi TF [6395]", overlay = true, margin_long = 30, margin_short = 30, pyramiding = 100, initial_capital = 100000, risk_free_rate = 1, slippage = 1)
+strategy("[STR] US500 Multi TF [6395]", overlay = true, margin_long = 30, margin_short = 30, pyramiding = 100, initial_capital = 10000, risk_free_rate = 1, slippage = 1)
 
 //-----------------------------------------------------------------------------}
 //Momentum  Settings
@@ -23,6 +23,7 @@ TargetRisk                  = input.float(0.07,     maxval = 1, step = 0.01, tit
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Momentum Change Limit (%)", group = "Risk Settings")
 SmoothOptLength             = input.int(1,          title = "Smooth Optimal Position Length", group = "Risk Settings")
 SmoothOpt                   = input(true,           title = "Smooth Optimal Position", group = "Risk Settings")
+FixIniFund                  = input(true,           title = "Fix Initial Fund for Optimal Calculation", group = "Risk Settings")
 MarginCal                   = input(true,           title = "Margin Account", group = "Risk Settings")
 
 //-----------------------------------------------------------------------------}
@@ -137,14 +138,14 @@ else if ComCappedForc >= 20
 //-----------------------------------------------------------------------------{
 TrandRiskFactor             = MarginCal ? (CappedForc / 10) : (CappedForc / 20)
 
-OptimalSizing               = (TrandRiskFactor * IniFund * TargetRisk) / (InstRisk * close)
+OptimalSizing               = FixIniFund ? (TrandRiskFactor * IniFund * TargetRisk) / (InstRisk * close) : (TrandRiskFactor * strategy.equity * TargetRisk) / (InstRisk * close)
 RawOptimalPosition          = math.round(OptimalSizing, 0)
 
 OptimalPosition             = SmoothOpt ? ta.ema(RawOptimalPosition, SmoothOptLength) : RawOptimalPosition
 
 //Buffer Zone
 //-----------------------------------------------------------------------------{
-BufferWidth                 = (DeviationPer * IniFund * TargetRisk) / (InstRisk * close)
+BufferWidth                 = FixIniFund ? (DeviationPer * IniFund * TargetRisk) / (InstRisk * close) : (DeviationPer * strategy.equity * TargetRisk) / (InstRisk * close)
 LowerBuffer                 = math.round(OptimalPosition - BufferWidth, 1)
 UpperBuffer                 = math.round(OptimalPosition + BufferWidth, 1)
 CurrentSize                 = strategy.position_size
