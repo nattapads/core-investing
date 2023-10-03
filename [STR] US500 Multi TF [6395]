@@ -2,6 +2,12 @@
 //@version=5
 strategy("[STR] US500 Multi TF [6395]", overlay = true, margin_long = 30, margin_short = 30, pyramiding = 100, initial_capital = 10000, risk_free_rate = 1, slippage = 1)
 
+//------------------------------------------------------------------------------
+//Settings
+//-----------------------------------------------------------------------------{
+start_time                  = input.time(timestamp("Jan 01 1950 00:00:00"), title="Start Time")
+in_time_window              = time >= start_time
+
 //-----------------------------------------------------------------------------}
 //Momentum  Settings
 //-----------------------------------------------------------------------------{
@@ -178,14 +184,14 @@ AdjustSell                  = CurrentSize < 0 and CurrentSize < LowerBuffer and 
 //-----------------------------------------------------------------------------}
 //Strategy
 //-----------------------------------------------------------------------------{ 
-if Buy
+if Buy and in_time_window
     strategy.entry("B", strategy.long, qty = BuyQty)
-else if AdjustBuy
+else if AdjustBuy and in_time_window
     strategy.close("B", qty = AdjBuyQty)
 
-if Sell
+if Sell and in_time_window
     strategy.entry("S", strategy.short, qty = SellQty)
-else if AdjustSell
+else if AdjustSell and in_time_window
     strategy.close("S", qty = AdjSellQty)
 
 // Calculate net profit and percentage profitable
