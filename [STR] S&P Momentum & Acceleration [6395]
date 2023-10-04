@@ -140,7 +140,7 @@ else if ScaledForcS >= 20
 
 //Momentum Forecast Combination
 //-----------------------------------------------------------------------------{
-ComCappedForc               = (CappedForcF + CappedForcM + CappedForcS) / 3
+ComCappedForc               = (CappedForcF + CappedForcM + CappedForcS) * Mfdm / 3
 
 if ComCappedForc <= -20
     CappedForc              := -20
@@ -195,7 +195,7 @@ else if ScaledForcSAcc >= 20
 
 //Acceleration Forecast Combination
 //-----------------------------------------------------------------------------{
-ComCappedForcAcc            = (CappedForcFAcc + CappedForcMAcc + CappedForcSAcc) / 3
+ComCappedForcAcc            = (CappedForcFAcc + CappedForcMAcc + CappedForcSAcc) * Afdm / 3
 
 if ComCappedForcAcc <= -20
     CappedForcAcc           := -20
@@ -207,7 +207,7 @@ else if ComCappedForcAcc >= 20
 //-----------------------------------------------------------------------------}
 //Notional Exposure & Risk-Adjusted Position
 //-----------------------------------------------------------------------------{
-TrandRiskFactor             = MarginCal ? (CappedForc * (1 - AccProp) * Mfdm / 10) + (CappedForcAcc * AccProp * Afdm / 10) : (CappedForc * (1 - AccProp) * Mfdm / 20) + (CappedForcAcc * AccProp * Afdm / 20)
+TrandRiskFactor             = MarginCal ? (CappedForc * (1 - AccProp) / 10) + (CappedForcAcc * AccProp / 10) : (CappedForc * (1 - AccProp) / 20) + (CappedForcAcc * AccProp / 20)
 
 OptimalSizing               = FixIniFund ? (TrandRiskFactor * IniFund * TargetRisk) / (InstRisk * close) : (TrandRiskFactor * strategy.equity * TargetRisk) / (InstRisk * close)
 RawOptimalPosition          = math.round(OptimalSizing, 0)
