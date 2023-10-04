@@ -133,7 +133,7 @@ ScaledForcM                 = RiskAdjM * MediumScalar
 if ScaledForcM <= -20
     CappedForcM             := -20
 else if ScaledForcM > -20 and ScaledForcM < 20
-    CappedForcM             := CappedForcM
+    CappedForcM             := ScaledForcM
 else if ScaledForcM >= 20
     CappedForcM             := 20 
 
