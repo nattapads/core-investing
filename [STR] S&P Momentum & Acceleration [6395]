@@ -17,6 +17,7 @@ SlowLength                  = input.int(64,         step = 1, title = "Slow Leng
 FastScalar                  = input.float(4.10,     step = 0.01, title = "Fast Forecast Scalar", group = "Momentum Settings")
 MediumScalar                = input.float(2.79,     step = 0.01, title = "Medium Forecast Scalar", group = "Momentum Settings")
 SlowScalar                  = input.float(1.91,     step = 0.01, title = "Slow Forecast Scalar", group = "Momentum Settings")
+Mfdm                        = input.float(1.08,     step = 0.01, title = "Momentum Forecast Diversification Multiplier", group = "Momentum Settings")
 zerolag                     = input(false,          title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
 showtrend                   = input(true,           title ="Show Momentum Line", group = "Momentum Settings")
 
@@ -26,6 +27,7 @@ showtrend                   = input(true,           title ="Show Momentum Line",
 FastAccScalar               = input.float(1.90,     step = 0.01, title = "Fast Forecast Acceleration Scalar", group = "Acceleration Settings")
 MediumAccScalar             = input.float(1.98,     step = 0.01, title = "Medium Forecast Acceleration Scalar", group = "Acceleration Settings")
 SlowAccScalar               = input.float(2.05,     step = 0.01, title = "Slow Forecast Acceleration Scalar", group = "Acceleration Settings")
+Afdm                        = input.float(1.37,     step = 0.01, title = "Acceleration Forecast Diversification Multiplier", group = "Acceleration Settings")
 AccProp                     = input.float(0.3,      maxval = 0.9, step = 0.1, title = "Acceleration Proportion (%)", group = "Acceleration Settings")
 
 //-----------------------------------------------------------------------------}
@@ -205,7 +207,7 @@ else if ComCappedForcAcc >= 20
 //-----------------------------------------------------------------------------}
 //Notional Exposure & Risk-Adjusted Position
 //-----------------------------------------------------------------------------{
-TrandRiskFactor             = MarginCal ? (CappedForc * (1 - AccProp) / 10) + (CappedForcAcc * AccProp / 10) : (CappedForc * (1 - AccProp) / 20) + (CappedForcAcc * AccProp / 20)
+TrandRiskFactor             = MarginCal ? (CappedForc * (1 - AccProp) * Mfdm / 10) + (CappedForcAcc * AccProp * Afdm / 10) : (CappedForc * (1 - AccProp) * Mfdm / 20) + (CappedForcAcc * AccProp * Afdm / 20)
 
 OptimalSizing               = FixIniFund ? (TrandRiskFactor * IniFund * TargetRisk) / (InstRisk * close) : (TrandRiskFactor * strategy.equity * TargetRisk) / (InstRisk * close)
 RawOptimalPosition          = math.round(OptimalSizing, 0)
