@@ -25,22 +25,24 @@ showtrend                   = input(false,          title ="Show Momentum Line",
 //------------------------------------------------------------------------------
 //Mean Reversion Settings
 //-----------------------------------------------------------------------------{
-EarlyEntry                  = input(true,           title = "Early Entry (US Stock or Index Only)", group="Mean Reversion Settings")
+EarlyEntry                  = input(true,           title = "Early Entry (US Stock or Index Only)", group = "Mean Reversion Settings")
 
 //-----------------------------------------------------------------------------}
 //Carry Settings
 //-----------------------------------------------------------------------------{
-CarryProp                   = input.float(0.5,      maxval = 0.99, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
-ExpectedDiv                 = input.float(0.03,     maxval = 0.99, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
+CarryProp                   = input.float(0.5,      maxval = 0.99, step = 0.1, title = "Carry Proportion (%)", group = "Carry Settings", tooltip = "Higher proportion causes higher percent risk")
+ExpectedDiv                 = input.float(0.03,     maxval = 0.99, step = 0.001, title = "Expected Annualised Return % (%)", group = "Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
 
 //-----------------------------------------------------------------------------}
 //Risk Settings
 //-----------------------------------------------------------------------------{
-StdLength                   = input.int(25,         title = "Standard Deviation Length", group="Risk Settings")
+SMStdLength                 = input.int(22,         title = "Simple SD Length", group="Risk Settings")
+EWStdLength                 = input.int(32,         title = "Exponential SD Length", group="Risk Settings")
 TargetRisk                  = input.float(0.16,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings", tooltip = "16% is recommended for trading no maore than 3 instruments")
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Change Sensitivity (%)", group="Risk Settings", tooltip = "Higher sensitivity causes less frequent trades, and lower trading costs")
 SmoothOptLength             = input.int(5,          title = "Modified Optimal Position Length", group="Risk Settings")
 SmoothOpt                   = input(false,          title="Modified Optimal Position", group="Risk Settings")
+EWStdDv                     = input(false,          title="Exponentially Weighted SD", group="Risk Settings")
 MarginCal                   = input(false,          title="Margin Account", group="Risk Settings")
 
 //------------------------------------------------------------------------------
@@ -131,11 +133,12 @@ var float CappedForcS       = na
 //Instrument Risk Calculation
 //-----------------------------------------------------------------------------{
 PercentChange               = array.new_float(0)
-AdjustedLength              = StdLength - 1
+AdjustedLength              = EWStdDv ? EWStdLength - 1 : SMStdLength - 1
+ReturnChange                = EWStdDv ? ta.ema(close, EWStdLength) : close
 
 // Loop through the last price change and add them to the array
 for i = 0 to AdjustedLength
-    array.push(PercentChange, ((close[i]-close[i+1])/close[i+1]))
+    array.push(PercentChange, ((ReturnChange[i] - ReturnChange[i+1]) / ReturnChange[i+1]))
 
 // Calculate the standard deviation of the percent change
 DailyPercentVol             = math.round(array.stdev(PercentChange, false), 6)
