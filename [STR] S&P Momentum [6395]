@@ -172,19 +172,20 @@ StrongBearish               = Trenddiff[0] < Trenddiff[1] and Trenddiff < 0
 Bullish                     = Trenddiff[0] < Trenddiff[1] and Trenddiff >= 0
 Bearish                     = Trenddiff[0] > Trenddiff[1] and Trenddiff < 0
 
+//-----------------------------------------------------------------------------{
 //Position Adjustment Signal & Sizing
 //-----------------------------------------------------------------------------{
 BuyQty                      = math.abs(math.round(LowerBuffer - CurrentSize, 0))
 AdjBuyQty                   = math.abs(math.round(CurrentSize - UpperBuffer, 0))
 
 Buy                         = MarginCal ? OptimalPosition > 0 and OptimalPosition > CurrentSize and CurrentSize < LowerBuffer and BuyQty >= 1 : OptimalPosition > 0 and OptimalPosition > CurrentSize and CurrentSize < LowerBuffer and BuyQty >= 1 and strategy.equity > (OptimalPosition * close)
-AdjustBuy                   = MarginCal ? CurrentSize > 0 and CurrentSize > UpperBuffer and AdjBuyQty >= 1 : CurrentSize > 0 and CurrentSize > UpperBuffer and AdjBuyQty >= 1 and strategy.equity > (OptimalPosition * close)
+AdjustBuy                   = CurrentSize > 0 and CurrentSize > UpperBuffer and AdjBuyQty >= 1
 
 SellQty                     = math.abs(math.round(UpperBuffer - CurrentSize, 0))
 AdjSellQty                  = math.abs(math.round(CurrentSize - LowerBuffer, 0))
 
 Sell                        = MarginCal ? OptimalPosition < 0 and OptimalPosition < CurrentSize and CurrentSize > UpperBuffer and SellQty >= 1 : OptimalPosition < 0 and OptimalPosition < CurrentSize and CurrentSize > UpperBuffer and SellQty >= 1 and strategy.equity > math.abs(OptimalPosition * close)
-AdjustSell                  = MarginCal ? CurrentSize < 0 and CurrentSize < LowerBuffer and AdjSellQty >= 1 : CurrentSize < 0 and CurrentSize < LowerBuffer and AdjSellQty >= 1 and strategy.equity > math.abs(OptimalPosition * close)
+AdjustSell                  = CurrentSize < 0 and CurrentSize < LowerBuffer and AdjSellQty >= 1
 
 //-----------------------------------------------------------------------------}
 //Strategy
@@ -241,6 +242,7 @@ plotshape(AdjustBuy,        title = "Adjust Buy",   text = "✘", textcolor = co
 
 plotshape(Sell,             title = "Sell",          text = "▼", textcolor = color.white, style = shape.labeldown, location = location.abovebar, color = color.rgb(242, 54, 69), size = size.tiny)
 plotshape(AdjustSell,       title = "Adjust Sell",   text = "✘", textcolor = color.white, style = shape.labelup, location = location.belowbar, color = color.rgb(8, 153, 129), size = size.tiny)
+
 //-----------------------------------------------------------------------------}
 //Bar & Trend Line Colours
 //-----------------------------------------------------------------------------{
