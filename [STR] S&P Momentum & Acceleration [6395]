@@ -5,7 +5,7 @@ strategy("[STR] S&P Momentum & Acceleration [6395]", overlay = true, margin_long
 //------------------------------------------------------------------------------
 //Settings
 //-----------------------------------------------------------------------------{
-start_time      = input.time(timestamp("Jan 01 1950 00:00:00"), title="Start Time")
+start_time      = input.time(timestamp("Jan 01 1920 00:00:00"), title="Start Time")
 in_time_window  = time >= start_time
 
 //-----------------------------------------------------------------------------}
@@ -24,9 +24,9 @@ showtrend                   = input(true,           title ="Show Momentum Line",
 //-----------------------------------------------------------------------------}
 //Acceleration Settings
 //-----------------------------------------------------------------------------{
-FastAccScalar               = input.float(1.90,     step = 0.01, title = "Fast Forecast Acceleration Scalar", group = "Acceleration Settings")
-MediumAccScalar             = input.float(1.98,     step = 0.01, title = "Medium Forecast Acceleration Scalar", group = "Acceleration Settings")
-SlowAccScalar               = input.float(2.05,     step = 0.01, title = "Slow Forecast Acceleration Scalar", group = "Acceleration Settings")
+FastAccScalar               = input.float(1.90,     step = 0.01, title = "Fast Forecast Scalar", group = "Acceleration Settings")
+MediumAccScalar             = input.float(1.98,     step = 0.01, title = "Medium Forecast Scalar", group = "Acceleration Settings")
+SlowAccScalar               = input.float(2.05,     step = 0.01, title = "Slow Forecast Scalar", group = "Acceleration Settings")
 Afdm                        = input.float(1.37,     step = 0.01, title = "Acceleration FDM", group = "Acceleration Settings")
 AccProp                     = input.float(0.3,      maxval = 0.9, step = 0.1, title = "Acceleration Proportion (%)", group = "Acceleration Settings")
 
@@ -34,11 +34,13 @@ AccProp                     = input.float(0.3,      maxval = 0.9, step = 0.1, ti
 //Risk Settings
 //-----------------------------------------------------------------------------{
 IniFund                     = input.int(100000,     minval = 100, step = 100, title = "Initial Fund", group = "Risk Settings")
-StdLength                   = input.int(25,         title = "Standard Deviation Length", group = "Risk Settings")
+SMStdLength                 = input.int(22,         title = "Simple SD Length", group="Risk Settings")
+EWStdLength                 = input.int(32,         title = "Exponential SD Length", group="Risk Settings")
 TargetRisk                  = input.float(0.20,     maxval = 1, step = 0.01, title = "Target Risk (%)", group = "Risk Settings")
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Momentum Change Limit (%)", group = "Risk Settings")
 SmoothOptLength             = input.int(5,          title = "Smooth Optimal Position Length", group = "Risk Settings")
 SmoothOpt                   = input(false,          title = "Smooth Optimal Position", group = "Risk Settings")
+EWStdDv                     = input(false,          title = "Exponentially Weighted SD", group="Risk Settings")
 FixIniFund                  = input(false,          title = "Fix Initial Fund for Optimal Calculation", group = "Risk Settings")
 MarginCal                   = input(false,          title = "Margin Account", group = "Risk Settings")
 
@@ -95,11 +97,12 @@ var float CappedForcS       = na
 //Instrument Risk Calculation
 //-----------------------------------------------------------------------------{
 PercentChange               = array.new_float(0)
-AdjustedLength              = StdLength - 1
+AdjustedLength              = EWStdDv ? EWStdLength - 1 : SMStdLength - 1
+ReturnChange                = EWStdDv ? ta.ema(close, EWStdLength) : close
 
 // Loop through the last price change and add them to the array
 for i = 0 to AdjustedLength
-    array.push(PercentChange, ((close[i]-close[i+1])/close[i+1]))
+    array.push(PercentChange, ((ReturnChange[i] - ReturnChange[i+1]) / ReturnChange[i+1]))
 
 // Calculate the standard deviation of the percent change
 DailyPercentVol             = math.round(array.stdev(PercentChange, false), 6)
