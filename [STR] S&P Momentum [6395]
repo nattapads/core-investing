@@ -26,7 +26,7 @@ showtrend                   = input(true,           title ="Show Momentum Line",
 //-----------------------------------------------------------------------------{
 IniFund                     = input.int(100000,     minval = 100, step = 100, title = "Initial Fund", group = "Risk Settings")
 StdLength                   = input.int(25,         title = "Standard Deviation Length", group = "Risk Settings")
-TargetRisk                  = input.float(0.12,     maxval = 1, step = 0.01, title = "Target Risk (%)", group = "Risk Settings")
+TargetRisk                  = input.float(0.20,     maxval = 1, step = 0.01, title = "Target Risk (%)", group = "Risk Settings")
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Momentum Change Limit (%)", group = "Risk Settings")
 SmoothOptLength             = input.int(1,          title = "Smooth Optimal Position Length", group = "Risk Settings")
 SmoothOpt                   = input(true,           title = "Smooth Optimal Position", group = "Risk Settings")
@@ -93,12 +93,13 @@ for i = 0 to AdjustedLength
     array.push(PercentChange, ((close[i]-close[i+1])/close[i+1]))
 
 // Calculate the standard deviation of the percent change
-DailyPVol                   = math.round(array.stdev(PercentChange, false), 6)
-InstRisk                    = math.round((DailyPVol * 16), 6)
+DailyPercentVol             = math.round(array.stdev(PercentChange, false), 6)
+InstRisk                    = math.round((DailyPercentVol * 16), 6)
+DailyPriceVol               = DailyPercentVol * close
 
 //Fast Momentum Forecast
 //-----------------------------------------------------------------------------{
-RiskAdjF                    = (FastEMA - FastSEMA) / DailyPVol
+RiskAdjF                    = (FastEMA - FastSEMA) / DailyPriceVol
 ScaledForcF                 = RiskAdjF * FastScalar
 
 if ScaledForcF <= -20
@@ -110,7 +111,7 @@ else if ScaledForcF >= 20
 
 //Medium Momentum Forecast
 //-----------------------------------------------------------------------------{
-RiskAdjM                    = (MediumEMA - MediumSEMA) / DailyPVol
+RiskAdjM                    = (MediumEMA - MediumSEMA) / DailyPriceVol
 ScaledForcM                 = RiskAdjM * MediumScalar
 
 if ScaledForcM <= -20
@@ -122,7 +123,7 @@ else if ScaledForcM >= 20
 
 //Slow Momentum Forecast
 //-----------------------------------------------------------------------------{
-RiskAdjS                    = (SlowEMA - SlowSEMA) / DailyPVol
+RiskAdjS                    = (SlowEMA - SlowSEMA) / DailyPriceVol
 ScaledForcS                 = RiskAdjS * SlowScalar
 
 if ScaledForcS <= -20
