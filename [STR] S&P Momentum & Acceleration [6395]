@@ -17,7 +17,6 @@ SlowLength                  = input.int(64,         step = 1, title = "Slow Leng
 FastScalar                  = input.float(4.10,     step = 0.01, title = "Fast Forecast Scalar", group = "Momentum Settings")
 MediumScalar                = input.float(2.79,     step = 0.01, title = "Medium Forecast Scalar", group = "Momentum Settings")
 SlowScalar                  = input.float(1.91,     step = 0.01, title = "Slow Forecast Scalar", group = "Momentum Settings")
-Mfdm                        = input.float(1.27,     step = 0.01, title = "Momentum FDM", group = "Momentum Settings")
 zerolag                     = input(false,          title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
 showtrend                   = input(true,           title ="Show Momentum Line", group = "Momentum Settings")
 
@@ -27,7 +26,6 @@ showtrend                   = input(true,           title ="Show Momentum Line",
 FastAccScalar               = input.float(1.90,     step = 0.01, title = "Fast Forecast Scalar", group = "Acceleration Settings")
 MediumAccScalar             = input.float(1.98,     step = 0.01, title = "Medium Forecast Scalar", group = "Acceleration Settings")
 SlowAccScalar               = input.float(2.05,     step = 0.01, title = "Slow Forecast Scalar", group = "Acceleration Settings")
-Afdm                        = input.float(1.27,     step = 0.01, title = "Acceleration FDM", group = "Acceleration Settings")
 AccProp                     = input.float(0.3,      maxval = 0.9, step = 0.1, title = "Acceleration Proportion (%)", group = "Acceleration Settings")
 
 //-----------------------------------------------------------------------------}
@@ -38,6 +36,7 @@ SMStdLength                 = input.int(22,         title = "Simple SD Length", 
 EWStdLength                 = input.int(32,         title = "Exponential SD Length", group="Risk Settings")
 TargetRisk                  = input.float(0.20,     maxval = 1, step = 0.01, title = "Target Risk (%)", group = "Risk Settings")
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Momentum Change Limit (%)", group = "Risk Settings")
+FDM                         = input.float(1.27,     step = 0.01, title = "Forecast Diversification Multiplier", group = "Risk Settings")
 SmoothOptLength             = input.int(5,          title = "Smooth Optimal Position Length", group = "Risk Settings")
 SmoothOpt                   = input(false,          title = "Smooth Optimal Position", group = "Risk Settings")
 EWStdDv                     = input(false,          title = "Exponentially Weighted SD", group="Risk Settings")
@@ -147,7 +146,7 @@ else if ScaledForcS >= 20
 
 //Momentum Forecast Combination
 //-----------------------------------------------------------------------------{
-ComCappedForc               = (CappedForcF + CappedForcM + CappedForcS) * Mfdm / 3
+ComCappedForc               = (CappedForcF + CappedForcM + CappedForcS) * FDM / 3
 
 if ComCappedForc <= -20
     CappedForc              := -20
@@ -202,7 +201,7 @@ else if ScaledForcSAcc >= 20
 
 //Acceleration Forecast Combination
 //-----------------------------------------------------------------------------{
-ComCappedForcAcc            = (CappedForcFAcc + CappedForcMAcc + CappedForcSAcc) * Afdm / 3
+ComCappedForcAcc            = (CappedForcFAcc + CappedForcMAcc + CappedForcSAcc) * FDM / 3
 
 if ComCappedForcAcc <= -20
     CappedForcAcc           := -20
@@ -214,9 +213,10 @@ else if ComCappedForcAcc >= 20
 //-----------------------------------------------------------------------------}
 //Notional Exposure & Risk-Adjusted Position
 //-----------------------------------------------------------------------------{
-TrandRiskFactor             = MarginCal ? (CappedForc * (1 - AccProp) / 10) + (CappedForcAcc * AccProp / 10) : (CappedForc * (1 - AccProp) / 20) + (CappedForcAcc * AccProp / 20)
+TrendProp                   = 1 - AccProp
+TrendRiskFactor             = MarginCal ? (CappedForc * TrendProp / 10) + (CappedForcAcc * AccProp / 10) : (CappedForc * TrendProp / 20) + (CappedForcAcc * AccProp / 20)
 
-OptimalSizing               = FixIniFund ? (TrandRiskFactor * IniFund * TargetRisk) / (InstRisk * close) : (TrandRiskFactor * strategy.equity * TargetRisk) / (InstRisk * close)
+OptimalSizing               = FixIniFund ? (TrendRiskFactor * IniFund * TargetRisk) / (InstRisk * close) : (TrendRiskFactor * strategy.equity * TargetRisk) / (InstRisk * close)
 RawOptimalPosition          = math.round(OptimalSizing, 0)
 
 OptimalPosition             = SmoothOpt ? ta.ema(RawOptimalPosition, SmoothOptLength) : RawOptimalPosition
