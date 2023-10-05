@@ -1,6 +1,6 @@
 //NSal
 //@version=5
-strategy("[STR] S&P Momentum [6395]", overlay = true, margin_long = 100, margin_short = 100, pyramiding = 100, initial_capital = 10000, risk_free_rate = 1, slippage = 1)
+strategy("[STR] S&P Momentum & Acceleration [6395]", overlay = true, margin_long = 100, margin_short = 100, pyramiding = 100, initial_capital = 10000, risk_free_rate = 1, slippage = 1)
 
 //------------------------------------------------------------------------------
 //Settings
@@ -20,6 +20,15 @@ SlowScalar                  = input.float(1.91,     step = 0.01, title = "Slow F
 Mfdm                        = input.float(1.08,     step = 0.01, title = "Momentum FDM", group = "Momentum Settings")
 zerolag                     = input(false,          title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
 showtrend                   = input(true,           title ="Show Momentum Line", group = "Momentum Settings")
+
+//-----------------------------------------------------------------------------}
+//Acceleration Settings
+//-----------------------------------------------------------------------------{
+FastAccScalar               = input.float(1.90,     step = 0.01, title = "Fast Forecast Acceleration Scalar", group = "Acceleration Settings")
+MediumAccScalar             = input.float(1.98,     step = 0.01, title = "Medium Forecast Acceleration Scalar", group = "Acceleration Settings")
+SlowAccScalar               = input.float(2.05,     step = 0.01, title = "Slow Forecast Acceleration Scalar", group = "Acceleration Settings")
+Afdm                        = input.float(1.37,     step = 0.01, title = "Acceleration FDM", group = "Acceleration Settings")
+AccProp                     = input.float(0.3,      maxval = 0.9, step = 0.1, title = "Acceleration Proportion (%)", group = "Acceleration Settings")
 
 //-----------------------------------------------------------------------------}
 //Risk Settings
@@ -145,9 +154,64 @@ else if ComCappedForc >= 20
     CappedForc              := 20 
 
 //-----------------------------------------------------------------------------}
+//Acceleration Forcast Calculation
+//-----------------------------------------------------------------------------{
+var float CappedForcAcc     = na
+var float CappedForcFAcc    = na
+var float CappedForcMAcc    = na
+var float CappedForcSAcc    = na
+
+//Fast Acceleration Forecast
+//-----------------------------------------------------------------------------{
+ForcFAcc                    = ScaledForcF - ScaledForcF[FastLength]
+ScaledForcFAcc              = ForcFAcc * FastAccScalar
+
+if ScaledForcFAcc <= -20
+    CappedForcFAcc          := -20
+else if ScaledForcFAcc > -20 and ScaledForcFAcc < 20
+    CappedForcFAcc          := ScaledForcFAcc
+else if ScaledForcFAcc >= 20
+    CappedForcFAcc          := 20  
+
+//Medium Acceleration Forecast
+//-----------------------------------------------------------------------------{
+ForcMAcc                    = ScaledForcM - ScaledForcM[MediumLength]
+ScaledForcMAcc              = ForcMAcc * MediumAccScalar
+
+if ScaledForcMAcc <= -20
+    CappedForcMAcc             := -20
+else if ScaledForcMAcc > -20 and ScaledForcMAcc < 20
+    CappedForcMAcc             := ScaledForcMAcc
+else if ScaledForcMAcc >= 20
+    CappedForcMAcc             := 20 
+
+//Slow Acceleration Forecast
+//-----------------------------------------------------------------------------{
+ForcSAcc                    = ScaledForcS - ScaledForcS[SlowLength]
+ScaledForcSAcc              = ForcSAcc * SlowAccScalar
+
+if ScaledForcSAcc <= -20
+    CappedForcSAcc          := -20
+else if ScaledForcSAcc > -20 and ScaledForcSAcc < 20
+    CappedForcSAcc          := ScaledForcSAcc
+else if ScaledForcSAcc >= 20
+    CappedForcSAcc          := 20 
+
+//Acceleration Forecast Combination
+//-----------------------------------------------------------------------------{
+ComCappedForcAcc            = (CappedForcFAcc + CappedForcMAcc + CappedForcSAcc) * Afdm / 3
+
+if ComCappedForcAcc <= -20
+    CappedForcAcc           := -20
+else if ComCappedForcAcc > -20 and ComCappedForcAcc < 20
+    CappedForcAcc           := ComCappedForcAcc
+else if ComCappedForcAcc >= 20
+    CappedForcAcc           := 20 
+
+//-----------------------------------------------------------------------------}
 //Notional Exposure & Risk-Adjusted Position
 //-----------------------------------------------------------------------------{
-TrandRiskFactor             = MarginCal ? (CappedForc / 10) : (CappedForc / 20)
+TrandRiskFactor             = MarginCal ? (CappedForc * (1 - AccProp) / 10) + (CappedForcAcc * AccProp / 10) : (CappedForc * (1 - AccProp) / 20) + (CappedForcAcc * AccProp / 20)
 
 OptimalSizing               = FixIniFund ? (TrandRiskFactor * IniFund * TargetRisk) / (InstRisk * close) : (TrandRiskFactor * strategy.equity * TargetRisk) / (InstRisk * close)
 RawOptimalPosition          = math.round(OptimalSizing, 0)
@@ -225,9 +289,9 @@ CurrentProportion           = (CurrentHoldingValue / strategy.equity) * 100
 //-----------------------------------------------------------------------------}
 //Summary Table
 //-----------------------------------------------------------------------------{ 
-table_data                  = table.new(position = position.top_right, columns = 1, rows = 8, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
+table_data                  = table.new(position = position.bottom_right, columns = 1, rows = 8, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
 
-table.cell(table_data, 0, 0, "MTF782", bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
+table.cell(table_data, 0, 0, "MTA782", bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
 table.cell(table_data, 0, 1, str.tostring("$" + str.tostring(math.round(net_profit, 0))), text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Net Profit")
 table.cell(table_data, 0, 2, str.tostring(str.tostring(math.round(percent_profitable * 100, 0)) + "%"), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Percent Profitable")
 table.cell(table_data, 0, 3, str.tostring("$" + str.tostring(math.round(strategy.max_drawdown, 0))), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Max Drawdown")
@@ -237,11 +301,11 @@ table.cell(table_data, 0, 5, str.tostring(str.tostring(math.round(CurrentProport
 //-----------------------------------------------------------------------------}
 //Entry & Exit Signal
 //-----------------------------------------------------------------------------{
-plotshape(Buy,              title = "Buy",          text = "▲", textcolor = color.white, style = shape.labelup, location = location.belowbar, color = color.rgb(8, 153, 129), size = size.tiny)
-plotshape(AdjustBuy,        title = "Adjust Buy",   text = "✘", textcolor = color.white, style = shape.labeldown, location = location.abovebar, color = color.rgb(242, 54, 69), size = size.tiny)
+plotshape(Buy,              title = "Buy",          text = "▲", textcolor = color.white, style = shape.labelup, location = location.belowbar, color = color.rgb(8, 153, 129, 70), size = size.tiny)
+plotshape(AdjustBuy,        title = "Adjust Buy",   text = "✘", textcolor = color.white, style = shape.labeldown, location = location.abovebar, color = color.rgb(242, 54, 69, 70), size = size.tiny)
 
-plotshape(Sell,             title = "Sell",          text = "▼", textcolor = color.white, style = shape.labeldown, location = location.abovebar, color = color.rgb(242, 54, 69), size = size.tiny)
-plotshape(AdjustSell,       title = "Adjust Sell",   text = "✘", textcolor = color.white, style = shape.labelup, location = location.belowbar, color = color.rgb(8, 153, 129), size = size.tiny)
+plotshape(Sell,             title = "Sell",         text = "▼", textcolor = color.white, style = shape.labeldown, location = location.abovebar, color = color.rgb(242, 54, 69, 70), size = size.tiny)
+plotshape(AdjustSell,       title = "Adjust Sell",  text = "✘", textcolor = color.white, style = shape.labelup, location = location.belowbar, color = color.rgb(8, 153, 129, 70), size = size.tiny)
 
 //-----------------------------------------------------------------------------}
 //Bar & Trend Line Colours
