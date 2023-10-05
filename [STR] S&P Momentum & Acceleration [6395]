@@ -179,13 +179,13 @@ BuyQty                      = math.abs(math.round(LowerBuffer - CurrentSize, 0))
 AdjBuyQty                   = math.abs(math.round(CurrentSize - UpperBuffer, 0))
 
 Buy                         = MarginCal ? OptimalPosition > 0 and OptimalPosition > CurrentSize and CurrentSize < LowerBuffer and BuyQty >= 1 : OptimalPosition > 0 and OptimalPosition > CurrentSize and CurrentSize < LowerBuffer and BuyQty >= 1 and strategy.equity > (OptimalPosition * close)
-AdjustBuy                   = MarginCal ? CurrentSize > 0 and CurrentSize > UpperBuffer and AdjBuyQty >= 1 : CurrentSize > 0 and CurrentSize > UpperBuffer and AdjBuyQty >= 1 and strategy.equity > (OptimalPosition * close)
+AdjustBuy                   = CurrentSize > 0 and CurrentSize > UpperBuffer and AdjBuyQty >= 1
 
 SellQty                     = math.abs(math.round(UpperBuffer - CurrentSize, 0))
 AdjSellQty                  = math.abs(math.round(CurrentSize - LowerBuffer, 0))
 
 Sell                        = MarginCal ? OptimalPosition < 0 and OptimalPosition < CurrentSize and CurrentSize > UpperBuffer and SellQty >= 1 : OptimalPosition < 0 and OptimalPosition < CurrentSize and CurrentSize > UpperBuffer and SellQty >= 1 and strategy.equity > math.abs(OptimalPosition * close)
-AdjustSell                  = MarginCal ? CurrentSize < 0 and CurrentSize < LowerBuffer and AdjSellQty >= 1 : CurrentSize < 0 and CurrentSize < LowerBuffer and AdjSellQty >= 1 and strategy.equity > math.abs(OptimalPosition * close)
+AdjustSell                  = CurrentSize < 0 and CurrentSize < LowerBuffer and AdjSellQty >= 1
 
 //-----------------------------------------------------------------------------}
 //Strategy
