@@ -43,34 +43,37 @@ lsmaRFS                     = ta.ema(lsmaRF, FastLength)
 eqF                         = lsmaRF - lsmaRFS
 FastEMA                     = zerolag ? lsmaRF + eqF : ta.ema(close, FastLength)
 
-lsmaRM                      = ta.ema(close, (FastLength*4))
-lsmaRMS                     = ta.ema(lsmaRM, (FastLength*4))
-eqM                         = lsmaRM - lsmaRMS
-FastSEMA                    = zerolag ? lsmaRM + eqM : ta.ema(close, (FastLength*4))
+Fast4Length                 = FastLength * 4
+lsmaRF4                     = ta.ema(close, Fast4Length)
+lsmaRF4S                    = ta.ema(lsmaRF4, Fast4Length)
+eqF4                        = lsmaRF4 - lsmaRF4S
+FastSEMA                    = zerolag ? lsmaRF4 + eqF4 : ta.ema(close, Fast4Length)
 
 //Medium Momentum
 //-----------------------------------------------------------------------------{
-lsmaR5                      = ta.ema(close, MediumLength)
-lsmaR5S                     = ta.ema(lsmaR5, MediumLength)
-eq5                         = lsmaR5 - lsmaR5S
-MediumEMA                   = zerolag ? lsmaR5 + eq5 : ta.ema(close, MediumLength)
+lsmaRM                      = ta.ema(close, MediumLength)
+lsmaRMS                     = ta.ema(lsmaRM, MediumLength)
+eqM                         = lsmaRM - lsmaRMS
+MediumEMA                   = zerolag ? lsmaRM + eqM : ta.ema(close, MediumLength)
 
-lsmaR5A                     = ta.ema(close, (MediumLength*4))
-lsmaR5SA                    = ta.ema(lsmaR5A, (MediumLength*4))
-eq5A                        = lsmaR5A - lsmaR5SA
-MediumSEMA                  = zerolag ? lsmaR5A + eq5A : ta.ema(close, (MediumLength*4))
+Medium4Length               = MediumLength * 4
+lsmaRM4                     = ta.ema(close, Medium4Length)
+lsmaRM4S                    = ta.ema(lsmaRM4, Medium4Length)
+eqM4                        = lsmaRM4 - lsmaRM4S
+MediumSEMA                  = zerolag ? lsmaRM4 + eqM4 : ta.ema(close, Medium4Length)
 
 //Slow Momentum
 //-----------------------------------------------------------------------------{
-lsmaR6                      = ta.ema(close, SlowLength)
-lsmaR6S                     = ta.ema(lsmaR6, SlowLength)
-eq6                         = lsmaR6 - lsmaR6S
-SlowEMA                     = zerolag ? lsmaR6 + eq6 : ta.ema(close, SlowLength)
+lsmaRS                      = ta.ema(close, SlowLength)
+lsmaRSS                     = ta.ema(lsmaRS, SlowLength)
+eqS                         = lsmaRS - lsmaRSS
+SlowEMA                     = zerolag ? lsmaRS + eqS : ta.ema(close, SlowLength)
 
-lsmaR6A                     = ta.ema(close, (SlowLength*4))
-lsmaR6SA                    = ta.ema(lsmaR6A, (SlowLength*4))
-eq6A                        = lsmaR6A - lsmaR6SA
-SlowSEMA                    = zerolag ? lsmaR6A + eq6A : ta.ema(close, (SlowLength*4))
+Slow4Length                 = SlowLength * 4
+lsmaRS4                     = ta.ema(close, Slow4Length)
+lsmaRS4S                    = ta.ema(lsmaRS4, Slow4Length)
+eqS4                        = lsmaRS4 - lsmaRS4S
+SlowSEMA                    = zerolag ? lsmaRS4 + eqS4 : ta.ema(close, Slow4Length)
 
 //-----------------------------------------------------------------------------}
 //Momentum Forcast Calculation
