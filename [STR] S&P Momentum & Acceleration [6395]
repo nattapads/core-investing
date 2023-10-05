@@ -1,6 +1,6 @@
 //NSal
 //@version=5
-strategy("[STR] S&P Momentum & Acceleration [6395]", overlay = true, margin_long = 100, margin_short = 100, pyramiding = 100, initial_capital = 10000, risk_free_rate = 1, slippage = 1)
+strategy("[STR] S&P Momentum & Acceleration [6395]", overlay = true, margin_long = 20, margin_short = 20, pyramiding = 100, initial_capital = 10000, risk_free_rate = 1, slippage = 1)
 
 //------------------------------------------------------------------------------
 //Settings
