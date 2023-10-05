@@ -37,8 +37,8 @@ IniFund                     = input.int(100000,     minval = 100, step = 100, ti
 StdLength                   = input.int(25,         title = "Standard Deviation Length", group = "Risk Settings")
 TargetRisk                  = input.float(0.20,     maxval = 1, step = 0.01, title = "Target Risk (%)", group = "Risk Settings")
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Momentum Change Limit (%)", group = "Risk Settings")
-SmoothOptLength             = input.int(1,          title = "Smooth Optimal Position Length", group = "Risk Settings")
-SmoothOpt                   = input(true,           title = "Smooth Optimal Position", group = "Risk Settings")
+SmoothOptLength             = input.int(5,          title = "Smooth Optimal Position Length", group = "Risk Settings")
+SmoothOpt                   = input(false,          title = "Smooth Optimal Position", group = "Risk Settings")
 FixIniFund                  = input(false,          title = "Fix Initial Fund for Optimal Calculation", group = "Risk Settings")
 MarginCal                   = input(false,          title = "Margin Account", group = "Risk Settings")
 
