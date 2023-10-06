@@ -19,7 +19,7 @@ showtrend                   = input(true,           title ="Show Momentum Line",
 //-----------------------------------------------------------------------------}
 //Breakout  Settings
 //-----------------------------------------------------------------------------{
-BrProp                      = input.float(0.2,      maxval = 0.9, step = 0.1, title = "Breakout Proportion (%)", group = "Breakout Settings")
+BrProp                      = input.float(0.1,      maxval = 0.9, step = 0.01, title = "Breakout Proportion (%)", group = "Breakout Settings")
 Bo20Scalar                  = input.float(0.67,     step = 0.01, title = "Breakout 20 Scalar", group = "Breakout Settings")
 Bo40Scalar                  = input.float(0.70,     step = 0.01, title = "Breakout 40 Scalar", group = "Breakout Settings")
 Bo80Scalar                  = input.float(0.73,     step = 0.01, title = "Breakout 80 Scalar", group = "Breakout Settings")
@@ -27,7 +27,7 @@ Bo80Scalar                  = input.float(0.73,     step = 0.01, title = "Breako
 //-----------------------------------------------------------------------------}
 //Skew  Settings
 //-----------------------------------------------------------------------------{
-SkProp                      = input.float(0.0,      maxval = 0.9, step = 0.1, title = "Skew Proportion (%)", group = "Skew Settings")
+SkProp                      = input.float(0.0,      maxval = 0.9, step = 0.01, title = "Skew Proportion (%)", group = "Skew Settings")
 Sk60Scalar                  = input.float(33.3,     step = 0.1, title = "Skew 60 Scalar", group = "Skew Settings")
 Sk120Scalar                 = input.float(37.2,     step = 0.1, title = "Skew 120 Scalar", group = "Skew Settings")
 Sk240Scalar                 = input.float(39.2,     step = 0.1, title = "Skew 240 Scalar", group = "Skew Settings")
@@ -35,7 +35,7 @@ Sk240Scalar                 = input.float(39.2,     step = 0.1, title = "Skew 24
 //-----------------------------------------------------------------------------}
 //Carry Settings
 //-----------------------------------------------------------------------------{
-CrProp                      = input.float(0.6,      maxval = 0.99, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
+CrProp                      = input.float(0.8,      maxval = 0.99, step = 0.01, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
 ExpectedDiv                 = input.float(0.03,     maxval = 0.99, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
 CarryForecScalar            = input.int(30,         step = 1, title = "Carry Scalar", group = "Carry Settings")
 
