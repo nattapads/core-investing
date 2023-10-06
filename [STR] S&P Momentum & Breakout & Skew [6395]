@@ -257,7 +257,7 @@ else if ScalSk60 >= 20
 //Skew 120
 //-----------------------------------------------------------------------------{
 Sk120raw                    = skewness(close, 120)
-Sk120Forc                   = ta.ema(Sk60raw, 30)
+Sk120Forc                   = ta.ema(Sk120raw, 30)
 ScalSk120                   = Sk120Forc * Sk120Scalar
 
 if ScalSk120 <= -20
@@ -270,7 +270,7 @@ else if ScalSk120 >= 20
 //Skew 240
 //-----------------------------------------------------------------------------{
 Sk240raw                    = skewness(close, 240)
-Sk240Forc                   = ta.ema(Sk60raw, 30)
+Sk240Forc                   = ta.ema(Sk240raw, 60)
 ScalSk240                   = Sk240Forc * Sk240Scalar
 
 if ScalSk240 <= -20
