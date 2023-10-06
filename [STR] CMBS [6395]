@@ -90,129 +90,53 @@ SlowEMA                     = ta.ema(close, SlowLength)
 SlowSEMA                    = ta.ema(close, Slow4Length)
 
 //-----------------------------------------------------------------------------}
-//Momentum Forcast Calculation
+//Momentum Forecast Calculation
 //-----------------------------------------------------------------------------{
-var float CappedForcF       = na
-var float CappedForcM       = na
-var float CappedForcS       = na
+scaleforecastMo(FastEMA, SlowEma, DailyPriceVol, ForecastScalar) =>
+    var float CappedForcMo  = na
 
-//Fast Momentum Forecast
-//-----------------------------------------------------------------------------{
-RiskAdjF                    = (FastEMA - FastSEMA) / DailyPriceVol
-ScaledForcF                 = RiskAdjF * FastScalar
+    riskAdj                 = (FastEMA - SlowEma) / DailyPriceVol
+    scaledForcMo            = riskAdj * ForecastScalar
 
-if ScaledForcF <= -20
-    CappedForcF             := -20
-else if ScaledForcF > -20 and ScaledForcF < 20
-    CappedForcF             := ScaledForcF
-else if ScaledForcF >= 20
-    CappedForcF             := 20  
+    if scaledForcMo <= -20
+        CappedForcMo             := -20
+    else if scaledForcMo > -20 and scaledForcMo < 20
+        CappedForcMo             := scaledForcMo
+    else if scaledForcMo >= 20
+        CappedForcMo             := 20 
 
-//Medium Momentum Forecast
-//-----------------------------------------------------------------------------{
-RiskAdjM                    = (MediumEMA - MediumSEMA) / DailyPriceVol
-ScaledForcM                 = RiskAdjM * MediumScalar
-
-if ScaledForcM <= -20
-    CappedForcM             := -20
-else if ScaledForcM > -20 and ScaledForcM < 20
-    CappedForcM             := ScaledForcM
-else if ScaledForcM >= 20
-    CappedForcM             := 20 
-
-//Slow Momentum Forecast
-//-----------------------------------------------------------------------------{
-RiskAdjS                    = (SlowEMA - SlowSEMA) / DailyPriceVol
-ScaledForcS                 = RiskAdjS * SlowScalar
-
-if ScaledForcS <= -20
-    CappedForcS             := -20
-else if ScaledForcS > -20 and ScaledForcS < 20
-    CappedForcS             := ScaledForcS
-else if ScaledForcS >= 20
-    CappedForcS             := 20 
-
-//Momentum Forecast Combination
-//-----------------------------------------------------------------------------{
-CappedForcMo                = (CappedForcF + CappedForcM + CappedForcS) / 3
-
-//-----------------------------------------------------------------------------}
-//Momentum Filter Calculation
-//-----------------------------------------------------------------------------{
-Trenddiff                   = SlowEMA - SlowSEMA
-StrongBullish               = Trenddiff[0] > Trenddiff[1] and Trenddiff >= 0
-StrongBearish               = Trenddiff[0] < Trenddiff[1] and Trenddiff < 0
-Bullish                     = Trenddiff[0] < Trenddiff[1] and Trenddiff >= 0
-Bearish                     = Trenddiff[0] > Trenddiff[1] and Trenddiff < 0
+CappedForcF = scaleforecastMo(FastEMA, FastSEMA, DailyPriceVol, FastScalar)
+CappedForcM = scaleforecastMo(MediumEMA, MediumSEMA, DailyPriceVol, MediumScalar)
+CappedForcS = scaleforecastMo(SlowEMA, SlowSEMA, DailyPriceVol, SlowScalar)
 
 //-----------------------------------------------------------------------------}
 //Breakout Forcast Calculation
 //-----------------------------------------------------------------------------{
-var float CappedForcBo20    = na
-var float CappedForcBo40    = na
-var float CappedForcBo80    = na
-var float CappedForcBo160   = na
-var float CappedForcBo320   = na
+scaleforecastBo(BreakLength, ForecastScalar) =>
+    var float CappedForcBo  = na
 
-//Breakout 20
-//-----------------------------------------------------------------------------{
-Max20                       = ta.highest(high, 20)
-Min20                       = ta.lowest(low, 20)
-Mean20                      = (Max20 + Min20) / 2
-Bo20Forc                    = (40 * (close - Mean20)) /  (Max20 - Min20)
-SmBo20Forc                  = ta.ema(Bo20Forc, 5)
-ScalSmBo20Forc              = SmBo20Forc * Bo20Scalar
+    max                     = ta.highest(high, BreakLength)
+    min                     = ta.lowest(low, BreakLength)
+    mean                    = (max + min) / 2
+    BoForc                  = (40 * (close - mean)) /  (max - min)
+    smoothLength            = BreakLength / 4
+    smoothForcBo            = ta.ema(BoForc, smoothLength)
+    scaledForcBo            = smoothForcBo * ForecastScalar
 
-if ScalSmBo20Forc <= -20
-    CappedForcBo20          := -20
-else if ScalSmBo20Forc > -20 and ScalSmBo20Forc < 20
-    CappedForcBo20          := ScalSmBo20Forc
-else if ScalSmBo20Forc >= 20
-    CappedForcBo20          := 20 
+    if scaledForcBo <= -20
+        CappedForcBo             := -20
+    else if scaledForcBo > -20 and scaledForcBo < 20
+        CappedForcBo             := scaledForcBo
+    else if scaledForcBo >= 20
+        CappedForcBo             := 20 
 
-//Breakout 40
-//-----------------------------------------------------------------------------{
-Max40                       = ta.highest(high, 40)
-Min40                       = ta.lowest(low, 40)
-Mean40                      = (Max40 + Min40) / 2
-Bo40Forc                    = (40 * (close - Mean40)) /  (Max40 - Min40)
-SmBo40Forc                  = ta.ema(Bo40Forc, 10)
-ScalSmBo40Forc              = SmBo40Forc * Bo40Scalar
-
-if ScalSmBo40Forc <= -20
-    CappedForcBo40          := -20
-else if ScalSmBo40Forc > -20 and ScalSmBo40Forc < 20
-    CappedForcBo40          := ScalSmBo40Forc
-else if ScalSmBo40Forc >= 20
-    CappedForcBo40          := 20 
-
-//Breakout 80
-//-----------------------------------------------------------------------------{
-Max80                       = ta.highest(high, 80)
-Min80                       = ta.lowest(low, 80)
-Mean80                      = (Max80 + Min80) / 2
-Bo80Forc                    = (40 * (close - Mean80)) /  (Max80 - Min80)
-SmBo80Forc                  = ta.ema(Bo80Forc, 20)
-ScalSmBo80Forc              = SmBo80Forc * Bo80Scalar
-
-if ScalSmBo80Forc <= -20
-    CappedForcBo80          := -20
-else if ScalSmBo80Forc > -20 and ScalSmBo80Forc < 20
-    CappedForcBo80          := ScalSmBo80Forc
-else if ScalSmBo80Forc >= 20
-    CappedForcBo80          := 20 
-
-//Breakout Forecast Combination
-//-----------------------------------------------------------------------------{
-CappedForcBo                = (CappedForcBo20 + CappedForcBo40 + CappedForcBo80) / 3
+CappedForcBo20              = scaleforecastBo(20, Bo20Scalar)
+CappedForcBo40              = scaleforecastBo(40, Bo40Scalar)
+CappedForcBo80              = scaleforecastBo(80, Bo80Scalar)
 
 //-----------------------------------------------------------------------------}
 //Skew Forcast Calculation
 //-----------------------------------------------------------------------------{
-var float CappedForcSk60    = na
-var float CappedForcSk120   = na
-var float CappedForcSk240   = na
-
 skewness(roc, length) =>
     avg = ta.sma(roc, length)
     stdv = ta.stdev(roc, length)
@@ -221,48 +145,24 @@ skewness(roc, length) =>
         sum := sum + math.pow(roc[i] - avg, 3)
     ((sum / length) / math.pow(stdv, 3))
 
-//Skew 60
-//-----------------------------------------------------------------------------{
-Sk60raw                     = skewness(close, 60)
-Sk60Forc                    = ta.ema(Sk60raw, 15)
-ScalSk60                    = Sk60Forc * Sk60Scalar
+scaleforecastSk(SkewLength, ForecastScalar) =>
+    var float CappedForcSk  = na
 
-if ScalSk60 <= -20
-    CappedForcSk60          := -20
-else if ScalSk60 > -20 and ScalSk60 < 20
-    CappedForcSk60          := ScalSk60
-else if ScalSk60 >= 20
-    CappedForcSk60          := 20 
+    raw                     = skewness(close, SkewLength)
+    smoothLength            = SkewLength / 4
+    smoothForcSk            = ta.ema(raw, smoothLength)
+    scaledForcSk            = smoothForcSk * ForecastScalar
 
-//Skew 120
-//-----------------------------------------------------------------------------{
-Sk120raw                    = skewness(close, 120)
-Sk120Forc                   = ta.ema(Sk120raw, 30)
-ScalSk120                   = Sk120Forc * Sk120Scalar
+    if scaledForcSk <= -20
+        CappedForcSk             := -20
+    else if scaledForcSk > -20 and scaledForcSk < 20
+        CappedForcSk             := scaledForcSk
+    else if scaledForcSk >= 20
+        CappedForcSk             := 20 
 
-if ScalSk120 <= -20
-    CappedForcSk120         := -20
-else if ScalSk120 > -20 and ScalSk120 < 20
-    CappedForcSk120         := ScalSk120
-else if ScalSk120 >= 20
-    CappedForcSk120         := 20 
-
-//Skew 240
-//-----------------------------------------------------------------------------{
-Sk240raw                    = skewness(close, 240)
-Sk240Forc                   = ta.ema(Sk240raw, 60)
-ScalSk240                   = Sk240Forc * Sk240Scalar
-
-if ScalSk240 <= -20
-    CappedForcSk240         := -20
-else if ScalSk240 > -20 and ScalSk240 < 20
-    CappedForcSk240         := ScalSk240
-else if ScalSk240 >= 20
-    CappedForcSk240         := 20 
-
-//Skew Forecast Combination
-//-----------------------------------------------------------------------------{
-CappedForcSk                = (ScalSk60 + ScalSk120 + ScalSk240) / 3
+CappedForcSk60              = scaleforecastSk(60, Sk60Scalar)
+CappedForcSk120             = scaleforecastSk(120, Sk120Scalar)
+CappedForcSk240             = scaleforecastSk(240, Sk240Scalar)
 
 //-----------------------------------------------------------------------------}
 //Carry Forcast Calculation
@@ -277,6 +177,12 @@ else if CarryScaledForc > -20 and CarryScaledForc < 20
     CappedForcCr            := CarryScaledForc
 else if CarryScaledForc >= 20
     CappedForcCr            := 20
+
+//All Forecast Combination
+//-----------------------------------------------------------------------------{
+CappedForcMo                = (CappedForcF + CappedForcM + CappedForcS) / 3
+CappedForcBo                = (CappedForcBo20 + CappedForcBo40 + CappedForcBo80) / 3
+CappedForcSk                = (CappedForcSk60 + CappedForcSk120 + CappedForcSk240) / 3
 
 //All Forecast Combination
 //-----------------------------------------------------------------------------{
@@ -378,6 +284,15 @@ StrongBullColor             = color.rgb(8, 153, 129)
 BullColor                   = color.rgb(8, 153, 129, 50)
 StrongBearishColor          = color.rgb(242, 54, 69)
 BearColor                   = color.rgb(242, 54, 69, 50)
+
+//-----------------------------------------------------------------------------}
+//Momentum Filter Calculation
+//-----------------------------------------------------------------------------{
+Trenddiff                   = SlowEMA - SlowSEMA
+StrongBullish               = Trenddiff[0] > Trenddiff[1] and Trenddiff >= 0
+StrongBearish               = Trenddiff[0] < Trenddiff[1] and Trenddiff < 0
+Bullish                     = Trenddiff[0] < Trenddiff[1] and Trenddiff >= 0
+Bearish                     = Trenddiff[0] > Trenddiff[1] and Trenddiff < 0
 
 //Style Adjustment
 //-----------------------------------------------------------------------------{
