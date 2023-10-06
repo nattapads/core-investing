@@ -27,7 +27,7 @@ Bo80Scalar                  = input.float(0.73,     step = 0.01, title = "Breako
 //-----------------------------------------------------------------------------}
 //Skew  Settings
 //-----------------------------------------------------------------------------{
-SkProp                      = input.float(0.3,      maxval = 0.9, step = 0.1, title = "Skew Proportion (%)", group = "Skew Settings")
+SkProp                      = input.float(0.0,      maxval = 0.9, step = 0.1, title = "Skew Proportion (%)", group = "Skew Settings")
 Sk60Scalar                  = input.float(33.3,     step = 0.1, title = "Skew 60 Scalar", group = "Skew Settings")
 Sk120Scalar                 = input.float(37.2,     step = 0.1, title = "Skew 120 Scalar", group = "Skew Settings")
 Sk240Scalar                 = input.float(39.2,     step = 0.1, title = "Skew 240 Scalar", group = "Skew Settings")
@@ -35,17 +35,17 @@ Sk240Scalar                 = input.float(39.2,     step = 0.1, title = "Skew 24
 //-----------------------------------------------------------------------------}
 //Carry Settings
 //-----------------------------------------------------------------------------{
-CrProp                      = input.float(0.3,      maxval = 0.99, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
+CrProp                      = input.float(0.6,      maxval = 0.99, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
 ExpectedDiv                 = input.float(0.03,     maxval = 0.99, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
-CarryForecScalar            = input.int(30,         step = 1, title = "Carry Forecast Scalar", group = "Carry Settings")
+CarryForecScalar            = input.int(30,         step = 1, title = "Carry Scalar", group = "Carry Settings")
 
 //-----------------------------------------------------------------------------}
 //Risk Settings
 //-----------------------------------------------------------------------------{
 SMStdLength                 = input.int(22,         title = "Simple SD Length", group="Risk Settings")
-TargetRisk                  = input.float(0.16,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings", tooltip = "16% is recommended for trading no maore than 3 instruments")
+TargetRisk                  = input.float(0.20,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings", tooltip = "16% is recommended for trading no maore than 3 instruments")
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Change Sensitivity (%)", group="Risk Settings", tooltip = "Higher sensitivity causes less frequent trades, and lower trading costs")
-FDM                         = input.float(1.35,     step = 0.01, title = "Forecast Diversification Multiplier", group = "Risk Settings")
+FDM                         = input.float(1.29,     step = 0.01, title = "Forecast Diversification Multiplier", group = "Risk Settings")
 MarginCal                   = input(false,          title = "Margin Account", group="Risk Settings")
 
 //-----------------------------------------------------------------------------{
