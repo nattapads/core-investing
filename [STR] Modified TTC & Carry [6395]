@@ -12,14 +12,9 @@ ContrarianEntry             = input(true,           title = "Contrarian Entry", 
 //-----------------------------------------------------------------------------}
 //Momentum  Settings
 //-----------------------------------------------------------------------------{
-FastLength                  = input.int(16,         step = 1, title = "Fast Length", group = "Momentum Settings")
-MediumLength                = input.int(32,         step = 1, title = "Medium Length", group = "Momentum Settings")
-SlowLength                  = input.int(64,         step = 1, title = "Slow Length", group = "Momentum Settings")
 FastScalar                  = input.float(4.10,     step = 0.01, title = "Fast Forecast Scalar", group = "Momentum Settings")
 MediumScalar                = input.float(2.79,     step = 0.01, title = "Medium Forecast Scalar", group = "Momentum Settings")
 SlowScalar                  = input.float(1.91,     step = 0.01, title = "Slow Forecast Scalar", group = "Momentum Settings")
-Mfdm                        = input.float(1.08,     step = 0.01, title = "Momentum FDM", group = "Momentum Settings")
-zerolag                     = input(true,           title = "Acceleration-Adjusted Momentum", group = "Momentum Settings")
 showtrend                   = input(false,          title = "Show Momentum Line", group = "Momentum Settings")
 
 //------------------------------------------------------------------------------
@@ -30,19 +25,17 @@ EarlyEntry                  = input(true,           title = "Early Entry (US Sto
 //-----------------------------------------------------------------------------}
 //Carry Settings
 //-----------------------------------------------------------------------------{
-CarryProp                   = input.float(0.5,      maxval = 0.99, step = 0.1, title = "Carry Proportion (%)", group = "Carry Settings", tooltip = "Higher proportion causes higher percent risk")
-ExpectedDiv                 = input.float(0.03,     maxval = 0.99, step = 0.001, title = "Expected Annualised Return % (%)", group = "Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
+CrProp                      = input.float(0.5,      maxval = 0.99, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
+ExpectedDiv                 = input.float(0.03,     maxval = 0.99, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
+CrScalar                    = input.int(30,         step = 1, title = "Carry Scalar", group = "Carry Settings")
 
 //-----------------------------------------------------------------------------}
 //Risk Settings
 //-----------------------------------------------------------------------------{
 SMStdLength                 = input.int(22,         title = "Simple SD Length", group="Risk Settings")
-EWStdLength                 = input.int(32,         title = "Exponential SD Length", group="Risk Settings")
 TargetRisk                  = input.float(0.16,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings", tooltip = "16% is recommended for trading no maore than 3 instruments")
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Change Sensitivity (%)", group="Risk Settings", tooltip = "Higher sensitivity causes less frequent trades, and lower trading costs")
-SmoothOptLength             = input.int(5,          title = "Modified Optimal Position Length", group="Risk Settings")
-SmoothOpt                   = input(false,          title = "Modified Optimal Position", group="Risk Settings")
-EWStdDv                     = input(false,          title = "Exponentially Weighted SD", group="Risk Settings")
+FDM                         = input.float(1.29,     step = 0.01, title = "Forecast Diversification Multiplier", group = "Risk Settings")
 MarginCal                   = input(false,          title = "Margin Account", group="Risk Settings")
 
 //------------------------------------------------------------------------------
@@ -80,61 +73,12 @@ E2                          = ta.barssince(sellSignal[1])
 E3                          = ta.barssince(buyExit[1])
 E4                          = ta.barssince(sellExit[1])
 
-//-----------------------------------------------------------------------------}
-//Momentum Calculation
 //-----------------------------------------------------------------------------{
-//Fast Momentum
-//-----------------------------------------------------------------------------{
-lsmaRF                      = ta.ema(close, FastLength)
-lsmaRFS                     = ta.ema(lsmaRF, FastLength)
-eqF                         = lsmaRF - lsmaRFS
-FastEMA                     = zerolag ? lsmaRF + eqF : ta.ema(close, FastLength)
-
-Fast4Length                 = FastLength * 4
-lsmaRF4                     = ta.ema(close, Fast4Length)
-lsmaRF4S                    = ta.ema(lsmaRF4, Fast4Length)
-eqF4                        = lsmaRF4 - lsmaRF4S
-FastSEMA                    = zerolag ? lsmaRF4 + eqF4 : ta.ema(close, Fast4Length)
-
-//Medium Momentum
-//-----------------------------------------------------------------------------{
-lsmaRM                      = ta.ema(close, MediumLength)
-lsmaRMS                     = ta.ema(lsmaRM, MediumLength)
-eqM                         = lsmaRM - lsmaRMS
-MediumEMA                   = zerolag ? lsmaRM + eqM : ta.ema(close, MediumLength)
-
-Medium4Length               = MediumLength * 4
-lsmaRM4                     = ta.ema(close, Medium4Length)
-lsmaRM4S                    = ta.ema(lsmaRM4, Medium4Length)
-eqM4                        = lsmaRM4 - lsmaRM4S
-MediumSEMA                  = zerolag ? lsmaRM4 + eqM4 : ta.ema(close, Medium4Length)
-
-//Slow Momentum
-//-----------------------------------------------------------------------------{
-lsmaRS                      = ta.ema(close, SlowLength)
-lsmaRSS                     = ta.ema(lsmaRS, SlowLength)
-eqS                         = lsmaRS - lsmaRSS
-SlowEMA                     = zerolag ? lsmaRS + eqS : ta.ema(close, SlowLength)
-
-Slow4Length                 = SlowLength * 4
-lsmaRS4                     = ta.ema(close, Slow4Length)
-lsmaRS4S                    = ta.ema(lsmaRS4, Slow4Length)
-eqS4                        = lsmaRS4 - lsmaRS4S
-SlowSEMA                    = zerolag ? lsmaRS4 + eqS4 : ta.ema(close, Slow4Length)
-
-//-----------------------------------------------------------------------------}
-//Momentum Forcast Calculation
-//-----------------------------------------------------------------------------{
-var float CappedForc        = na
-var float CappedForcF       = na
-var float CappedForcM       = na
-var float CappedForcS       = na
-
 //Instrument Risk Calculation
 //-----------------------------------------------------------------------------{
 PercentChange               = array.new_float(0)
-AdjustedLength              = EWStdDv ? EWStdLength - 1 : SMStdLength - 1
-ReturnChange                = EWStdDv ? ta.ema(close, EWStdLength) : close
+AdjustedLength              = SMStdLength - 1
+ReturnChange                = close
 
 // Loop through the last price change and add them to the array
 for i = 0 to AdjustedLength
@@ -145,52 +89,112 @@ DailyPercentVol             = math.round(array.stdev(PercentChange, false), 6)
 InstRisk                    = math.round((DailyPercentVol * 16), 6)
 DailyPriceVol               = DailyPercentVol * close
 
+//-----------------------------------------------------------------------------}
+//Momentum Calculation
+//-----------------------------------------------------------------------------{
+FastLength                  = 16
+MediumLength                = 32
+SlowLength                  = 64
+
+//Fast Momentum
+//-----------------------------------------------------------------------------{
+Fast4Length                 = FastLength * 4
+FastEMA                     = ta.ema(close, FastLength)
+FastSEMA                    = ta.ema(close, Fast4Length)
+
+//Medium Momentum
+//-----------------------------------------------------------------------------{
+Medium4Length               = MediumLength * 4
+MediumEMA                   = ta.ema(close, MediumLength)
+MediumSEMA                  = ta.ema(close, Medium4Length)
+
+//Slow Momentum
+//-----------------------------------------------------------------------------{
+Slow4Length                 = SlowLength * 4
+SlowEMA                     = ta.ema(close, SlowLength)
+SlowSEMA                    = ta.ema(close, Slow4Length)
+
+///-----------------------------------------------------------------------------}
+//Momentum Forcast Calculation
+//-----------------------------------------------------------------------------{
 //Fast Momentum Forecast
 //-----------------------------------------------------------------------------{
 RiskAdjF                    = (FastEMA - FastSEMA) / DailyPriceVol
 ScaledForcF                 = RiskAdjF * FastScalar
-
-if ScaledForcF <= -20
-    CappedForcF             := -20
-else if ScaledForcF > -20 and ScaledForcF < 20
-    CappedForcF             := ScaledForcF
-else if ScaledForcF >= 20
-    CappedForcF             := 20  
 
 //Medium Momentum Forecast
 //-----------------------------------------------------------------------------{
 RiskAdjM                    = (MediumEMA - MediumSEMA) / DailyPriceVol
 ScaledForcM                 = RiskAdjM * MediumScalar
 
-if ScaledForcM <= -20
-    CappedForcM             := -20
-else if ScaledForcM > -20 and ScaledForcM < 20
-    CappedForcM             := ScaledForcM
-else if ScaledForcM >= 20
-    CappedForcM             := 20 
-
 //Slow Momentum Forecast
 //-----------------------------------------------------------------------------{
 RiskAdjS                    = (SlowEMA - SlowSEMA) / DailyPriceVol
 ScaledForcS                 = RiskAdjS * SlowScalar
 
-if ScaledForcS <= -20
-    CappedForcS             := -20
-else if ScaledForcS > -20 and ScaledForcS < 20
-    CappedForcS             := ScaledForcS
-else if ScaledForcS >= 20
-    CappedForcS             := 20 
-
-//Momentum Forecast Combination
+//Capped Momentum Forecast
 //-----------------------------------------------------------------------------{
-ComCappedForc               = (CappedForcF + CappedForcM + CappedForcS) * Mfdm / 3
+capforecastMo(scaledForc) =>
+    var float CappedForcMo  = na
 
-if ComCappedForc <= -20
-    CappedForc              := -20
-else if ComCappedForc > -20 and ComCappedForc < 20
-    CappedForc              := ComCappedForc
-else if ComCappedForc >= 20
-    CappedForc              := 20 
+    if scaledForc <= -20
+        CappedForcMo        := -20
+    else if scaledForc > -20 and scaledForc < 20
+        CappedForcMo        := scaledForc
+    else if scaledForc >= 20
+        CappedForcMo        := 20
+
+CappedForcF                 = capforecastMo(ScaledForcF)
+CappedForcM                 = capforecastMo(ScaledForcF)
+CappedForcS                 = capforecastMo(ScaledForcF)
+
+//-----------------------------------------------------------------------------}
+//Carry Forcast Calculation
+//-----------------------------------------------------------------------------{
+capforecastCr(ExpectedDiv, smoothLength, InstRisk, ForecastScalar) =>
+    var float CappedForcCr  = na
+
+    CrForc                  = ExpectedDiv * ForecastScalar / InstRisk
+    scaledForcCr            = ta.ema(CrForc, smoothLength)
+
+    if scaledForcCr <= -20
+        CappedForcCr        := -20
+    else if scaledForcCr > -20 and scaledForcCr < 20
+        CappedForcCr        := scaledForcCr
+    else if scaledForcCr >= 20
+        CappedForcCr        := 20 
+
+CappedForcCr20              = capforecastCr(ExpectedDiv, 20, InstRisk, CrScalar)
+CappedForcCr60              = capforecastCr(ExpectedDiv, 60, InstRisk, CrScalar)
+CappedForcCr120             = capforecastCr(ExpectedDiv, 120, InstRisk, CrScalar)
+
+//All Forecast Combination
+//-----------------------------------------------------------------------------{
+CappedForcMo                = (CappedForcF + CappedForcM + CappedForcS) / 3
+CappedForcCr                = (CappedForcCr20 + CappedForcCr60 + CappedForcCr120) / 3
+
+//All Forecast Combination
+//-----------------------------------------------------------------------------{
+var float CappedCombForc    = na
+
+MoProp                      = 1 - CrProp 
+CombForc                    = (CappedForcMo * MoProp) + (CappedForcCr * CrProp)
+ScalCombForc                = CombForc * FDM
+
+if ScalCombForc <= -20
+    CappedCombForc          := -20
+else if ScalCombForc > -20 and ScalCombForc < 20
+    CappedCombForc          := ScalCombForc
+else if ScalCombForc >= 20
+    CappedCombForc          := 20 
+
+AdjCombForc                 = MarginCal ? CappedCombForc / 10 : CappedCombForc / 20
+
+//-----------------------------------------------------------------------------}
+//Mean Reversion Settings
+//-----------------------------------------------------------------------------{
+VolatilityRef               = input.symbol(title = "Primary Source", defval="S5TH", group = "Volatility Settings", inline = "source")
+Quantile                    = request.security(VolatilityRef, "D", close)
 
 //-----------------------------------------------------------------------------}
 //Momentum Filter Calculation
@@ -202,38 +206,13 @@ Bullish                     = Trenddiff[0] < Trenddiff[1] and Trenddiff >= 0
 Bearish                     = Trenddiff[0] > Trenddiff[1] and Trenddiff < 0
 
 //-----------------------------------------------------------------------------}
-//Carry Forcast Calculation
-//-----------------------------------------------------------------------------{
-var float CarryCappedForc   = na
-
-CarryScaling                = 30
-CarryScaledForc             = CarryScaling * ExpectedDiv / InstRisk
-
-if CarryScaledForc <= -20
-    CarryCappedForc         := -20
-else if CarryScaledForc > -20 and CarryScaledForc < 20
-    CarryCappedForc         := CarryScaledForc
-else if CarryScaledForc >= 20
-    CarryCappedForc         := 20
-
-//-----------------------------------------------------------------------------}
-//Mean Reversion Settings
-//-----------------------------------------------------------------------------{
-VolatilityRef               = input.symbol(title = "Primary Source", defval="S5TH", group = "Volatility Settings", inline = "source")
-Quantile                    = request.security(VolatilityRef, "D", close)
-
-//-----------------------------------------------------------------------------}
 //Notional Exposure & Risk-Adjusted Position
 //-----------------------------------------------------------------------------{
-TrandStraProp               = (1 - CarryProp)
-InvNotionalExposure         = strategy.equity * TargetRisk * CarryProp / InstRisk
+InvNotionalExposure         = strategy.equity * TargetRisk * CappedForcCr / InstRisk
 InvSize                     = math.round(InvNotionalExposure / close, 0)
-TrandRiskFactor             = MarginCal ? (CappedForc * TrandStraProp / 10) + (CarryCappedForc * CarryProp / 10) : (CappedForc * TrandStraProp / 20) + (CarryCappedForc * CarryProp / 10)
 
-OptimalSizing               = (TrandRiskFactor * strategy.equity * TargetRisk) / (InstRisk * close)
-RawOptimalPosition          = math.round(OptimalSizing, 0)
-
-OptimalPosition             = SmoothOpt ? ta.ema(RawOptimalPosition, SmoothOptLength) : RawOptimalPosition
+OptimalSizing               = (AdjCombForc * strategy.equity * TargetRisk) / (InstRisk * close)
+OptimalPosition             = math.round(OptimalSizing, 0)
 
 //Buffer Zone
 //-----------------------------------------------------------------------------{
@@ -256,14 +235,15 @@ RecSize                     = math.round(OptimalPosition - strategy.position_siz
 
 //Position Adjustment Signal & Sizing
 //-----------------------------------------------------------------------------{
-BufferGap                   = LowerBuffer - CurrentSize > 0
+BuyBufferGap                = LowerBuffer > CurrentSize
+
 InvQty                      = InvSize - CurrentSize
 BuyQty                      = LowerBuffer - CurrentSize
 AdjustBuyQty                = CurrentSize - LowerBuffer
 
 EarlyBuy                    = EarlyEntry ? ta.crossover(Quantile, 20) and InvSize > CurrentSize : na
 InitialBuy                  = ta.crossover(SlowEMA, SlowSEMA) and RecSize > 0
-Buy                         = ContrarianEntry ? (buyExit and O1 < O3[1] and StrongBullish and BufferGap == true) or (buyExit and O1 < O3[1] and Bullish and BufferGap == true) : (buySignal and O3 < O1[1] and StrongBullish and BufferGap == true) or (buySignal and O3 < O1[1] and Bullish and BufferGap == true)
+Buy                         = ContrarianEntry ? (buyExit and O1 < O3[1] and StrongBullish and BuyBufferGap == true) or (buyExit and O1 < O3[1] and Bullish and BuyBufferGap == true) : (buySignal and O3 < O1[1] and StrongBullish and BuyBufferGap == true) or (buySignal and O3 < O1[1] and Bullish and BuyBufferGap == true)
 AdjustBuy                   = (buyExit and O1 < O3[1] and StrongBullish and CurrentSize > UpperBuffer) or (buyExit and O1 < O3[1] and Bullish and CurrentSize > UpperBuffer) or (sellSignal and O4 < O2[1] and StrongBullish and CurrentSize > UpperBuffer) or (sellSignal and O4 < O2[1] and Bullish and CurrentSize > UpperBuffer)
 ExitBuy                     = ta.crossunder(SlowEMA, SlowSEMA)
 
@@ -279,7 +259,7 @@ else if Buy
 else if AdjustBuy
     strategy.close("B", qty = AdjustBuyQty)
 else if ExitBuy
-    strategy.close("B", qty_percent = TrandStraProp * 100)
+    strategy.close("B", qty_percent = MoProp * 100)
 
 // Calculate net profit and percentage profitable
 //-----------------------------------------------------------------------------{ 
