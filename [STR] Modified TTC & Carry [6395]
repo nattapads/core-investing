@@ -1,6 +1,6 @@
 //NSal
 //@version=5
-strategy("[STR] Modified TTC & Carry [6395]", overlay = true, margin_long = 50, margin_short = 50, pyramiding = 100, initial_capital = 10000, risk_free_rate = 1, commission_value = 0.165)
+strategy("[STR] Modified TTC & Carry [6395]", overlay = true, margin_long = 50, margin_short = 50, pyramiding = 100, initial_capital = 10000, risk_free_rate = 1, commission_value = 0.165, process_orders_on_close = true)
 
 //------------------------------------------------------------------------------
 //Settings
