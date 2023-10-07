@@ -48,7 +48,7 @@ TargetRisk                  = input.float(0.20,     maxval = 1, step = 0.01, tit
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Change Sensitivity (%)", group="Risk Settings", tooltip = "Higher sensitivity causes less frequent trades, and lower trading costs")
 FDM                         = input.float(1.34,     step = 0.01, title = "Forecast Diversification Multiplier", group = "Risk Settings")
 RiskFree                    = input.float(0.01,     step = 0.01, title = "Risk-free Rate (%)", group = "Risk Settings")
-EPStdCal                    = input(false,          title = "Use Exponential Standard Deviation", group="Risk Settings")
+EPStdCal                    = input(true,           title = "Use Exponential Standard Deviation", group="Risk Settings")
 MarginCal                   = input(false,          title = "Margin Account", group="Risk Settings")
 
 //-----------------------------------------------------------------------------{
@@ -61,16 +61,28 @@ Lamda                       = 2.0 / (EPStdLength + 1.0)
 // Loop through the last price change and add them to the array
 if EPStdCal == true
     for i = 0 to EPStdLength
-        ReturnChange            = (ReturnChange[i] - ReturnChange[i+1]) / ReturnChange[i+1]
-        LambaWeight             = math.pow((1 - Lamda), i)
+        ReturnChange        = (ReturnChange[i] - ReturnChange[i+1]) / ReturnChange[i+1]
+        LambaWeight         = math.pow((1 - Lamda), i)
         array.push(PercentChange, (ReturnChange * LambaWeight))
 else
     for i = 0 to SPStdLength
-        ReturnChange            = (ReturnChange[i] - ReturnChange[i+1]) / ReturnChange[i+1]
+        ReturnChange        = (ReturnChange[i] - ReturnChange[i+1]) / ReturnChange[i+1]
         array.push(PercentChange, ReturnChange)
 
 // Calculate the standard deviation of the percent change
-DailyPercentVol             = math.round(array.stdev(PercentChange, false), 6)
+RawDailyPercentVol          = math.round(array.stdev(PercentChange, false), 6)
+
+// Calculate 5-year (1260 Records) average of SDs (for Exponential SD only)
+Return5yr                   = array.new_float(0)
+
+if EPStdCal == true
+    for i = 0 to 1260
+        array.push(Return5yr, RawDailyPercentVol[i])
+
+DailyPercentVol5yr          = array.avg(Return5yr)
+
+// Annualising Instrument Risk
+DailyPercentVol             = EPStdCal ? ((0.3 * DailyPercentVol5yr) + (0.7 * RawDailyPercentVol)) : RawDailyPercentVol
 InstRisk                    = math.round((DailyPercentVol * 16), 6)
 DailyPriceVol               = DailyPercentVol * close
 
