@@ -257,16 +257,16 @@ else if AdjustBuy and in_time_window
 // Calculate Strategy Performance
 //-----------------------------------------------------------------------------{ 
 avgDrawdown() =>
-    winArr = array.new_float()
-    lossArr = array.new_float()
+    winArr                  = array.new_float()
+    lossArr                 = array.new_float()
     
     for i = 0 to strategy.closedtrades -1 
         
-        drawdown = strategy.closedtrades.max_drawdown(i)
-        costBasis = strategy.closedtrades.entry_price(i)
-        drawdownPerc = drawdown / (costBasis * strategy.closedtrades.size(i))
+        drawdown            = strategy.closedtrades.max_drawdown(i)
+        costBasis           = strategy.closedtrades.entry_price(i)
+        drawdownPerc        = drawdown / (costBasis * strategy.closedtrades.size(i))
         
-        isWin = strategy.closedtrades.profit(i) >= 0
+        isWin               = strategy.closedtrades.profit(i) >= 0
         
         if isWin
             array.push(winArr, drawdownPerc)
@@ -280,12 +280,12 @@ RawAvgAnnualReturn          = strategy.netprofit / (strategy.initial_capital * T
 AvgAnnualReturn             = RawAvgAnnualReturn * 100
 SharpeRatio                 = (RawAvgAnnualReturn - RiskFree) / InstRisk
 
-var float AvgWinDD = na
-var float AvgLossDD = na
-var float AvgDD = na
+var float AvgWinDD          = na
+var float AvgLossDD         = na
+var float AvgDD             = na
 
 if barstate.islast
-    [win, loss] = avgDrawdown()
+    [win, loss]             = avgDrawdown()
     AvgWinDD                := win * 100
     AvgLossDD               := loss * 100
     AvgDD                   := (AvgWinDD + AvgLossDD) / 2
@@ -308,7 +308,7 @@ else
 table_data                  = table.new(position = position.bottom_right, columns = 1, rows = 6, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
 
 if barstate.islast
-    table.cell(table_data, 0, 0, "MTT782", bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
+    table.cell(table_data, 0, 0, "MDC782", bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
     table.cell(table_data, 0, 1, str.tostring(AvgAnnualReturn, format.percent) , text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Annual Return")
     table.cell(table_data, 0, 2, str.tostring(math.round(SharpeRatio, 3)), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Sharpe Ratio")
     table.cell(table_data, 0, 3, str.tostring(AvgDD, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Drawdown")
