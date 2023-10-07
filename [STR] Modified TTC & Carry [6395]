@@ -36,6 +36,7 @@ SMStdLength                 = input.int(22,         title = "Simple SD Length", 
 TargetRisk                  = input.float(0.16,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings", tooltip = "16% is recommended for trading no maore than 3 instruments")
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Change Sensitivity (%)", group="Risk Settings", tooltip = "Higher sensitivity causes less frequent trades, and lower trading costs")
 FDM                         = input.float(1.29,     step = 0.01, title = "Forecast Diversification Multiplier", group = "Risk Settings")
+RiskFree                    = input.float(0.02,     step = 0.01, title = "Risk-free Rate", group = "Risk Settings")
 MarginCal                   = input(false,          title = "Margin Account", group="Risk Settings")
 
 //------------------------------------------------------------------------------
@@ -261,17 +262,48 @@ else if AdjustBuy
 else if ExitBuy
     strategy.close("B", qty_percent = MoProp * 100)
 
-// Calculate net profit and percentage profitable
+// Calculate Strategy Performance
 //-----------------------------------------------------------------------------{ 
-net_profit                  = strategy.netprofit
-percent_profitable          = math.round(strategy.wintrades / (strategy.wintrades + strategy.losstrades), 2)
+avgDrawdown() =>
+    winArr = array.new_float()
+    lossArr = array.new_float()
+    
+    for i = 0 to strategy.closedtrades -1 
+        
+        drawdown = strategy.closedtrades.max_drawdown(i)
+        costBasis = strategy.closedtrades.entry_price(i)
+        drawdownPerc = drawdown / (costBasis * strategy.closedtrades.size(i))
+        
+        isWin = strategy.closedtrades.profit(i) >= 0
+        
+        if isWin
+            array.push(winArr, drawdownPerc)
+        else
+            array.push(lossArr, drawdownPerc)
+
+    [array.avg(winArr), array.avg(lossArr)]
+
+TotalYears                  = bar_index / 252
+RawAvgAnnualReturn          = strategy.netprofit / (strategy.initial_capital * TotalYears)
+AvgAnnualReturn             = RawAvgAnnualReturn * 100
+SharpeRatio                 = (RawAvgAnnualReturn - RiskFree) / InstRisk
+
+var float AvgWinDD = na
+var float AvgLossDD = na
+var float AvgDD = na
+
+if barstate.islast
+    [win, loss] = avgDrawdown()
+    AvgWinDD                := win * 100
+    AvgLossDD               := loss * 100
+    AvgDD                   := (AvgWinDD + AvgLossDD) / 2
 
 //Table Styling
 //-----------------------------------------------------------------------------{ 
 bgMColour                   = color.rgb(0, 0, 0, 30)
 bgSColour                   = color.rgb(0, 0, 0, 20)
     
-if net_profit > 0
+if strategy.netprofit > 0
     bgMColour               := color.rgb(8, 153, 129)
     bgSColour               := color.rgb(8, 153, 129, 20)
 else
@@ -281,13 +313,15 @@ else
 //-----------------------------------------------------------------------------}
 //Summary Table
 //-----------------------------------------------------------------------------{ 
-table_data                  = table.new(position = position.top_right, columns = 1, rows = 5, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
+table_data                  = table.new(position = position.top_right, columns = 1, rows = 6, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
 
-table.cell(table_data, 0, 0, "MTT782", bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
-table.cell(table_data, 0, 1, str.tostring("$" + str.tostring(math.round(net_profit,0))), text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Net Profit")
-table.cell(table_data, 0, 2, str.tostring(str.tostring(math.round(percent_profitable * 100,0)) + "%"), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Percent Profitable")
-table.cell(table_data, 0, 3, str.tostring("$" + str.tostring(math.round(strategy.max_drawdown,0))), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Max Drawdown")
-table.cell(table_data, 0, 4, str.tostring(str.tostring(math.round(CurrentProportion * 100,0)) + "%"), bgcolor = color.rgb(255, 255, 255, 90), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Percent Risk")
+if barstate.islast
+    table.cell(table_data, 0, 0, "MTT782", bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
+    table.cell(table_data, 0, 1, str.tostring(strategy.netprofit, format.volume), text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Net Profit")
+    table.cell(table_data, 0, 2, str.tostring(AvgAnnualReturn, format.percent) , text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Annual Return")
+    table.cell(table_data, 0, 3, str.tostring(math.round(SharpeRatio, 3)), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Sharpe Ratio")
+    table.cell(table_data, 0, 4, str.tostring(AvgDD, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Drawdown")
+    table.cell(table_data, 0, 5, str.tostring(math.round(CurrentProportion * 100, 0), format.percent), bgcolor = color.rgb(255, 255, 255, 90), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Percent Risk")
 
 //-----------------------------------------------------------------------------}
 //Entry & Exit Signal
