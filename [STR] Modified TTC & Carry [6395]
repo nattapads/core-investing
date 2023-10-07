@@ -152,8 +152,8 @@ capforecastMo(scaledForc) =>
         CappedForcMo        := 20
 
 CappedForcF                 = capforecastMo(ScaledForcF)
-CappedForcM                 = capforecastMo(ScaledForcF)
-CappedForcS                 = capforecastMo(ScaledForcF)
+CappedForcM                 = capforecastMo(ScaledForcM)
+CappedForcS                 = capforecastMo(ScaledForcS)
 
 //-----------------------------------------------------------------------------}
 //Carry Forcast Calculation
