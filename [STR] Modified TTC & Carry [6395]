@@ -57,16 +57,28 @@ Lamda                       = 2.0 / (EPStdLength + 1.0)
 // Loop through the last price change and add them to the array
 if EPStdCal == true
     for i = 0 to EPStdLength
-        ReturnChange            = (ReturnChange[i] - ReturnChange[i+1]) / ReturnChange[i+1]
-        LambaWeight             = math.pow((1 - Lamda), i)
+        ReturnChange        = (ReturnChange[i] - ReturnChange[i+1]) / ReturnChange[i+1]
+        LambaWeight         = math.pow((1 - Lamda), i)
         array.push(PercentChange, (ReturnChange * LambaWeight))
 else
     for i = 0 to SPStdLength
-        ReturnChange            = (ReturnChange[i] - ReturnChange[i+1]) / ReturnChange[i+1]
+        ReturnChange        = (ReturnChange[i] - ReturnChange[i+1]) / ReturnChange[i+1]
         array.push(PercentChange, ReturnChange)
 
 // Calculate the standard deviation of the percent change
-DailyPercentVol             = math.round(array.stdev(PercentChange, false), 6)
+RawDailyPercentVol          = math.round(array.stdev(PercentChange, false), 6)
+
+// Calculate 5-year (1260 Records) average of SDs (for Exponential SD only)
+Return5yr                   = array.new_float(0)
+
+if EPStdCal == true
+    for i = 0 to 1260
+        array.push(Return5yr, RawDailyPercentVol[i])
+
+DailyPercentVol5yr          = array.avg(Return5yr)
+
+// Annualising Instrument Risk
+DailyPercentVol             = EPStdCal ? ((0.3 * DailyPercentVol5yr) + (0.7 * RawDailyPercentVol)) : RawDailyPercentVol
 InstRisk                    = math.round((DailyPercentVol * 16), 6)
 DailyPriceVol               = DailyPercentVol * close
 
