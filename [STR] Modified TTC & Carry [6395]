@@ -311,7 +311,7 @@ else
     bgSColour               := color.rgb(242, 54, 69, 20)
     
 //-----------------------------------------------------------------------------}
-//Summary Table
+//Performance Table
 //-----------------------------------------------------------------------------{ 
 table_data                  = table.new(position = position.top_right, columns = 1, rows = 6, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
 
