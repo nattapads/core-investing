@@ -14,8 +14,8 @@ in_time_window              = time >= start_time
 FastScalar                  = input.float(4.10,     step = 0.01, title = "EMA 16 Scalar", group = "Momentum Settings")
 MediumScalar                = input.float(2.79,     step = 0.01, title = "EMA 32 Scalar", group = "Momentum Settings")
 SlowScalar                  = input.float(1.91,     step = 0.01, title = "EMA 64 Scalar", group = "Momentum Settings")
-zerolag                     = input(false,          title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
-showtrend                   = input(true,           title ="Show Momentum Line", group = "Momentum Settings")
+zerolag                     = input(true,           title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
+showtrend                   = input(false,          title ="Show Momentum Line", group = "Momentum Settings")
 
 //-----------------------------------------------------------------------------}
 //Acceleration Settings
@@ -168,6 +168,8 @@ CappedForcF                 = capforecastMo(ScaledForcF)
 CappedForcM                 = capforecastMo(ScaledForcM)
 CappedForcS                 = capforecastMo(ScaledForcS)
 
+CappedForcMoAr              = array.from(CappedForcF, CappedForcM, CappedForcS)
+
 //-----------------------------------------------------------------------------}
 //Acceleration Forcast Calculation
 //-----------------------------------------------------------------------------{
@@ -184,9 +186,11 @@ capforecastAc(FastEMA, scaledForc, ForecastScalarAc) =>
     else if scaledForcAc >= 20
         CappedForcAc        := 20
 
-CappedForcFAcc              = capforecastAc(FastLength, ScaledForcF, AcFastScalar)
-CappedForcMAcc              = capforecastAc(MediumLength, ScaledForcM, AcMediumScalar)
-CappedForcSAcc              = capforecastAc(SlowLength, ScaledForcS, AcSlowScalar)
+CappedForcFAc               = capforecastAc(FastLength, ScaledForcF, AcFastScalar)
+CappedForcMAc               = capforecastAc(MediumLength, ScaledForcM, AcMediumScalar)
+CappedForcSAc               = capforecastAc(SlowLength, ScaledForcS, AcSlowScalar)
+
+CappedForcAcAr              = array.from(CappedForcFAc, CappedForcMAc, CappedForcSAc)
 
 //-----------------------------------------------------------------------------}
 //Breakout Forcast Calculation
@@ -213,6 +217,8 @@ CappedForcBo20              = capforecastBo(20, Bo20Scalar)
 CappedForcBo40              = capforecastBo(40, Bo40Scalar)
 CappedForcBo80              = capforecastBo(80, Bo80Scalar)
 
+CappedForcBoAr              = array.from(CappedForcBo20, CappedForcBo40, CappedForcBo80)
+
 //-----------------------------------------------------------------------------}
 //Carry Forcast Calculation
 //-----------------------------------------------------------------------------{
@@ -233,12 +239,14 @@ CappedForcCr20              = capforecastCr(ExpectedDiv, 20, InstRisk, CrScalar)
 CappedForcCr60              = capforecastCr(ExpectedDiv, 60, InstRisk, CrScalar)
 CappedForcCr120             = capforecastCr(ExpectedDiv, 120, InstRisk, CrScalar)
 
+CappedForcCrAr              = array.from(CappedForcCr20, CappedForcCr60, CappedForcCr120)
+
 //All Forecast Combination
 //-----------------------------------------------------------------------------{
-CappedForcMo                = (CappedForcF + CappedForcM + CappedForcS) / 3
-CappedForcAc                = (CappedForcFAcc + CappedForcMAcc + CappedForcSAcc) / 3
-CappedForcBo                = (CappedForcBo20 + CappedForcBo40 + CappedForcBo80) / 3
-CappedForcCr                = (CappedForcCr20 + CappedForcCr60 + CappedForcCr120) / 3
+CappedForcMo                = array.avg(CappedForcMoAr)
+CappedForcAc                = array.avg(CappedForcAcAr)
+CappedForcBo                = array.avg(CappedForcBoAr)
+CappedForcCr                = array.avg(CappedForcCrAr)
 
 //All Forecast Combination
 //-----------------------------------------------------------------------------{
