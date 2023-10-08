@@ -14,6 +14,7 @@ in_time_window              = time >= start_time
 FastScalar                  = input.float(4.10,     step = 0.01, title = "EMA 16 Scalar", group = "Momentum Settings")
 MediumScalar                = input.float(2.79,     step = 0.01, title = "EMA 32 Scalar", group = "Momentum Settings")
 SlowScalar                  = input.float(1.91,     step = 0.01, title = "EMA 64 Scalar", group = "Momentum Settings")
+zerolag                     = input(true,           title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
 showtrend                   = input(true,           title ="Show Momentum Line", group = "Momentum Settings")
 
 //-----------------------------------------------------------------------------}
@@ -95,23 +96,45 @@ FastLength                  = 16
 MediumLength                = 32
 SlowLength                  = 64
 
+Fast4Length                 = FastLength * 4
+Medium4Length               = MediumLength * 4
+Slow4Length                 = SlowLength * 4
+
 //Fast Momentum
 //-----------------------------------------------------------------------------{
-Fast4Length                 = FastLength * 4
-FastEMA                     = ta.ema(close, FastLength)
-FastSEMA                    = ta.ema(close, Fast4Length)
+lsmaRF                      = ta.ema(close, FastLength)
+lsmaRFS                     = ta.ema(lsmaRF, FastLength)
+eqF                         = lsmaRF - lsmaRFS
+FastEMA                     = zerolag ? lsmaRF + eqF : ta.ema(close, FastLength)
+
+lsmaRF4                     = ta.ema(close, Fast4Length)
+lsmaRF4S                    = ta.ema(lsmaRF4, Fast4Length)
+eqF4                        = lsmaRF4 - lsmaRF4S
+FastSEMA                    = zerolag ? lsmaRF4 + eqF4 : ta.ema(close, Fast4Length)
 
 //Medium Momentum
 //-----------------------------------------------------------------------------{
-Medium4Length               = MediumLength * 4
-MediumEMA                   = ta.ema(close, MediumLength)
-MediumSEMA                  = ta.ema(close, Medium4Length)
+lsmaRM                      = ta.ema(close, MediumLength)
+lsmaRMS                     = ta.ema(lsmaRM, MediumLength)
+eqM                         = lsmaRM - lsmaRMS
+MediumEMA                   = zerolag ? lsmaRM + eqM : ta.ema(close, MediumLength)
+
+lsmaRM4                     = ta.ema(close, Medium4Length)
+lsmaRM4S                    = ta.ema(lsmaRM4, Medium4Length)
+eqM4                        = lsmaRM4 - lsmaRM4S
+MediumSEMA                  = zerolag ? lsmaRM4 + eqM4 : ta.ema(close, Medium4Length)
 
 //Slow Momentum
 //-----------------------------------------------------------------------------{
-Slow4Length                 = SlowLength * 4
-SlowEMA                     = ta.ema(close, SlowLength)
-SlowSEMA                    = ta.ema(close, Slow4Length)
+lsmaRS                      = ta.ema(close, SlowLength)
+lsmaRSS                     = ta.ema(lsmaRS, SlowLength)
+eqS                         = lsmaRS - lsmaRSS
+SlowEMA                     = zerolag ? lsmaRS + eqS : ta.ema(close, SlowLength)
+
+lsmaRS4                     = ta.ema(close, Slow4Length)
+lsmaRS4S                    = ta.ema(lsmaRS4, Slow4Length)
+eqS4                        = lsmaRS4 - lsmaRS4S
+SlowSEMA                    = zerolag ? lsmaRS4 + eqS4 : ta.ema(close, Slow4Length)
 
 //-----------------------------------------------------------------------------}
 //Momentum Forcast Calculation
