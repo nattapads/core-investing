@@ -84,67 +84,40 @@ DailyPriceVol               = DailyPercentVol * close
 //-----------------------------------------------------------------------------}
 //Momentum Calculation
 //-----------------------------------------------------------------------------{
+fmomentumCal(length, multiplier) =>
+    emalength               = length * multiplier
+
+    if zerolag == true
+        ema                 = ta.ema(close, emalength)
+        smoema              = ta.ema(ema, emalength)
+        eq                  = ema - smoema
+        zlema               = ema + eq
+    else
+        zlema               = ta.ema(close, emalength)
+
 FastLength                  = 16
 MediumLength                = 32
 SlowLength                  = 64
 
-Fast4Length                 = FastLength * 4
-Medium4Length               = MediumLength * 4
-Slow4Length                 = SlowLength * 4
-
-//Fast Momentum
-//-----------------------------------------------------------------------------{
-lsmaRF                      = ta.ema(close, FastLength)
-lsmaRFS                     = ta.ema(lsmaRF, FastLength)
-eqF                         = lsmaRF - lsmaRFS
-FastEMA                     = zerolag ? lsmaRF + eqF : ta.ema(close, FastLength)
-
-lsmaRF4                     = ta.ema(close, Fast4Length)
-lsmaRF4S                    = ta.ema(lsmaRF4, Fast4Length)
-eqF4                        = lsmaRF4 - lsmaRF4S
-FastSEMA                    = zerolag ? lsmaRF4 + eqF4 : ta.ema(close, Fast4Length)
-
-//Medium Momentum
-//-----------------------------------------------------------------------------{
-lsmaRM                      = ta.ema(close, MediumLength)
-lsmaRMS                     = ta.ema(lsmaRM, MediumLength)
-eqM                         = lsmaRM - lsmaRMS
-MediumEMA                   = zerolag ? lsmaRM + eqM : ta.ema(close, MediumLength)
-
-lsmaRM4                     = ta.ema(close, Medium4Length)
-lsmaRM4S                    = ta.ema(lsmaRM4, Medium4Length)
-eqM4                        = lsmaRM4 - lsmaRM4S
-MediumSEMA                  = zerolag ? lsmaRM4 + eqM4 : ta.ema(close, Medium4Length)
-
-//Slow Momentum
-//-----------------------------------------------------------------------------{
-lsmaRS                      = ta.ema(close, SlowLength)
-lsmaRSS                     = ta.ema(lsmaRS, SlowLength)
-eqS                         = lsmaRS - lsmaRSS
-SlowEMA                     = zerolag ? lsmaRS + eqS : ta.ema(close, SlowLength)
-
-lsmaRS4                     = ta.ema(close, Slow4Length)
-lsmaRS4S                    = ta.ema(lsmaRS4, Slow4Length)
-eqS4                        = lsmaRS4 - lsmaRS4S
-SlowSEMA                    = zerolag ? lsmaRS4 + eqS4 : ta.ema(close, Slow4Length)
+FastEMA                     = fmomentumCal(FastLength, 1)
+FastSEMA                    = fmomentumCal(FastLength, 4)
+MediumEMA                   = fmomentumCal(MediumLength, 1)
+MediumSEMA                  = fmomentumCal(MediumLength, 4)
+SlowEMA                     = fmomentumCal(SlowLength, 1)
+SlowSEMA                    = fmomentumCal(SlowLength, 4)
 
 //-----------------------------------------------------------------------------}
 //Momentum Forcast Calculation
 //-----------------------------------------------------------------------------{
-//Fast Momentum Forecast
+//Scale Momentum Forecast
 //-----------------------------------------------------------------------------{
-RiskAdjF                    = (FastEMA - FastSEMA) / DailyPriceVol
-ScaledForcF                 = RiskAdjF * FastScalar
+scalforecastMo(fastEMA, slowEMA, volatility, scalar) =>
+    RiskAdjusted            = (fastEMA - slowEMA) / volatility
+    ScaledForecast          = RiskAdjusted * scalar
 
-//Medium Momentum Forecast
-//-----------------------------------------------------------------------------{
-RiskAdjM                    = (MediumEMA - MediumSEMA) / DailyPriceVol
-ScaledForcM                 = RiskAdjM * MediumScalar
-
-//Slow Momentum Forecast
-//-----------------------------------------------------------------------------{
-RiskAdjS                    = (SlowEMA - SlowSEMA) / DailyPriceVol
-ScaledForcS                 = RiskAdjS * SlowScalar
+ScaledForcF                 = scalforecastMo(FastEMA, FastSEMA, DailyPriceVol, FastScalar)
+ScaledForcM                 = scalforecastMo(MediumEMA, MediumSEMA, DailyPriceVol, MediumScalar)
+ScaledForcS                 = scalforecastMo(SlowEMA, SlowSEMA, DailyPriceVol, SlowScalar)
 
 //Capped Momentum Forecast
 //-----------------------------------------------------------------------------{
