@@ -88,42 +88,35 @@ InstRisk                    = math.round((DailyPercentVol * 16), 6)
 DailyPriceVol               = DailyPercentVol * close
 
 //-----------------------------------------------------------------------------}
-//Momentum Calculation
+//Momentum Forcast Calculation
 //-----------------------------------------------------------------------------{
-fmomentumCal(length, multiplier) =>
-    emalength               = length * multiplier
-
-    if zerolag == true
-        ema                 = ta.ema(close, emalength)
-        smoema              = ta.ema(ema, emalength)
-        eq                  = ema - smoema
-        zlema               = ema + eq
-    else
-        zlema               = ta.ema(close, emalength)
-
 FastLength                  = 16
 MediumLength                = 32
 SlowLength                  = 64
 
-FastEMA                     = fmomentumCal(FastLength, 1)
-FastSEMA                    = fmomentumCal(FastLength, 4)
-MediumEMA                   = fmomentumCal(MediumLength, 1)
-MediumSEMA                  = fmomentumCal(MediumLength, 4)
-SlowEMA                     = fmomentumCal(SlowLength, 1)
-SlowSEMA                    = fmomentumCal(SlowLength, 4)
+scalforecastMo(length, volatility, scalar) =>
+    Slength                 = length * 4
 
-//-----------------------------------------------------------------------------}
-//Momentum Forcast Calculation
-//-----------------------------------------------------------------------------{
-//Scale Momentum Forecast
-//-----------------------------------------------------------------------------{
-scalforecastMo(fastEMA, slowEMA, volatility, scalar) =>
-    RiskAdjusted            = (fastEMA - slowEMA) / volatility
-    ScaledForecast          = RiskAdjusted * scalar
+    if zerolag == true
+        Fema                = ta.ema(close, length)
+        Fsmoema             = ta.ema(Fema, length)
+        Feq                 = Fema - Fsmoema
+        Fzlema              = Fema + Feq
+        Sema                = ta.ema(close, Slength)
+        Ssmoema             = ta.ema(Sema, Slength)
+        Seq                 = Sema - Ssmoema
+        Szlema              = Sema + Seq
+        RiskAdjusted        = (Fzlema - Szlema) / volatility
+        ScaledForecast      = RiskAdjusted * scalar
+    else
+        Fzlema              = ta.ema(close, length)
+        Szlema              = ta.ema(close, Slength)
+        RiskAdjusted        = (Fzlema - Szlema) / volatility
+        ScaledForecast      = RiskAdjusted * scalar
 
-ScaledForcF                 = scalforecastMo(FastEMA, FastSEMA, DailyPriceVol, FastScalar)
-ScaledForcM                 = scalforecastMo(MediumEMA, MediumSEMA, DailyPriceVol, MediumScalar)
-ScaledForcS                 = scalforecastMo(SlowEMA, SlowSEMA, DailyPriceVol, SlowScalar)
+ScaledForcF                 = scalforecastMo(FastLength, DailyPriceVol, FastScalar)
+ScaledForcM                 = scalforecastMo(MediumLength, DailyPriceVol, MediumScalar)
+ScaledForcS                 = scalforecastMo(SlowLength, DailyPriceVol, SlowScalar)
 
 //Capped Momentum Forecast
 //-----------------------------------------------------------------------------{
@@ -357,37 +350,13 @@ BearColor                   = color.rgb(242, 54, 69, 50)
 //-----------------------------------------------------------------------------}
 //Momentum Filter Calculation
 //-----------------------------------------------------------------------------{
-Trenddiff                   = SlowEMA - SlowSEMA
-StrongBullish               = Trenddiff[0] > Trenddiff[1] and Trenddiff >= 0
-StrongBearish               = Trenddiff[0] < Trenddiff[1] and Trenddiff < 0
-Bullish                     = Trenddiff[0] < Trenddiff[1] and Trenddiff >= 0
-Bearish                     = Trenddiff[0] > Trenddiff[1] and Trenddiff < 0
+StrongBullish               = AdjCombForc > 0 and AdjCombForc > AdjCombForc[1]
+StrongBearish               = AdjCombForc < 0 and AdjCombForc < AdjCombForc[1]
+Bullish                     = AdjCombForc > 0 and AdjCombForc < AdjCombForc[1]
+Bearish                     = AdjCombForc < 0 and AdjCombForc > AdjCombForc[1]
 
-//Style Adjustment
+//Bar Colour
 //-----------------------------------------------------------------------------{
-var col                     = color.rgb(120, 123, 134, 100)
-var fillG                   = color.rgb(120, 123, 134, 100)
-
-if Trenddiff[0] > Trenddiff[1] and Trenddiff >= 0 and showtrend == true
-    col                     := BullColor
-    fillG                   := color.rgb(8, 153, 129, 85)
-else if Trenddiff[0] < Trenddiff[1] and Trenddiff >= 0 and showtrend == true
-    col                     := BullColor
-    fillG                   := color.rgb(8, 153, 129, 95)
-else if Trenddiff[0] < Trenddiff[1] and Trenddiff < 0 and showtrend == true
-    col                     := BearColor
-    fillG                   := color.rgb(242, 54, 70, 85)
-else if Trenddiff[0] > Trenddiff[1] and Trenddiff < 0 and showtrend == true
-    col                     := BearColor
-    fillG                   := color.rgb(242, 54, 70, 95)
-else
-    col                     := color.rgb(120, 123, 134, 100)
-    fillG                   := color.rgb(120, 123, 134, 100)
-
-plotFastMA                  = plot(SlowEMA,     "Fast Momentum", color=col, linewidth=1) 
-plotSlowMA                  = plot(SlowSEMA,    "Slow Momentum", color=col, linewidth=1)
-
-fill(plotFastMA, plotSlowMA, color = fillG, title = "Momentum Color", fillgaps = true) 
 barcolor(StrongBullish ? StrongBullColor : StrongBearish ? StrongBearishColor : Bullish ? BullColor : Bearish ? BearColor : NeutralColor)
 
 //-----------------------------------------------------------------------------}
