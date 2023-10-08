@@ -199,6 +199,8 @@ CappedForcF                 = capforecastMo(ScaledForcF)
 CappedForcM                 = capforecastMo(ScaledForcM)
 CappedForcS                 = capforecastMo(ScaledForcS)
 
+CappedForcMoAr              = array.from(CappedForcF, CappedForcM, CappedForcS)
+
 //-----------------------------------------------------------------------------}
 //Carry Forcast Calculation
 //-----------------------------------------------------------------------------{
@@ -219,10 +221,12 @@ CappedForcCr20              = capforecastCr(ExpectedDiv, 20, InstRisk, CrScalar)
 CappedForcCr60              = capforecastCr(ExpectedDiv, 60, InstRisk, CrScalar)
 CappedForcCr120             = capforecastCr(ExpectedDiv, 120, InstRisk, CrScalar)
 
+CappedForcCrAr              = array.from(CappedForcCr20, CappedForcCr60, CappedForcCr120)
+
 //All Forecast Combination
 //-----------------------------------------------------------------------------{
-CappedForcMo                = (CappedForcF + CappedForcM + CappedForcS) / 3
-CappedForcCr                = (CappedForcCr20 + CappedForcCr60 + CappedForcCr120) / 3
+CappedForcMo                = array.avg(CappedForcMoAr)
+CappedForcCr                = array.avg(CappedForcCrAr)
 
 //All Forecast Combination
 //-----------------------------------------------------------------------------{
