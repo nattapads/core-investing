@@ -79,7 +79,7 @@ RawDailyPercentVol          = math.round(array.stdev(PercentChange, false), 6)
 Return5yr                   = array.new_float(0)
 
 if EPStdCal == true
-    for i = 0 to 1260
+    for i = 0 to 1280
         array.push(Return5yr, RawDailyPercentVol[i])
 
 DailyPercentVol5yr          = array.avg(Return5yr)
@@ -170,6 +170,8 @@ CappedForcF                 = capforecastMo(ScaledForcF)
 CappedForcM                 = capforecastMo(ScaledForcM)
 CappedForcS                 = capforecastMo(ScaledForcS)
 
+CappedForcMoAr              = array.from(CappedForcF, CappedForcM, CappedForcS)
+
 //-----------------------------------------------------------------------------}
 //Acceleration Forcast Calculation
 //-----------------------------------------------------------------------------{
@@ -186,9 +188,11 @@ capforecastAc(FastEMA, scaledForc, ForecastScalarAc) =>
     else if scaledForcAc >= 20
         CappedForcAc        := 20
 
-CappedForcFAcc              = capforecastAc(FastLength, ScaledForcF, AcFastScalar)
-CappedForcMAcc              = capforecastAc(MediumLength, ScaledForcM, AcMediumScalar)
-CappedForcSAcc              = capforecastAc(SlowLength, ScaledForcS, AcSlowScalar)
+CappedForcFAc               = capforecastAc(FastLength, ScaledForcF, AcFastScalar)
+CappedForcMAc               = capforecastAc(MediumLength, ScaledForcM, AcMediumScalar)
+CappedForcSAc               = capforecastAc(SlowLength, ScaledForcS, AcSlowScalar)
+
+CappedForcAcAr              = array.from(CappedForcFAc, CappedForcMAc, CappedForcSAc)
 
 //-----------------------------------------------------------------------------}
 //Breakout Forcast Calculation
@@ -215,6 +219,8 @@ CappedForcBo20              = capforecastBo(20, Bo20Scalar)
 CappedForcBo40              = capforecastBo(40, Bo40Scalar)
 CappedForcBo80              = capforecastBo(80, Bo80Scalar)
 
+CappedForcBoAr              = array.from(CappedForcBo20, CappedForcBo40, CappedForcBo80)
+
 //-----------------------------------------------------------------------------}
 //Carry Forcast Calculation
 //-----------------------------------------------------------------------------{
@@ -235,12 +241,14 @@ CappedForcCr20              = capforecastCr(ExpectedDiv, 20, InstRisk, CrScalar)
 CappedForcCr60              = capforecastCr(ExpectedDiv, 60, InstRisk, CrScalar)
 CappedForcCr120             = capforecastCr(ExpectedDiv, 120, InstRisk, CrScalar)
 
+CappedForcCrAr              = array.from(CappedForcCr20, CappedForcCr60, CappedForcCr120)
+
 //All Forecast Combination
 //-----------------------------------------------------------------------------{
-CappedForcMo                = (CappedForcF + CappedForcM + CappedForcS) / 3
-CappedForcAc                = (CappedForcFAcc + CappedForcMAcc + CappedForcSAcc) / 3
-CappedForcBo                = (CappedForcBo20 + CappedForcBo40 + CappedForcBo80) / 3
-CappedForcCr                = (CappedForcCr20 + CappedForcCr60 + CappedForcCr120) / 3
+CappedForcMo                = array.avg(CappedForcMoAr)
+CappedForcAc                = array.avg(CappedForcAcAr)
+CappedForcBo                = array.avg(CappedForcBoAr)
+CappedForcCr                = array.avg(CappedForcCrAr)
 
 //All Forecast Combination
 //-----------------------------------------------------------------------------{
