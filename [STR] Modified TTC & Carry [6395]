@@ -365,13 +365,12 @@ else
 //-----------------------------------------------------------------------------{ 
 table_data                  = table.new(position = position.top_right, columns = 1, rows = 6, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
 
-if barstate.islast
-    table.cell(table_data, 0, 0, "MTT782", bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
-    table.cell(table_data, 0, 1, str.tostring(AvgAnnualReturn, format.percent) , text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Annual Return")
-    table.cell(table_data, 0, 2, str.tostring(math.round(SharpeRatio, 3)), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Sharpe Ratio")
-    table.cell(table_data, 0, 3, str.tostring(AvgDD * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Drawdown")
-    table.cell(table_data, 0, 4, str.tostring(InstRisk * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 70, 70), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Standard Deviation")
-    table.cell(table_data, 0, 5, str.tostring(CurrentProportion * 100, format.percent), bgcolor = color.rgb(255, 255, 255, 90), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Percent Risk")
+table.cell(table_data, 0, 0, "MTT782", bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
+table.cell(table_data, 0, 1, str.tostring(AvgAnnualReturn, format.percent) , text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Annual Return")
+table.cell(table_data, 0, 2, str.tostring(math.round(SharpeRatio, 3)), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Sharpe Ratio")
+table.cell(table_data, 0, 3, str.tostring(AvgDD * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Drawdown")
+table.cell(table_data, 0, 4, str.tostring(InstRisk * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 70, 70), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Standard Deviation")
+table.cell(table_data, 0, 5, str.tostring(CurrentProportion * 100, format.percent), bgcolor = color.rgb(255, 255, 255, 90), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Percent Risk")
 
 //-----------------------------------------------------------------------------}
 //Entry & Exit Signal
