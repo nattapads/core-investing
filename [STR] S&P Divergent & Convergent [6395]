@@ -1,6 +1,6 @@
 //NSal
 //@version=5
-strategy("[STR] S&P Divergent & Convergent [6395]", overlay = true, margin_long = 20, margin_short = 20, pyramiding = 100, initial_capital = 100000, risk_free_rate = 1, commission_value = 0.165, process_orders_on_close = true)
+strategy("[STR] Modified Divergent & Convergent [6395]", overlay = true, margin_long = 50, margin_short = 50, pyramiding = 100, initial_capital = 10000, risk_free_rate = 1, commission_value = 0.165, process_orders_on_close = true)
 
 //------------------------------------------------------------------------------
 //Settings
@@ -15,7 +15,7 @@ FastScalar                  = input.float(4.10,     step = 0.01, title = "EMA 16
 MediumScalar                = input.float(2.79,     step = 0.01, title = "EMA 32 Scalar", group = "Momentum Settings")
 SlowScalar                  = input.float(1.91,     step = 0.01, title = "EMA 64 Scalar", group = "Momentum Settings")
 zerolag                     = input(true,           title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
-showtrend                   = input(true,           title ="Show Momentum Line", group = "Momentum Settings")
+showtrend                   = input(false,          title ="Show Momentum Line", group = "Momentum Settings")
 
 //-----------------------------------------------------------------------------}
 //Acceleration Settings
@@ -43,16 +43,14 @@ CrScalar                    = input.int(30,         step = 1, title = "Carry Sca
 //-----------------------------------------------------------------------------}
 //Risk Settings
 //-----------------------------------------------------------------------------{
-IniFund                     = input.int(100000,     minval = 100, step = 100, title = "Initial Fund", group = "Risk Settings")
 SPStdLength                 = input.int(22,         title = "Simple SD Length", group="Risk Settings")
 EPStdLength                 = input.int(32,         title = "Exponential SD Length", group="Risk Settings")
 TargetRisk                  = input.float(0.20,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings", tooltip = "20% is recommended for trading less than 3 instruments")
 DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Change Sensitivity (%)", group="Risk Settings", tooltip = "Higher sensitivity causes less frequent trades, and lower trading costs")
 FDM                         = input.float(1.38,     step = 0.01, title = "Forecast Diversification Multiplier", group = "Risk Settings")
 RiskFree                    = input.float(0.01,     step = 0.01, title = "Risk-free Rate (%)", group = "Risk Settings")
-EPStdCal                    = input(true,          title = "Use Exponential Standard Deviation", group="Risk Settings")
+EPStdCal                    = input(true,           title = "Use Exponential Standard Deviation", group="Risk Settings")
 MarginCal                   = input(false,          title = "Margin Account", group="Risk Settings")
-FixIniFund                  = input(false,          title = "Fix Initial Fund for Optimal Calculation", group = "Risk Settings")
 
 //-----------------------------------------------------------------------------{
 //Instrument Risk Calculation
@@ -270,29 +268,18 @@ AdjCombForc                 = MarginCal ? CappedCombForc / 10 : CappedCombForc /
 //-----------------------------------------------------------------------------}
 //Notional Exposure & Risk-Adjusted Position
 //-----------------------------------------------------------------------------{
-OptimalSizing               = FixIniFund ? (AdjCombForc * IniFund * TargetRisk) / (InstRisk * close) : (AdjCombForc * strategy.equity * TargetRisk) / (InstRisk * close)
+OptimalSizing               = (AdjCombForc * strategy.equity * TargetRisk) / (InstRisk * close)
 OptimalPosition             = math.round(OptimalSizing, 0)
 
 //Buffer Zone
 //-----------------------------------------------------------------------------{
-BufferWidth                 = FixIniFund ? (DeviationPer * IniFund * TargetRisk) / (InstRisk * close) : (DeviationPer * strategy.equity * TargetRisk) / (InstRisk * close)
-LowerBuffer                 = math.round(OptimalPosition - BufferWidth, 1)
-UpperBuffer                 = math.round(OptimalPosition + BufferWidth, 1)
+BufferWidth                 = (DeviationPer * strategy.equity * TargetRisk) / (InstRisk * close)
+LowerBuffer                 = math.round(OptimalPosition - BufferWidth, 0)
+UpperBuffer                 = math.round(OptimalPosition + BufferWidth, 0)
+
 CurrentSize                 = strategy.position_size
 
-RecSize                     = math.round(OptimalPosition - strategy.position_size, 1)
-
-//-----------------------------------------------------------------------------}
-//Momentum Filter Calculation
-//-----------------------------------------------------------------------------{
-Trenddiff                   = SlowEMA - SlowSEMA
-StrongBullish               = Trenddiff[0] > Trenddiff[1] and Trenddiff >= 0
-StrongBearish               = Trenddiff[0] < Trenddiff[1] and Trenddiff < 0
-Bullish                     = Trenddiff[0] < Trenddiff[1] and Trenddiff >= 0
-Bearish                     = Trenddiff[0] > Trenddiff[1] and Trenddiff < 0
-
-//-----------------------------------------------------------------------------{
-//Position Adjustment Signal & Sizing
+//Position Adjustment Signal & Position
 //-----------------------------------------------------------------------------{
 BuyQty                      = math.abs(math.round(LowerBuffer - CurrentSize, 0))
 AdjBuyQty                   = math.abs(math.round(CurrentSize - UpperBuffer, 0))
@@ -300,11 +287,16 @@ AdjBuyQty                   = math.abs(math.round(CurrentSize - UpperBuffer, 0))
 Buy                         = MarginCal ? OptimalPosition > 0 and OptimalPosition > CurrentSize and CurrentSize < LowerBuffer and BuyQty >= 1 : OptimalPosition > 0 and OptimalPosition > CurrentSize and CurrentSize < LowerBuffer and BuyQty >= 1 and strategy.equity > (OptimalPosition * close)
 AdjustBuy                   = CurrentSize > 0 and CurrentSize > UpperBuffer and AdjBuyQty >= 1
 
-SellQty                     = math.abs(math.round(UpperBuffer - CurrentSize, 0))
-AdjSellQty                  = math.abs(math.round(CurrentSize - LowerBuffer, 0))
+//Current Proportion
+//-----------------------------------------------------------------------------{
+CurrentHoldingValue         = strategy.position_size * close
+CurrentProportion           = CurrentHoldingValue / strategy.equity
 
-Sell                        = MarginCal ? OptimalPosition < 0 and OptimalPosition < CurrentSize and CurrentSize > UpperBuffer and SellQty >= 1 : OptimalPosition < 0 and OptimalPosition < CurrentSize and CurrentSize > UpperBuffer and SellQty >= 1 and strategy.equity > math.abs(OptimalPosition * close)
-AdjustSell                  = CurrentSize < 0 and CurrentSize < LowerBuffer and AdjSellQty >= 1
+RecSize                     = math.round(OptimalPosition - strategy.position_size, 0)
+if RecSize <= 0
+    RecSize                 := 0
+
+AdjustBuyQty                = LowerBuffer - CurrentSize
 
 //-----------------------------------------------------------------------------}
 //Strategy
@@ -313,11 +305,6 @@ if Buy and in_time_window
     strategy.entry("B", strategy.long, qty = BuyQty)
 else if AdjustBuy and in_time_window
     strategy.close("B", qty = AdjBuyQty)
-
-if Sell and in_time_window
-    strategy.entry("S", strategy.short, qty = SellQty)
-else if AdjustSell and in_time_window
-    strategy.close("S", qty = AdjSellQty)
 
 // Calculate Strategy Performance
 //-----------------------------------------------------------------------------{ 
@@ -366,41 +353,42 @@ if strategy.netprofit > 0
 else
     bgMColour               := color.rgb(242, 54, 69)
     bgSColour               := color.rgb(242, 54, 69, 20)
-
-//Current Proportion
-//-----------------------------------------------------------------------------{
-CurrentHoldingValue         = strategy.position_size * close
-CurrentProportion           = CurrentHoldingValue / strategy.equity
-
+    
 //-----------------------------------------------------------------------------}
-//Summary Table
+//Performance Table
 //-----------------------------------------------------------------------------{ 
-table_data                  = table.new(position = position.top_right, columns = 1, rows = 8, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
+table_data                  = table.new(position = position.bottom_right, columns = 1, rows = 6, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
 
-if barstate.islast
-    table.cell(table_data, 0, 0, "SDC782", bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
-    table.cell(table_data, 0, 1, str.tostring(AvgAnnualReturn, format.percent) , text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Annual Return")
-    table.cell(table_data, 0, 2, str.tostring(math.round(SharpeRatio, 3)), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Sharpe Ratio")
-    table.cell(table_data, 0, 3, str.tostring(AvgDD * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Drawdown")
-    table.cell(table_data, 0, 4, str.tostring(InstRisk * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 70, 70), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Standard Deviation")
-    table.cell(table_data, 0, 5, str.tostring(CurrentProportion * 100, format.percent), bgcolor = color.rgb(255, 255, 255, 90), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Percent Risk")
+table.cell(table_data, 0, 0, "MDC782", bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
+table.cell(table_data, 0, 1, str.tostring(AvgAnnualReturn, format.percent) , text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Annual Return")
+table.cell(table_data, 0, 2, str.tostring(math.round(SharpeRatio, 3)), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Sharpe Ratio")
+table.cell(table_data, 0, 3, str.tostring(AvgDD * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Drawdown")
+table.cell(table_data, 0, 4, str.tostring(InstRisk * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 70, 70), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Standard Deviation")
+table.cell(table_data, 0, 5, str.tostring(CurrentProportion * 100, format.percent), bgcolor = color.rgb(255, 255, 255, 90), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Percent Risk")
+
 //-----------------------------------------------------------------------------}
 //Entry & Exit Signal
 //-----------------------------------------------------------------------------{
-plotshape(Buy,              title = "Buy",          text = "▲", textcolor = color.white, style = shape.labelup, location = location.belowbar, color = color.rgb(8, 153, 129), size = size.tiny)
-plotshape(AdjustBuy,        title = "Adjust Buy",   text = "✘", textcolor = color.white, style = shape.labeldown, location = location.abovebar, color = color.rgb(242, 54, 69), size = size.tiny)
-
-plotshape(Sell,             title = "Sell",          text = "▼", textcolor = color.white, style = shape.labeldown, location = location.abovebar, color = color.rgb(242, 54, 69), size = size.tiny)
-plotshape(AdjustSell,       title = "Adjust Sell",   text = "✘", textcolor = color.white, style = shape.labelup, location = location.belowbar, color = color.rgb(8, 153, 129), size = size.tiny)
+plotshape(Buy,              title = "Initial Buy",  text = "▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(AdjustBuy,        title = "Adjust Sell",  text = "✘", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69, 70), size=size.tiny)
 
 //-----------------------------------------------------------------------------}
 //Bar & Trend Line Colours
 //-----------------------------------------------------------------------------{
-NeutralColor                = color.rgb(120, 123, 134, 65)
+NeutralColor                = #56328f
 StrongBullColor             = color.rgb(8, 153, 129)
 BullColor                   = color.rgb(8, 153, 129, 50)
 StrongBearishColor          = color.rgb(242, 54, 69)
 BearColor                   = color.rgb(242, 54, 69, 50)
+
+//-----------------------------------------------------------------------------}
+//Momentum Filter Calculation
+//-----------------------------------------------------------------------------{
+Trenddiff                   = SlowEMA - SlowSEMA
+StrongBullish               = Trenddiff[0] > Trenddiff[1] and Trenddiff >= 0
+StrongBearish               = Trenddiff[0] < Trenddiff[1] and Trenddiff < 0
+Bullish                     = Trenddiff[0] < Trenddiff[1] and Trenddiff >= 0
+Bearish                     = Trenddiff[0] > Trenddiff[1] and Trenddiff < 0
 
 //Style Adjustment
 //-----------------------------------------------------------------------------{
@@ -409,16 +397,16 @@ var fillG                   = color.rgb(120, 123, 134, 100)
 
 if Trenddiff[0] > Trenddiff[1] and Trenddiff >= 0 and showtrend == true
     col                     := BullColor
-    fillG                   := color.rgb(8, 153, 129, 92)
+    fillG                   := color.rgb(8, 153, 129, 85)
 else if Trenddiff[0] < Trenddiff[1] and Trenddiff >= 0 and showtrend == true
     col                     := BullColor
-    fillG                   := color.rgb(8, 153, 129, 96)
+    fillG                   := color.rgb(8, 153, 129, 95)
 else if Trenddiff[0] < Trenddiff[1] and Trenddiff < 0 and showtrend == true
     col                     := BearColor
-    fillG                   := color.rgb(242, 54, 70, 92)
+    fillG                   := color.rgb(242, 54, 70, 85)
 else if Trenddiff[0] > Trenddiff[1] and Trenddiff < 0 and showtrend == true
     col                     := BearColor
-    fillG                   := color.rgb(242, 54, 70, 96)
+    fillG                   := color.rgb(242, 54, 70, 95)
 else
     col                     := color.rgb(120, 123, 134, 100)
     fillG                   := color.rgb(120, 123, 134, 100)
@@ -432,7 +420,5 @@ barcolor(StrongBullish ? StrongBullColor : StrongBearish ? StrongBearishColor : 
 //-----------------------------------------------------------------------------}
 //Alert
 //-----------------------------------------------------------------------------{
-if Buy
-    alert("Buy Position Adjusted", alert.freq_once_per_bar_close)
-else if AdjustBuy
-    alert("Exit Buy", alert.freq_once_per_bar_close)
+if Buy or AdjustBuy
+    alert("Position Adjusted", alert.freq_once_per_bar_close)
