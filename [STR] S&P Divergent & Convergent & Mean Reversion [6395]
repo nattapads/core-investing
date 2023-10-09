@@ -67,7 +67,7 @@ else
 // Calculate the standard deviation of the percent change
 RawDailyPercentVol          = math.round(array.stdev(PercentChange, false), 6)
 
-// Calculate 5-year (1280 Records) average of SDs (for Exponential SD only)
+// Calculate 8-year (2000 Records) average of SDs (for Exponential SD only)
 Return5yr                   = array.new_float(0)
 
 if EPStdCal == true
