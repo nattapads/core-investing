@@ -68,16 +68,16 @@ else
 RawDailyPercentVol          = math.round(array.stdev(PercentChange, false), 6)
 
 // Calculate 8-year (2000 Records) average of SDs (for Exponential SD only)
-Return5yr                   = array.new_float(0)
+Return8yr                   = array.new_float(0)
 
 if EPStdCal == true
     for i = 0 to 2000
-        array.push(Return5yr, RawDailyPercentVol[i])
+        array.push(Return8yr, RawDailyPercentVol[i])
 
-DailyPercentVol5yr          = array.avg(Return5yr)
+DailyPercentVol8yr          = array.avg(Return8yr)
 
 // Annualising Instrument Risk
-DailyPercentVol             = EPStdCal ? ((0.3 * DailyPercentVol5yr) + (0.7 * RawDailyPercentVol)) : RawDailyPercentVol
+DailyPercentVol             = EPStdCal ? ((0.3 * DailyPercentVol8yr) + (0.7 * RawDailyPercentVol)) : RawDailyPercentVol
 InstRisk                    = math.round((DailyPercentVol * 16), 6)
 DailyPriceVol               = DailyPercentVol * close
 
