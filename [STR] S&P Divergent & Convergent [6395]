@@ -11,7 +11,7 @@ in_time_window              = time >= start_time
 //-----------------------------------------------------------------------------}
 //Momentum  Settings
 //-----------------------------------------------------------------------------{
-MoProp                      = input.float(0.2,      maxval = 0.99, step = 0.1, title = "Momentum Proportion (%)", group="Momentum Settings")
+MoProp                      = input.float(0.2,      maxval = 1, step = 0.1, title = "Momentum Proportion (%)", group="Momentum Settings")
 FastScalar                  = input.float(4.10,     step = 0.01, title = "EMA 16 Scalar", group = "Momentum Settings")
 MediumScalar                = input.float(2.79,     step = 0.01, title = "EMA 32 Scalar", group = "Momentum Settings")
 SlowScalar                  = input.float(1.91,     step = 0.01, title = "EMA 64 Scalar", group = "Momentum Settings")
@@ -20,7 +20,7 @@ zerolag                     = input(false,          title ="Acceleration-Adjuste
 //-----------------------------------------------------------------------------}
 //Acceleration Settings
 //-----------------------------------------------------------------------------{
-AcProp                      = input.float(0.2,      maxval = 0.9, step = 0.1, title = "Acceleration Proportion (%)", group = "Acceleration Settings")
+AcProp                      = input.float(0.2,      maxval = 1, step = 0.1, title = "Acceleration Proportion (%)", group = "Acceleration Settings")
 AcFastScalar                = input.float(1.90,     step = 0.01, title = "EMA 16 Acceleration Scalar", group = "Acceleration Settings")
 AcMediumScalar              = input.float(1.98,     step = 0.01, title = "EMA 32 Acceleration Scalar", group = "Acceleration Settings")
 AcSlowScalar                = input.float(2.05,     step = 0.01, title = "EMA 64 Acceleration Scalar", group = "Acceleration Settings")
@@ -28,7 +28,7 @@ AcSlowScalar                = input.float(2.05,     step = 0.01, title = "EMA 64
 //-----------------------------------------------------------------------------}
 //Breakout  Settings
 //-----------------------------------------------------------------------------{
-BoProp                      = input.float(0.2,      maxval = 0.9, step = 0.1, title = "Breakout Proportion (%)", group = "Breakout Settings")
+BoProp                      = input.float(0.2,      maxval = 1, step = 0.1, title = "Breakout Proportion (%)", group = "Breakout Settings")
 Bo20Scalar                  = input.float(0.67,     step = 0.01, title = "Breakout 20 Scalar", group = "Breakout Settings")
 Bo40Scalar                  = input.float(0.70,     step = 0.01, title = "Breakout 40 Scalar", group = "Breakout Settings")
 Bo80Scalar                  = input.float(0.73,     step = 0.01, title = "Breakout 80 Scalar", group = "Breakout Settings")
