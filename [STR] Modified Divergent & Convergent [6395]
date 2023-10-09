@@ -257,12 +257,6 @@ AdjustBuy                   = CurrentSize > 0 and CurrentSize > UpperBuffer and 
 CurrentHoldingValue         = strategy.position_size * close
 CurrentProportion           = CurrentHoldingValue / strategy.equity
 
-RecSize                     = math.round(OptimalPosition - strategy.position_size, 0)
-if RecSize <= 0
-    RecSize                 := 0
-
-AdjustBuyQty                = LowerBuffer - CurrentSize
-
 //-----------------------------------------------------------------------------}
 //Strategy
 //-----------------------------------------------------------------------------{ 
@@ -292,7 +286,7 @@ avgDrawdown() =>
 
     [array.avg(winArr), array.avg(lossArr)]
 
-TotalYears                  = bar_index / 252
+TotalYears                  = bar_index / 256
 RawAvgAnnualReturn          = strategy.netprofit / (strategy.initial_capital * TotalYears)
 AvgAnnualReturn             = RawAvgAnnualReturn * 100
 SharpeRatio                 = (RawAvgAnnualReturn - RiskFree) / InstRisk
