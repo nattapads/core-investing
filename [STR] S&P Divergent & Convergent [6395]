@@ -5,7 +5,7 @@ strategy("[STR] S&P Divergent & Convergent [6395]", overlay = true, margin_long 
 //------------------------------------------------------------------------------
 //Settings
 //-----------------------------------------------------------------------------{
-start_time                  = input.time(timestamp("Jan 01 1970 00:00:00"), title="Start Time")
+start_time                  = input.time(timestamp("Jan 01 1970 00:00:00"), title = "Start Time")
 in_time_window              = time >= start_time
 
 //-----------------------------------------------------------------------------}
@@ -297,7 +297,7 @@ avgDrawdown() =>
 
     [array.avg(winArr), array.avg(lossArr)]
 
-TotalYears                  = bar_index / 252
+TotalYears                  = bar_index / 256
 RawAvgAnnualReturn          = strategy.netprofit / (strategy.initial_capital * TotalYears)
 AvgAnnualReturn             = RawAvgAnnualReturn * 100
 SharpeRatio                 = (RawAvgAnnualReturn - RiskFree) / InstRisk
