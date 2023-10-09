@@ -18,6 +18,7 @@ ContrarianEntry             = input(true,           title = "Contrarian Entry", 
 //-----------------------------------------------------------------------------}
 //Momentum  Settings
 //-----------------------------------------------------------------------------{
+MoProp                      = input.float(0.5,      maxval = 0.99, step = 0.1, title = "Momentum Proportion (%)", group="Momentum Settings")
 FastScalar                  = input.float(4.10,     step = 0.01, title = "Fast Forecast Scalar", group = "Momentum Settings")
 MediumScalar                = input.float(2.79,     step = 0.01, title = "Medium Forecast Scalar", group = "Momentum Settings")
 SlowScalar                  = input.float(1.91,     step = 0.01, title = "Slow Forecast Scalar", group = "Momentum Settings")
@@ -205,7 +206,6 @@ CappedForcCr                = array.avg(CappedForcCrAr)
 //-----------------------------------------------------------------------------{
 var float CappedCombForc    = na
 
-MoProp                      = 1 - CrProp 
 CombForc                    = (CappedForcMo * MoProp) + (CappedForcCr * CrProp)
 ScalCombForc                = CombForc * FDM
 
