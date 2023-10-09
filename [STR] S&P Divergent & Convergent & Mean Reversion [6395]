@@ -5,13 +5,13 @@ strategy("[STR] S&P Divergent & Convergent & Mean Reversion [6395]", overlay = t
 //------------------------------------------------------------------------------
 //Settings
 //-----------------------------------------------------------------------------{
-start_time                  = input.time(timestamp("Jan 01 1970 00:00:00"), title="Start Time")
+start_time                  = input.time(timestamp("Jan 01 1970 00:00:00"), title = "Start Time")
 in_time_window              = time >= start_time
 
 //-----------------------------------------------------------------------------}
 //Momentum  Settings
 //-----------------------------------------------------------------------------{
-MoProp                      = input.float(0.2,      maxval = 0.99, step = 0.1, title = "Momentum Proportion (%)", group="Momentum Settings")
+MoProp                      = input.float(0.2,      maxval = 1, step = 0.1, title = "Momentum Proportion (%)", group="Momentum Settings")
 FastScalar                  = input.float(4.10,     step = 0.01, title = "EMA 16 Scalar", group = "Momentum Settings")
 MediumScalar                = input.float(2.79,     step = 0.01, title = "EMA 32 Scalar", group = "Momentum Settings")
 SlowScalar                  = input.float(1.91,     step = 0.01, title = "EMA 64 Scalar", group = "Momentum Settings")
@@ -20,7 +20,7 @@ zerolag                     = input(true,           title ="Acceleration-Adjuste
 //-----------------------------------------------------------------------------}
 //Mean Reversion Settings
 //-----------------------------------------------------------------------------{
-MeProp                      = input.float(0.2,      maxval = 0.99, step = 0.1, title = "Mean Reversion (%)", group = "Mean Reversion Settings")
+MeProp                      = input.float(0.2,      maxval = 1, step = 0.1, title = "Mean Reversion (%)", group = "Mean Reversion Settings")
 Equilibriumlength           = input.int(5,          step = 1, title = "Equilibrium Average Length", group = "Mean Reversion Settings")
 Quantilelength              = input.int(10,         step = 1, title = "Quantile Average Length", group = "Mean Reversion Settings")
 MeanForecScalar             = input.float(20,       step = 0.1, title = "Mean-Reversion Scalar", group = "Mean Reversion Settings")
@@ -28,8 +28,8 @@ MeanForecScalar             = input.float(20,       step = 0.1, title = "Mean-Re
 //-----------------------------------------------------------------------------}
 //Carry Settings
 //-----------------------------------------------------------------------------{
-CrProp                      = input.float(0.6,      maxval = 0.99, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
-ExpectedDiv                 = input.float(0.03,     maxval = 0.99, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
+CrProp                      = input.float(0.6,      maxval = 1, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
+ExpectedDiv                 = input.float(0.03,     maxval = 1, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
 CrScalar                    = input.int(30,         step = 1, title = "Carry Scalar", group = "Carry Settings")
 
 //-----------------------------------------------------------------------------}
