@@ -71,7 +71,7 @@ RawDailyPercentVol          = math.round(array.stdev(PercentChange, false), 6)
 Return5yr                   = array.new_float(0)
 
 if EPStdCal == true
-    for i = 0 to 1280
+    for i = 0 to 2000
         array.push(Return5yr, RawDailyPercentVol[i])
 
 DailyPercentVol5yr          = array.avg(Return5yr)
@@ -171,7 +171,7 @@ MeanSigmaIT                 = array.avg(SigmaITAr)
 VolatilityMe                = DailyPercentVol / MeanSigmaIT
 
 VolatilityMeAr              = array.new_float(0)
-for i = 0 to 1256
+for i = 0 to 2000
     array.push(VolatilityMeAr, VolatilityMe[i])
 
 QuantileMe                  = VolatilityMe - array.min(VolatilityMeAr)
