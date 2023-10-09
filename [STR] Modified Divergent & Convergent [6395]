@@ -11,6 +11,7 @@ in_time_window              = time >= start_time
 //-----------------------------------------------------------------------------}
 //Momentum  Settings
 //-----------------------------------------------------------------------------{
+MoProp                      = input.float(0.2,      maxval = 0.99, step = 0.1, title = "Momentum Proportion (%)", group="Momentum Settings")
 FastScalar                  = input.float(4.10,     step = 0.01, title = "EMA 16 Scalar", group = "Momentum Settings")
 MediumScalar                = input.float(2.79,     step = 0.01, title = "EMA 32 Scalar", group = "Momentum Settings")
 SlowScalar                  = input.float(1.91,     step = 0.01, title = "EMA 64 Scalar", group = "Momentum Settings")
@@ -217,7 +218,6 @@ CappedForcCr                = array.avg(CappedForcCrAr)
 //-----------------------------------------------------------------------------{
 var float CappedCombForc    = na
 
-MoProp                      = 1 - AcProp - BoProp - CrProp 
 CombForc                    = (CappedForcMo * MoProp) + (CappedForcAc * AcProp) + (CappedForcBo * BoProp) + (CappedForcCr * CrProp)
 ScalCombForc                = CombForc * FDM
 
