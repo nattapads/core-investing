@@ -5,7 +5,7 @@ strategy("[STR] Modified TTC & Carry [6395]", overlay = true, margin_long = 50, 
 //------------------------------------------------------------------------------
 //Settings
 //-----------------------------------------------------------------------------{
-start_time                  = input.time(timestamp("Jan 01 1970 00:00:00"), title="Start Time")
+start_time                  = input.time(timestamp("Jan 01 1970 00:00:00"), title = "Start Time")
 in_time_window              = time >= start_time
 
 //------------------------------------------------------------------------------
