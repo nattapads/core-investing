@@ -20,7 +20,7 @@ showtrend                   = input(true,           title ="Show Momentum Line",
 //-----------------------------------------------------------------------------}
 //Mean Reversion Settings
 //-----------------------------------------------------------------------------{
-MeProp                      = input.float(0.1,      maxval = 0.99, step = 0.1, title = "Mean Reversion (%)", group = "Mean Reversion Settings")
+MeProp                      = input.float(0.2,      maxval = 0.99, step = 0.1, title = "Mean Reversion (%)", group = "Mean Reversion Settings")
 Equilibriumlength           = input.int(5,          step = 1, title = "Equilibrium Average Length", group = "Mean Reversion Settings")
 Quantilelength              = input.int(10,         step = 1, title = "Quantile Average Length", group = "Mean Reversion Settings")
 MeanForecScalar             = input.float(20,       step = 0.1, title = "Mean-Reversion Scalar", group = "Mean Reversion Settings")
@@ -28,7 +28,7 @@ MeanForecScalar             = input.float(20,       step = 0.1, title = "Mean-Re
 //-----------------------------------------------------------------------------}
 //Carry Settings
 //-----------------------------------------------------------------------------{
-CrProp                      = input.float(0.7,      maxval = 0.99, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
+CrProp                      = input.float(0.6,      maxval = 0.99, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
 ExpectedDiv                 = input.float(0.03,     maxval = 0.99, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
 CrScalar                    = input.int(30,         step = 1, title = "Carry Scalar", group = "Carry Settings")
 
@@ -82,42 +82,35 @@ InstRisk                    = math.round((DailyPercentVol * 16), 6)
 DailyPriceVol               = DailyPercentVol * close
 
 //-----------------------------------------------------------------------------}
-//Momentum Calculation
+//Momentum Forcast Calculation
 //-----------------------------------------------------------------------------{
-fmomentumCal(length, multiplier) =>
-    emalength               = length * multiplier
-
-    if zerolag == true
-        ema                 = ta.ema(close, emalength)
-        smoema              = ta.ema(ema, emalength)
-        eq                  = ema - smoema
-        zlema               = ema + eq
-    else
-        zlema               = ta.ema(close, emalength)
-
 FastLength                  = 16
 MediumLength                = 32
 SlowLength                  = 64
 
-FastEMA                     = fmomentumCal(FastLength, 1)
-FastSEMA                    = fmomentumCal(FastLength, 4)
-MediumEMA                   = fmomentumCal(MediumLength, 1)
-MediumSEMA                  = fmomentumCal(MediumLength, 4)
-SlowEMA                     = fmomentumCal(SlowLength, 1)
-SlowSEMA                    = fmomentumCal(SlowLength, 4)
+scalforecastMo(length, volatility, scalar) =>
+    Slength                 = length * 4
 
-//-----------------------------------------------------------------------------}
-//Momentum Forcast Calculation
-//-----------------------------------------------------------------------------{
-//Scale Momentum Forecast
-//-----------------------------------------------------------------------------{
-scalforecastMo(fastEMA, slowEMA, volatility, scalar) =>
-    RiskAdjusted            = (fastEMA - slowEMA) / volatility
-    ScaledForecast          = RiskAdjusted * scalar
+    if zerolag == true
+        Fema                = ta.ema(close, length)
+        Fsmoema             = ta.ema(Fema, length)
+        Feq                 = Fema - Fsmoema
+        Fzlema              = Fema + Feq
+        Sema                = ta.ema(close, Slength)
+        Ssmoema             = ta.ema(Sema, Slength)
+        Seq                 = Sema - Ssmoema
+        Szlema              = Sema + Seq
+        RiskAdjusted        = (Fzlema - Szlema) / volatility
+        ScaledForecast      = RiskAdjusted * scalar
+    else
+        Fzlema              = ta.ema(close, length)
+        Szlema              = ta.ema(close, Slength)
+        RiskAdjusted        = (Fzlema - Szlema) / volatility
+        ScaledForecast      = RiskAdjusted * scalar
 
-ScaledForcF                 = scalforecastMo(FastEMA, FastSEMA, DailyPriceVol, FastScalar)
-ScaledForcM                 = scalforecastMo(MediumEMA, MediumSEMA, DailyPriceVol, MediumScalar)
-ScaledForcS                 = scalforecastMo(SlowEMA, SlowSEMA, DailyPriceVol, SlowScalar)
+ScaledForcF                 = scalforecastMo(FastLength, DailyPriceVol, FastScalar)
+ScaledForcM                 = scalforecastMo(MediumLength, DailyPriceVol, MediumScalar)
+ScaledForcS                 = scalforecastMo(SlowLength, DailyPriceVol, SlowScalar)
 
 //Capped Momentum Forecast
 //-----------------------------------------------------------------------------{
@@ -231,15 +224,6 @@ CurrentSize                 = strategy.position_size
 
 RecSize                     = math.round(OptimalPosition - strategy.position_size, 1)
 
-//-----------------------------------------------------------------------------}
-//Momentum Filter Calculation
-//-----------------------------------------------------------------------------{
-Trenddiff                   = SlowEMA - SlowSEMA
-StrongBullish               = Trenddiff[0] > Trenddiff[1] and Trenddiff >= 0
-StrongBearish               = Trenddiff[0] < Trenddiff[1] and Trenddiff < 0
-Bullish                     = Trenddiff[0] < Trenddiff[1] and Trenddiff >= 0
-Bearish                     = Trenddiff[0] > Trenddiff[1] and Trenddiff < 0
-
 //-----------------------------------------------------------------------------{
 //Position Adjustment Signal & Sizing
 //-----------------------------------------------------------------------------{
@@ -351,31 +335,16 @@ BullColor                   = color.rgb(8, 153, 129, 50)
 StrongBearishColor          = color.rgb(242, 54, 69)
 BearColor                   = color.rgb(242, 54, 69, 50)
 
-//Style Adjustment
+//-----------------------------------------------------------------------------}
+//Momentum Filter Calculation
 //-----------------------------------------------------------------------------{
-var col                     = color.rgb(120, 123, 134, 100)
-var fillG                   = color.rgb(120, 123, 134, 100)
+StrongBullish               = AdjCombForc > 0 and AdjCombForc > AdjCombForc[1]
+StrongBearish               = AdjCombForc < 0 and AdjCombForc < AdjCombForc[1]
+Bullish                     = AdjCombForc > 0 and AdjCombForc < AdjCombForc[1]
+Bearish                     = AdjCombForc < 0 and AdjCombForc > AdjCombForc[1]
 
-if Trenddiff[0] > Trenddiff[1] and Trenddiff >= 0 and showtrend == true
-    col                     := BullColor
-    fillG                   := color.rgb(8, 153, 129, 92)
-else if Trenddiff[0] < Trenddiff[1] and Trenddiff >= 0 and showtrend == true
-    col                     := BullColor
-    fillG                   := color.rgb(8, 153, 129, 96)
-else if Trenddiff[0] < Trenddiff[1] and Trenddiff < 0 and showtrend == true
-    col                     := BearColor
-    fillG                   := color.rgb(242, 54, 70, 92)
-else if Trenddiff[0] > Trenddiff[1] and Trenddiff < 0 and showtrend == true
-    col                     := BearColor
-    fillG                   := color.rgb(242, 54, 70, 96)
-else
-    col                     := color.rgb(120, 123, 134, 100)
-    fillG                   := color.rgb(120, 123, 134, 100)
-
-plotFastMA                  = plot(SlowEMA,     "Fast Momentum", color=col, linewidth=1) 
-plotSlowMA                  = plot(SlowSEMA,    "Slow Momentum", color=col, linewidth=1)
-
-fill(plotFastMA, plotSlowMA, color = fillG, title = "Momentum Color", fillgaps = true) 
+//Bar Colour
+//-----------------------------------------------------------------------------{
 barcolor(StrongBullish ? StrongBullColor : StrongBearish ? StrongBearishColor : Bullish ? BullColor : Bearish ? BearColor : NeutralColor)
 
 //-----------------------------------------------------------------------------}
