@@ -315,15 +315,10 @@ RawAvgAnnualReturn          = strategy.netprofit / (strategy.initial_capital * T
 AvgAnnualReturn             = RawAvgAnnualReturn * 100
 SharpeRatio                 = (RawAvgAnnualReturn - RiskFree) / InstRisk
 
-var float AvgWinDD          = na
-var float AvgLossDD         = na
-var float AvgDD             = na
-
-if barstate.islast
-    [win, loss]             = avgDrawdown()
-    AvgWinDD                := win
-    AvgLossDD               := loss
-    AvgDD                   := (AvgWinDD + AvgLossDD) / 2
+[win, loss]                 = avgDrawdown()
+AvgWinDD                    = win
+AvgLossDD                   = loss
+AvgDD                       = (AvgWinDD + AvgLossDD) / 2
 
 //Table Styling
 //-----------------------------------------------------------------------------{ 
