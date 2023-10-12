@@ -1,6 +1,6 @@
 //NSal
 //@version=5
-strategy("[STR] Modified Divergent & Convergent [6395]", overlay = true, margin_long = 50, margin_short = 50, pyramiding = 100, initial_capital = 10000, risk_free_rate = 1, commission_value = 0.165, process_orders_on_close = true)
+strategy("[STR] Modified Divergent & Convergent [6395]", overlay = true, margin_long = 50, margin_short = 50, pyramiding = 100, initial_capital = 10000, risk_free_rate = 1, commission_value = 0.165)
 
 //------------------------------------------------------------------------------
 //Settings
@@ -246,10 +246,14 @@ CurrentSize                 = strategy.position_size
 
 //Position Adjustment Signal & Position
 //-----------------------------------------------------------------------------{
+marginRequirement           = 0.5
+maxCapital                  = (strategy.equity - (CurrentSize * close)) / (1 - marginRequirement)
+maxPositionSize             = maxCapital / close
+
 BuyQty                      = math.abs(math.round(LowerBuffer - CurrentSize, 0))
 AdjBuyQty                   = math.abs(math.round(CurrentSize - UpperBuffer, 0))
 
-Buy                         = MarginCal ? OptimalPosition > 0 and OptimalPosition > CurrentSize and CurrentSize < LowerBuffer and BuyQty >= 1 : OptimalPosition > 0 and OptimalPosition > CurrentSize and CurrentSize < LowerBuffer and BuyQty >= 1 and strategy.equity > (OptimalPosition * close)
+Buy                         = MarginCal ? OptimalPosition > 0 and OptimalPosition > CurrentSize and CurrentSize < LowerBuffer and BuyQty >= 1 and maxPositionSize >= 1 : OptimalPosition > 0 and OptimalPosition > CurrentSize and CurrentSize < LowerBuffer and BuyQty >= 1 and strategy.equity > (OptimalPosition * close)
 AdjustBuy                   = CurrentSize > 0 and CurrentSize > UpperBuffer and AdjBuyQty >= 1
 
 //Current Proportion
