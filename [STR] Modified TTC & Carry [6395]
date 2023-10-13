@@ -147,17 +147,17 @@ slowSEma                    = fmomentumCal(slowMoLength, 4)
 //-----------------------------------------------------------------------------{
 //Scale Momentum Forecast
 //-----------------------------------------------------------------------------{
-scalforecastMo(fastEma, slowEma, volatility, scalar) =>
+scalForecastMo(fastEma, slowEma, volatility, scalar) =>
     riskAdjusted            = (fastEma - slowEma) / volatility
     scaledForecast          = riskAdjusted * scalar
 
-scaledForcF                 = scalforecastMo(fastEma, fastSEma, dailyPriceVol, fastMoScalar)
-scaledForcM                 = scalforecastMo(mediumEma, mediumSEma, dailyPriceVol, mediumMoScalar)
-scaledForcS                 = scalforecastMo(slowEma, slowSEma, dailyPriceVol, slowMoScalar)
+scaledForcF                 = scalForecastMo(fastEma, fastSEma, dailyPriceVol, fastMoScalar)
+scaledForcM                 = scalForecastMo(mediumEma, mediumSEma, dailyPriceVol, mediumMoScalar)
+scaledForcS                 = scalForecastMo(slowEma, slowSEma, dailyPriceVol, slowMoScalar)
 
 //Capped Momentum Forecast
 //-----------------------------------------------------------------------------{
-capforecastMo(scaledForc) =>
+capForecastMo(scaledForc) =>
     var float cappedForcMo  = na
 
     if scaledForc <= -20
@@ -167,16 +167,16 @@ capforecastMo(scaledForc) =>
     else if scaledForc >= 20
         cappedForcMo        := 20
 
-cappedForcF                 = capforecastMo(scaledForcF)
-cappedForcM                 = capforecastMo(scaledForcM)
-cappedForcS                 = capforecastMo(scaledForcS)
+cappedForcF                 = capForecastMo(scaledForcF)
+cappedForcM                 = capForecastMo(scaledForcM)
+cappedForcS                 = capForecastMo(scaledForcS)
 
 cappedForcMoAr              = array.from(cappedForcF, cappedForcM, cappedForcS)
 
 //-----------------------------------------------------------------------------}
 //Carry Forcast Calculation
 //-----------------------------------------------------------------------------{
-capforecastCr(expectedDiv, smoothLength, instRisk, ForecastScalar) =>
+capForecastCr(expectedDiv, smoothLength, instRisk, ForecastScalar) =>
     var float cappedForcCr  = na
 
     crForc                  = expectedDiv * ForecastScalar / instRisk
@@ -189,9 +189,9 @@ capforecastCr(expectedDiv, smoothLength, instRisk, ForecastScalar) =>
     else if scaledForcCr >= 20
         cappedForcCr        := 20 
 
-cappedForcCr20              = capforecastCr(expectedDiv, 20, instRisk, crScalar)
-cappedForcCr60              = capforecastCr(expectedDiv, 60, instRisk, crScalar)
-cappedForcCr120             = capforecastCr(expectedDiv, 120, instRisk, crScalar)
+cappedForcCr20              = capForecastCr(expectedDiv, 20, instRisk, crScalar)
+cappedForcCr60              = capForecastCr(expectedDiv, 60, instRisk, crScalar)
+cappedForcCr120             = capForecastCr(expectedDiv, 120, instRisk, crScalar)
 
 cappedForcCrAr              = array.from(cappedForcCr20, cappedForcCr60, cappedForcCr120)
 
