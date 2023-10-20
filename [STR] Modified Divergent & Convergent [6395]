@@ -5,164 +5,171 @@ strategy("[STR] Modified Divergent & Convergent [6395]", overlay = true, margin_
 //------------------------------------------------------------------------------
 //Settings
 //-----------------------------------------------------------------------------{
-start_time                  = input.time(timestamp("Jan 01 1970 00:00:00"), title = "Start Time")
-in_time_window              = time >= start_time
+startTime                   = input.time(timestamp("Jan 01 1970 00:00:00"), title = "Start Time")
+inTimeWindow                = time >= startTime
 
 //-----------------------------------------------------------------------------}
 //Momentum  Settings
 //-----------------------------------------------------------------------------{
-MoProp                      = input.float(0.2,      maxval = 0.99, step = 0.1, title = "Momentum Proportion (%)", group="Momentum Settings")
-FastScalar                  = input.float(4.10,     step = 0.01, title = "EMA 16 Scalar", group = "Momentum Settings")
-MediumScalar                = input.float(2.79,     step = 0.01, title = "EMA 32 Scalar", group = "Momentum Settings")
-SlowScalar                  = input.float(1.91,     step = 0.01, title = "EMA 64 Scalar", group = "Momentum Settings")
-zerolag                     = input(false,          title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
+moProp                      = input.float(0.2,      maxval = 0.99, step = 0.1, title = "Momentum Proportion (%)", group="Momentum Settings")
+fastMoScalar                = input.float(4.10,     step = 0.01, title = "EMA 16 Scalar", group = "Momentum Settings")
+mediumMoScalar              = input.float(2.79,     step = 0.01, title = "EMA 32 Scalar", group = "Momentum Settings")
+slowMoScalar                = input.float(1.91,     step = 0.01, title = "EMA 64 Scalar", group = "Momentum Settings")
+zeroLag                     = input(false,          title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
 
 //-----------------------------------------------------------------------------}
 //Acceleration Settings
 //-----------------------------------------------------------------------------{
-AcProp                      = input.float(0.2,      maxval = 0.9, step = 0.1, title = "Acceleration Proportion (%)", group = "Acceleration Settings")
-AcFastScalar                = input.float(1.90,     step = 0.01, title = "EMA 16 Acceleration Scalar", group = "Acceleration Settings")
-AcMediumScalar              = input.float(1.98,     step = 0.01, title = "EMA 32 Acceleration Scalar", group = "Acceleration Settings")
-AcSlowScalar                = input.float(2.05,     step = 0.01, title = "EMA 64 Acceleration Scalar", group = "Acceleration Settings")
+acProp                      = input.float(0.2,      maxval = 0.9, step = 0.1, title = "Acceleration Proportion (%)", group = "Acceleration Settings")
+acFastScalar                = input.float(1.90,     step = 0.01, title = "EMA 16 Acceleration Scalar", group = "Acceleration Settings")
+acMediumScalar              = input.float(1.98,     step = 0.01, title = "EMA 32 Acceleration Scalar", group = "Acceleration Settings")
+acSlowScalar                = input.float(2.05,     step = 0.01, title = "EMA 64 Acceleration Scalar", group = "Acceleration Settings")
 
 //-----------------------------------------------------------------------------}
 //Breakout  Settings
 //-----------------------------------------------------------------------------{
-BoProp                      = input.float(0.2,      maxval = 0.9, step = 0.1, title = "Breakout Proportion (%)", group = "Breakout Settings")
-Bo20Scalar                  = input.float(0.67,     step = 0.01, title = "Breakout 20 Scalar", group = "Breakout Settings")
-Bo40Scalar                  = input.float(0.70,     step = 0.01, title = "Breakout 40 Scalar", group = "Breakout Settings")
-Bo80Scalar                  = input.float(0.73,     step = 0.01, title = "Breakout 80 Scalar", group = "Breakout Settings")
+boProp                      = input.float(0.2,      maxval = 0.9, step = 0.1, title = "Breakout Proportion (%)", group = "Breakout Settings")
+bo20Scalar                  = input.float(0.67,     step = 0.01, title = "Breakout 20 Scalar", group = "Breakout Settings")
+bo40Scalar                  = input.float(0.70,     step = 0.01, title = "Breakout 40 Scalar", group = "Breakout Settings")
+bo80Scalar                  = input.float(0.73,     step = 0.01, title = "Breakout 80 Scalar", group = "Breakout Settings")
 
 //-----------------------------------------------------------------------------}
 //Carry Settings
 //-----------------------------------------------------------------------------{
-CrProp                      = input.float(0.4,      maxval = 0.99, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
-ExpectedDiv                 = input.float(0.03,     maxval = 0.99, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
-CrScalar                    = input.int(30,         step = 1, title = "Carry Scalar", group = "Carry Settings")
+crProp                      = input.float(0.4,      maxval = 0.99, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
+expectedDiv                 = input.float(0.03,     maxval = 0.99, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
+crScalar                    = input.int(30,         step = 1, title = "Carry Scalar", group = "Carry Settings")
 
 //-----------------------------------------------------------------------------}
 //Risk Settings
 //-----------------------------------------------------------------------------{
-SPStdLength                 = input.int(22,         title = "Simple SD Length", group="Risk Settings")
-EPStdLength                 = input.int(32,         title = "Exponential SD Length", group="Risk Settings")
-TargetRisk                  = input.float(0.23,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings", tooltip = "23% is recommended for trading less than 3 instruments")
-DeviationPer                = input.float(0.1,      maxval = 1, step = 0.1, title = "Change Sensitivity (%)", group="Risk Settings", tooltip = "Higher sensitivity causes less frequent trades, and lower trading costs")
-FDM                         = input.float(1.38,     step = 0.01, title = "Forecast Diversification Multiplier", group = "Risk Settings")
-RiskFree                    = input.float(0.01,     step = 0.01, title = "Risk-free Rate (%)", group = "Risk Settings")
-EPStdCal                    = input(true,           title = "Use Exponential Standard Deviation", group="Risk Settings")
-MarginCal                   = input(false,          title = "Margin Account", group="Risk Settings")
+simpleStdLength             = input.int(22,         title = "Simple SD Length", group="Risk Settings")
+expoStdLength               = input.int(32,         title = "Exponential SD Length", group="Risk Settings")
+targetRisk                  = input.float(0.23,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings", tooltip = "23% is recommended for trading less than 3 instruments")
+deviationChange             = input.float(0.1,      maxval = 1, step = 0.1, title = "Change Sensitivity (%)", group="Risk Settings", tooltip = "Higher sensitivity causes less frequent trades, and lower trading costs")
+forcastDiverMuliplier       = input.float(1.38,     step = 0.01, title = "Forecast Diversification Multiplier", group = "Risk Settings")
+riskFree                    = input.float(0.01,     step = 0.01, title = "Risk-free Rate (%)", group = "Risk Settings")
+useExpoStd                  = input(true,           title = "Use Exponential Standard Deviation", group="Risk Settings")
+useMarginAcc                = input(false,          title = "Margin Account", group="Risk Settings")
 
 //-----------------------------------------------------------------------------{
 //Instrument Risk Calculation
 //-----------------------------------------------------------------------------{
-PercentChange               = array.new_float(0)
-ReturnChange                = close
-Lamda                       = 2.0 / (EPStdLength + 1.0)
+percentChange               = array.new_float(0)
+returnChange                = close
+lamda                       = 2.0 / (expoStdLength + 1.0)
 
 // Loop through the last price change and add them to the array
-if EPStdCal == true
-    for i = 0 to EPStdLength
-        ReturnChange        = (ReturnChange[i] - ReturnChange[i+1]) / ReturnChange[i+1]
-        LambaWeight         = math.pow((1 - Lamda), i)
-        array.push(PercentChange, (ReturnChange * LambaWeight))
+if useExpoStd == true
+    for i = 0 to expoStdLength
+        returnChange        = (returnChange[i] - returnChange[i+1]) / returnChange[i+1]
+        LambaWeight         = math.pow((1 - lamda), i)
+        array.push(percentChange, (returnChange * LambaWeight))
 else
-    for i = 0 to SPStdLength
-        ReturnChange        = (ReturnChange[i] - ReturnChange[i+1]) / ReturnChange[i+1]
-        array.push(PercentChange, ReturnChange)
+    for i = 0 to simpleStdLength
+        returnChange        = (returnChange[i] - returnChange[i+1]) / returnChange[i+1]
+        array.push(percentChange, returnChange)
 
 // Calculate the standard deviation of the percent change
-RawDailyPercentVol          = math.round(array.stdev(PercentChange, false), 6)
+rawDailyPercentVol          = math.round(array.stdev(percentChange, false), 6)
 
 // Calculate 8-year (2000 Records) average of SDs (for Exponential SD only)
-Return8yr                   = array.new_float(0)
+return8Yr                   = array.new_float(0)
 
-if EPStdCal == true
+if useExpoStd == true
     for i = 0 to 2000
-        array.push(Return8yr, RawDailyPercentVol[i])
+        array.push(return8Yr, rawDailyPercentVol[i])
 
-DailyPercentVol8yr          = array.avg(Return8yr)
+dailyPercentVol8Yr          = array.avg(return8Yr)
 
 // Annualising Instrument Risk
-DailyPercentVol             = EPStdCal ? ((0.3 * DailyPercentVol8yr) + (0.7 * RawDailyPercentVol)) : RawDailyPercentVol
-InstRisk                    = math.round((DailyPercentVol * 16), 6)
-DailyPriceVol               = DailyPercentVol * close
+dailyPercentVol             = useExpoStd ? ((0.3 * dailyPercentVol8Yr) + (0.7 * rawDailyPercentVol)) : rawDailyPercentVol
+instRisk                    = math.round((dailyPercentVol * 16), 6)
+dailyPriceVol               = dailyPercentVol * close
+
+//-----------------------------------------------------------------------------}
+//Momentum Calculation
+//-----------------------------------------------------------------------------{
+momentumForcCal(length, multiplier) =>
+    EmaLength               = length * multiplier
+
+    if zeroLag == true
+        Ema                 = ta.ema(close, EmaLength)
+        smoEma              = ta.ema(Ema, EmaLength)
+        eq                  = Ema - smoEma
+        zlEma               = Ema + eq
+    else
+        zlEma               = ta.ema(close, EmaLength)
+
+fastMoLength                = 16
+mediumMoLength              = 32
+slowMoLength                = 64
+
+fastEma                     = momentumForcCal(fastMoLength, 1)
+fastSEma                    = momentumForcCal(fastMoLength, 4)
+mediumEma                   = momentumForcCal(mediumMoLength, 1)
+mediumSEma                  = momentumForcCal(mediumMoLength, 4)
+slowEma                     = momentumForcCal(slowMoLength, 1)
+slowSEma                    = momentumForcCal(slowMoLength, 4)
 
 //-----------------------------------------------------------------------------}
 //Momentum Forcast Calculation
 //-----------------------------------------------------------------------------{
-FastLength                  = 16
-MediumLength                = 32
-SlowLength                  = 64
+//Scale Momentum Forecast
+//-----------------------------------------------------------------------------{
+scalForecastMo(fastEma, slowEma, volatility, scalar) =>
+    riskAdjusted            = (fastEma - slowEma) / volatility
+    scaledForecast          = riskAdjusted * scalar
 
-scalforecastMo(length, volatility, scalar) =>
-    Slength                 = length * 4
-
-    if zerolag == true
-        Fema                = ta.ema(close, length)
-        Fsmoema             = ta.ema(Fema, length)
-        Feq                 = Fema - Fsmoema
-        Fzlema              = Fema + Feq
-        Sema                = ta.ema(close, Slength)
-        Ssmoema             = ta.ema(Sema, Slength)
-        Seq                 = Sema - Ssmoema
-        Szlema              = Sema + Seq
-        RiskAdjusted        = (Fzlema - Szlema) / volatility
-        ScaledForecast      = RiskAdjusted * scalar
-    else
-        Fzlema              = ta.ema(close, length)
-        Szlema              = ta.ema(close, Slength)
-        RiskAdjusted        = (Fzlema - Szlema) / volatility
-        ScaledForecast      = RiskAdjusted * scalar
-
-ScaledForcF                 = scalforecastMo(FastLength, DailyPriceVol, FastScalar)
-ScaledForcM                 = scalforecastMo(MediumLength, DailyPriceVol, MediumScalar)
-ScaledForcS                 = scalforecastMo(SlowLength, DailyPriceVol, SlowScalar)
+scaledForcF                 = scalForecastMo(fastEma, fastSEma, dailyPriceVol, fastMoScalar)
+scaledForcM                 = scalForecastMo(mediumEma, mediumSEma, dailyPriceVol, mediumMoScalar)
+scaledForcS                 = scalForecastMo(slowEma, slowSEma, dailyPriceVol, slowMoScalar)
 
 //Capped Momentum Forecast
 //-----------------------------------------------------------------------------{
-capforecastMo(scaledForc) =>
-    var float CappedForcMo  = na
+capForecastMo(scaledForc) =>
+    var float cappedForcMo  = na
 
     if scaledForc <= -20
-        CappedForcMo        := -20
+        cappedForcMo        := -20
     else if scaledForc > -20 and scaledForc < 20
-        CappedForcMo        := scaledForc
+        cappedForcMo        := scaledForc
     else if scaledForc >= 20
-        CappedForcMo        := 20
+        cappedForcMo        := 20
 
-CappedForcF                 = capforecastMo(ScaledForcF)
-CappedForcM                 = capforecastMo(ScaledForcM)
-CappedForcS                 = capforecastMo(ScaledForcS)
+cappedForcF                 = capForecastMo(scaledForcF)
+cappedForcM                 = capForecastMo(scaledForcM)
+cappedForcS                 = capForecastMo(scaledForcS)
 
-CappedForcMoAr              = array.from(CappedForcF, CappedForcM, CappedForcS)
+cappedForcMoAr              = array.from(cappedForcF, cappedForcM, cappedForcS)
 
 //-----------------------------------------------------------------------------}
 //Acceleration Forcast Calculation
 //-----------------------------------------------------------------------------{
-capforecastAc(FastEMA, scaledForc, ForecastScalarAc) =>
-    var float CappedForcAc  = na
+capForecastAc(fastEma, scaledForc, forecastAcScalar) =>
+    var float cappedForcAc  = na
 
-    ForcAc                  = scaledForc - scaledForc[FastEMA]
-    scaledForcAc            = ForcAc * ForecastScalarAc
+    forcAc                  = scaledForc - scaledForc[fastEma]
+    scaledForcAc            = forcAc * forecastAcScalar
 
     if scaledForcAc <= -20
-        CappedForcAc        := -20
+        cappedForcAc        := -20
     else if scaledForcAc > -20 and scaledForcAc < 20
-        CappedForcAc        := scaledForcAc
+        cappedForcAc        := scaledForcAc
     else if scaledForcAc >= 20
-        CappedForcAc        := 20
+        cappedForcAc        := 20
 
-CappedForcFAc               = capforecastAc(FastLength, ScaledForcF, AcFastScalar)
-CappedForcMAc               = capforecastAc(MediumLength, ScaledForcM, AcMediumScalar)
-CappedForcSAc               = capforecastAc(SlowLength, ScaledForcS, AcSlowScalar)
+cappedForcFAc               = capForecastAc(fastMoLength, scaledForcF, acFastScalar)
+cappedForcMAc               = capForecastAc(mediumMoLength, scaledForcM, acMediumScalar)
+cappedForcSAc               = capForecastAc(slowMoLength, scaledForcS, acSlowScalar)
 
-CappedForcAcAr              = array.from(CappedForcFAc, CappedForcMAc, CappedForcSAc)
+cappedForcAcAr              = array.from(cappedForcFAc, cappedForcMAc, cappedForcSAc)
 
 //-----------------------------------------------------------------------------}
 //Breakout Forcast Calculation
 //-----------------------------------------------------------------------------{
-capforecastBo(BreakLength, ForecastScalar) =>
-    var float CappedForcBo  = na
+capForecastBo(BreakLength, ForecastScalar) =>
+    var float cappedForcBo  = na
 
     max                     = ta.highest(high, BreakLength)
     min                     = ta.lowest(low, BreakLength)
@@ -173,101 +180,101 @@ capforecastBo(BreakLength, ForecastScalar) =>
     scaledForcBo            = smoothForcBo * ForecastScalar
 
     if scaledForcBo <= -20
-        CappedForcBo             := -20
+        cappedForcBo             := -20
     else if scaledForcBo > -20 and scaledForcBo < 20
-        CappedForcBo             := scaledForcBo
+        cappedForcBo             := scaledForcBo
     else if scaledForcBo >= 20
-        CappedForcBo             := 20 
+        cappedForcBo             := 20 
 
-CappedForcBo20              = capforecastBo(20, Bo20Scalar)
-CappedForcBo40              = capforecastBo(40, Bo40Scalar)
-CappedForcBo80              = capforecastBo(80, Bo80Scalar)
+cappedForcBo20              = capForecastBo(20, bo20Scalar)
+cappedForcBo40              = capForecastBo(40, bo40Scalar)
+cappedForcBo80              = capForecastBo(80, bo80Scalar)
 
-CappedForcBoAr              = array.from(CappedForcBo20, CappedForcBo40, CappedForcBo80)
+cappedForcBoAr              = array.from(cappedForcBo20, cappedForcBo40, cappedForcBo80)
 
 //-----------------------------------------------------------------------------}
 //Carry Forcast Calculation
 //-----------------------------------------------------------------------------{
-capforecastCr(ExpectedDiv, smoothLength, InstRisk, ForecastScalar) =>
-    var float CappedForcCr  = na
+capForecastCr(expectedDiv, smoothLength, instRisk, ForecastScalar) =>
+    var float cappedForcCr  = na
 
-    CrForc                  = ExpectedDiv * ForecastScalar / InstRisk
+    CrForc                  = expectedDiv * ForecastScalar / instRisk
     scaledForcCr            = ta.ema(CrForc, smoothLength)
 
     if scaledForcCr <= -20
-        CappedForcCr        := -20
+        cappedForcCr        := -20
     else if scaledForcCr > -20 and scaledForcCr < 20
-        CappedForcCr        := scaledForcCr
+        cappedForcCr        := scaledForcCr
     else if scaledForcCr >= 20
-        CappedForcCr        := 20 
+        cappedForcCr        := 20 
 
-CappedForcCr20              = capforecastCr(ExpectedDiv, 20, InstRisk, CrScalar)
-CappedForcCr60              = capforecastCr(ExpectedDiv, 60, InstRisk, CrScalar)
-CappedForcCr120             = capforecastCr(ExpectedDiv, 120, InstRisk, CrScalar)
+cappedForcCr20              = capForecastCr(expectedDiv, 20, instRisk, crScalar)
+cappedForcCr60              = capForecastCr(expectedDiv, 60, instRisk, crScalar)
+cappedForcCr120             = capForecastCr(expectedDiv, 120, instRisk, crScalar)
 
-CappedForcCrAr              = array.from(CappedForcCr20, CappedForcCr60, CappedForcCr120)
-
-//All Forecast Combination
-//-----------------------------------------------------------------------------{
-CappedForcMo                = array.avg(CappedForcMoAr)
-CappedForcAc                = array.avg(CappedForcAcAr)
-CappedForcBo                = array.avg(CappedForcBoAr)
-CappedForcCr                = array.avg(CappedForcCrAr)
+cappedForcCrAr              = array.from(cappedForcCr20, cappedForcCr60, cappedForcCr120)
 
 //All Forecast Combination
 //-----------------------------------------------------------------------------{
-var float CappedCombForc    = na
+cappedForcMo                = array.avg(cappedForcMoAr)
+cappedForcAc                = array.avg(cappedForcAcAr)
+cappedForcBo                = array.avg(cappedForcBoAr)
+cappedForcCr                = array.avg(cappedForcCrAr)
 
-CombForc                    = (CappedForcMo * MoProp) + (CappedForcAc * AcProp) + (CappedForcBo * BoProp) + (CappedForcCr * CrProp)
-ScalCombForc                = CombForc * FDM
+//All Forecast Combination
+//-----------------------------------------------------------------------------{
+var float cappedCombForc    = na
 
-if ScalCombForc <= -20
-    CappedCombForc          := -20
-else if ScalCombForc > -20 and ScalCombForc < 20
-    CappedCombForc          := ScalCombForc
-else if ScalCombForc >= 20
-    CappedCombForc          := 20 
+combForc                    = (cappedForcMo * moProp) + (cappedForcAc * acProp) + (cappedForcBo * boProp) + (cappedForcCr * crProp)
+scalCombForc                = combForc * forcastDiverMuliplier
 
-AdjCombForc                 = MarginCal ? CappedCombForc / 10 : CappedCombForc / 20
+if scalCombForc <= -20
+    cappedCombForc          := -20
+else if scalCombForc > -20 and scalCombForc < 20
+    cappedCombForc          := scalCombForc
+else if scalCombForc >= 20
+    cappedCombForc          := 20 
+
+adjCombForc                 = useMarginAcc ? cappedCombForc / 10 : cappedCombForc / 20
 
 //-----------------------------------------------------------------------------}
 //Notional Exposure & Risk-Adjusted Position
 //-----------------------------------------------------------------------------{
-OptimalSizing               = (AdjCombForc * strategy.equity * TargetRisk) / (InstRisk * close)
-OptimalPosition             = math.round(OptimalSizing, 0)
+optimalSizing               = (adjCombForc * strategy.equity * targetRisk) / (instRisk * close)
+optimalPosition             = math.round(optimalSizing, 0)
 
 //Buffer Zone
 //-----------------------------------------------------------------------------{
-BufferWidth                 = (DeviationPer * strategy.equity * TargetRisk) / (InstRisk * close)
-LowerBuffer                 = math.round(OptimalPosition - BufferWidth, 0)
-UpperBuffer                 = math.round(OptimalPosition + BufferWidth, 0)
+bufferWidth                 = (deviationChange * strategy.equity * targetRisk) / (instRisk * close)
+lowerBuffer                 = math.round(optimalPosition - bufferWidth, 0)
+upperBuffer                 = math.round(optimalPosition + bufferWidth, 0)
 
-CurrentSize                 = strategy.position_size
+currentSize                 = strategy.position_size
 
 //Position Adjustment Signal & Position
 //-----------------------------------------------------------------------------{
 marginRequirement           = 0.5
-maxCapital                  = (strategy.equity - (CurrentSize * close)) / (1 - marginRequirement)
+maxCapital                  = (strategy.equity - (currentSize * close)) / (1 - marginRequirement)
 maxPositionSize             = maxCapital / close
 
-BuyQty                      = math.abs(math.round(LowerBuffer - CurrentSize, 0))
-AdjBuyQty                   = math.abs(math.round(CurrentSize - UpperBuffer, 0))
+buyQty                      = math.abs(math.round(lowerBuffer - currentSize, 0))
+adjBuyQty                   = math.abs(math.round(currentSize - upperBuffer, 0))
 
-Buy                         = MarginCal ? OptimalPosition > 0 and OptimalPosition > CurrentSize and CurrentSize < LowerBuffer and BuyQty >= 1 and maxPositionSize >= 1 : OptimalPosition > 0 and OptimalPosition > CurrentSize and CurrentSize < LowerBuffer and BuyQty >= 1 and strategy.equity > (OptimalPosition * close)
-AdjustBuy                   = CurrentSize > 0 and CurrentSize > UpperBuffer and AdjBuyQty >= 1
+Buy                         = useMarginAcc ? optimalPosition > 0 and optimalPosition > currentSize and currentSize < lowerBuffer and buyQty >= 1 and maxPositionSize >= 1 : optimalPosition > 0 and optimalPosition > currentSize and currentSize < lowerBuffer and buyQty >= 1 and strategy.equity > (optimalPosition * close)
+adjustBuy                   = currentSize > 0 and currentSize > upperBuffer and adjBuyQty >= 1
 
 //Current Proportion
 //-----------------------------------------------------------------------------{
-CurrentHoldingValue         = strategy.position_size * close
-CurrentProportion           = CurrentHoldingValue / strategy.equity
+currentHoldingValue         = strategy.position_size * close
+currentProportion           = currentHoldingValue / strategy.equity
 
 //-----------------------------------------------------------------------------}
 //Strategy
 //-----------------------------------------------------------------------------{ 
-if Buy and in_time_window
-    strategy.entry("B", strategy.long, qty = BuyQty)
-else if AdjustBuy and in_time_window
-    strategy.close("B", qty = AdjBuyQty)
+if Buy and inTimeWindow
+    strategy.entry("B", strategy.long, qty = buyQty)
+else if adjustBuy and inTimeWindow
+    strategy.close("B", qty = adjBuyQty)
 
 // Calculate Strategy Performance
 //-----------------------------------------------------------------------------{ 
@@ -277,28 +284,28 @@ avgDrawdown() =>
     
     for i = 0 to strategy.closedtrades -1 
         
-        drawdown            = strategy.closedtrades.max_drawdown(i)
+        drawDown            = strategy.closedtrades.max_drawdown(i)
         costBasis           = strategy.closedtrades.entry_price(i)
-        drawdownPerc        = drawdown / (costBasis * strategy.closedtrades.size(i))
+        drawDownPerc        = drawDown / (costBasis * strategy.closedtrades.size(i))
         
         isWin               = strategy.closedtrades.profit(i) >= 0
         
         if isWin
-            array.push(winArr, drawdownPerc)
+            array.push(winArr, drawDownPerc)
         else
-            array.push(lossArr, drawdownPerc)
+            array.push(lossArr, drawDownPerc)
 
     [array.avg(winArr), array.avg(lossArr)]
 
-TotalYears                  = bar_index / 256
-RawAvgAnnualReturn          = strategy.netprofit / (strategy.initial_capital * TotalYears)
-AvgAnnualReturn             = RawAvgAnnualReturn * 100
-SharpeRatio                 = (RawAvgAnnualReturn - RiskFree) / InstRisk
+totalYears                  = bar_index / 256
+rawAvgAnnualReturn          = strategy.netprofit / (strategy.initial_capital * totalYears)
+avgAnnualReturn             = rawAvgAnnualReturn * 100
+sharpeRatio                 = (rawAvgAnnualReturn - riskFree) / instRisk
 
 [win, loss]                 = avgDrawdown()
-AvgWinDD                    = win
-AvgLossDD                   = loss
-AvgDD                       = (AvgWinDD + AvgLossDD) / 2
+avgWinDD                    = win
+avgLossDD                   = loss
+avgDD                       = (avgWinDD + avgLossDD) / 2
 
 //Table Styling
 //-----------------------------------------------------------------------------{ 
@@ -318,41 +325,41 @@ else
 table_data                  = table.new(position = position.bottom_right, columns = 1, rows = 6, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
 
 table.cell(table_data, 0, 0, "MDC782", bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
-table.cell(table_data, 0, 1, str.tostring(AvgAnnualReturn, format.percent) , text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Annual Return")
-table.cell(table_data, 0, 2, str.tostring(math.round(SharpeRatio, 3)), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Sharpe Ratio")
-table.cell(table_data, 0, 3, str.tostring(AvgDD * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Drawdown")
-table.cell(table_data, 0, 4, str.tostring(InstRisk * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 70, 70), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Standard Deviation")
-table.cell(table_data, 0, 5, str.tostring(CurrentProportion * 100, format.percent), bgcolor = color.rgb(255, 255, 255, 90), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Percent Risk")
+table.cell(table_data, 0, 1, str.tostring(avgAnnualReturn, format.percent) , text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Annual Return")
+table.cell(table_data, 0, 2, str.tostring(math.round(sharpeRatio, 3)), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Sharpe Ratio")
+table.cell(table_data, 0, 3, str.tostring(avgDD * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Drawdown")
+table.cell(table_data, 0, 4, str.tostring(instRisk * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 70, 70), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Standard Deviation")
+table.cell(table_data, 0, 5, str.tostring(currentProportion * 100, format.percent), bgcolor = color.rgb(255, 255, 255, 90), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Percent Risk")
 
 //-----------------------------------------------------------------------------}
 //Entry & Exit Signal
 //-----------------------------------------------------------------------------{
 plotshape(Buy,              title = "Initial Buy",  text = "▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
-plotshape(AdjustBuy,        title = "Adjust Sell",  text = "✘", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69, 70), size=size.tiny)
+plotshape(adjustBuy,        title = "Adjust Sell",  text = "✘", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 69, 70), size=size.tiny)
 
 //-----------------------------------------------------------------------------}
 //Bar & Trend Line Colours
 //-----------------------------------------------------------------------------{
-NeutralColor                = #56328f
-StrongBullColor             = color.rgb(8, 153, 129)
-BullColor                   = color.rgb(8, 153, 129, 50)
-StrongBearishColor          = color.rgb(242, 54, 69)
-BearColor                   = color.rgb(242, 54, 69, 50)
+neutralColor                = #56328f
+strongbullColor             = color.rgb(8, 153, 129)
+bullColor                   = color.rgb(8, 153, 129, 50)
+strongBearishColor          = color.rgb(242, 54, 69)
+bearColor                   = color.rgb(242, 54, 69, 50)
 
 //-----------------------------------------------------------------------------}
 //Momentum Filter Calculation
 //-----------------------------------------------------------------------------{
-StrongBullish               = AdjCombForc > 0 and AdjCombForc > AdjCombForc[1]
-StrongBearish               = AdjCombForc < 0 and AdjCombForc < AdjCombForc[1]
-Bullish                     = AdjCombForc > 0 and AdjCombForc < AdjCombForc[1]
-Bearish                     = AdjCombForc < 0 and AdjCombForc > AdjCombForc[1]
+strongBullish               = adjCombForc > 0 and adjCombForc > adjCombForc[1]
+strongBearish               = adjCombForc < 0 and adjCombForc < adjCombForc[1]
+bullish                     = adjCombForc > 0 and adjCombForc < adjCombForc[1]
+bearish                     = adjCombForc < 0 and adjCombForc > adjCombForc[1]
 
 //Bar Colour
 //-----------------------------------------------------------------------------{
-barcolor(StrongBullish ? StrongBullColor : StrongBearish ? StrongBearishColor : Bullish ? BullColor : Bearish ? BearColor : NeutralColor)
+barcolor(strongBullish ? strongbullColor : strongBearish ? strongBearishColor : bullish ? bullColor : bearish ? bearColor : neutralColor)
 
 //-----------------------------------------------------------------------------}
 //Alert
 //-----------------------------------------------------------------------------{
-if Buy or AdjustBuy
+if Buy or adjustBuy
     alert("Position Adjusted", alert.freq_once_per_bar_close)
