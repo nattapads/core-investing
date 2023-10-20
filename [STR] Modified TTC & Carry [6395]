@@ -120,7 +120,7 @@ e2                          = ta.barssince(sellSignal[1])
 //-----------------------------------------------------------------------------}
 //Momentum Calculation
 //-----------------------------------------------------------------------------{
-fmomentumCal(length, multiplier) =>
+momentumCal(length, multiplier) =>
     EmaLength               = length * multiplier
 
     if zeroLag == true
@@ -135,12 +135,12 @@ fastMoLength                = 16
 mediumMoLength              = 32
 slowMoLength                = 64
 
-fastEma                     = fmomentumCal(fastMoLength, 1)
-fastSEma                    = fmomentumCal(fastMoLength, 4)
-mediumEma                   = fmomentumCal(mediumMoLength, 1)
-mediumSEma                  = fmomentumCal(mediumMoLength, 4)
-slowEma                     = fmomentumCal(slowMoLength, 1)
-slowSEma                    = fmomentumCal(slowMoLength, 4)
+fastEma                     = momentumCal(fastMoLength, 1)
+fastSEma                    = momentumCal(fastMoLength, 4)
+mediumEma                   = momentumCal(mediumMoLength, 1)
+mediumSEma                  = momentumCal(mediumMoLength, 4)
+slowEma                     = momentumCal(slowMoLength, 1)
+slowSEma                    = momentumCal(slowMoLength, 4)
 
 //-----------------------------------------------------------------------------}
 //Momentum Forcast Calculation
