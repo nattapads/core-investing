@@ -218,18 +218,9 @@ CappedForcCr                = array.avg(CappedForcCrAr)
 
 //All Forecast Combination
 //-----------------------------------------------------------------------------{
-var float CappedCombForc    = na
-
 CombForc                    = (CappedForcMo * MoProp) + (CappedForcAc * AcProp) + (CappedForcBo * BoProp) + (CappedForcCr * CrProp)
 ScalCombForc                = CombForc * FDM
-
-if ScalCombForc <= -20
-    CappedCombForc          := -20
-else if ScalCombForc > -20 and ScalCombForc < 20
-    CappedCombForc          := ScalCombForc
-else if ScalCombForc >= 20
-    CappedCombForc          := 20 
-
+CappedCombForc              = capforecastMo(ScalCombForc)
 AdjCombForc                 = MarginCal ? CappedCombForc / 10 : CappedCombForc / 20
 
 //-----------------------------------------------------------------------------}
