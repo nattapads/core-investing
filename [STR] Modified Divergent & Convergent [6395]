@@ -11,7 +11,7 @@ inTimeWindow                = time >= startTime
 //-----------------------------------------------------------------------------}
 //Momentum  Settings
 //-----------------------------------------------------------------------------{
-moProp                      = input.float(0.2,      maxval = 0.99, step = 0.1, title = "Momentum Proportion (%)", group="Momentum Settings")
+moProp                      = input.float(0.2,      maxval = 0.99, step = 0.1, title = "Momentum Weight (%)", group="Momentum Settings")
 fastMoScalar                = input.float(4.10,     step = 0.01, title = "EMA 16 Scalar", group = "Momentum Settings")
 mediumMoScalar              = input.float(2.79,     step = 0.01, title = "EMA 32 Scalar", group = "Momentum Settings")
 slowMoScalar                = input.float(1.91,     step = 0.01, title = "EMA 64 Scalar", group = "Momentum Settings")
@@ -20,7 +20,7 @@ zeroLag                     = input(false,          title ="Acceleration-Adjuste
 //-----------------------------------------------------------------------------}
 //Acceleration Settings
 //-----------------------------------------------------------------------------{
-acProp                      = input.float(0.2,      maxval = 0.9, step = 0.1, title = "Acceleration Proportion (%)", group = "Acceleration Settings")
+acProp                      = input.float(0.2,      maxval = 0.9, step = 0.1, title = "Acceleration Weight (%)", group = "Acceleration Settings")
 acFastScalar                = input.float(1.90,     step = 0.01, title = "EMA 16 Acceleration Scalar", group = "Acceleration Settings")
 acMediumScalar              = input.float(1.98,     step = 0.01, title = "EMA 32 Acceleration Scalar", group = "Acceleration Settings")
 acSlowScalar                = input.float(2.05,     step = 0.01, title = "EMA 64 Acceleration Scalar", group = "Acceleration Settings")
@@ -28,7 +28,7 @@ acSlowScalar                = input.float(2.05,     step = 0.01, title = "EMA 64
 //-----------------------------------------------------------------------------}
 //Breakout  Settings
 //-----------------------------------------------------------------------------{
-boProp                      = input.float(0.2,      maxval = 0.9, step = 0.1, title = "Breakout Proportion (%)", group = "Breakout Settings")
+boProp                      = input.float(0.2,      maxval = 0.9, step = 0.1, title = "Breakout Weight (%)", group = "Breakout Settings")
 bo20Scalar                  = input.float(0.67,     step = 0.01, title = "Breakout 20 Scalar", group = "Breakout Settings")
 bo40Scalar                  = input.float(0.70,     step = 0.01, title = "Breakout 40 Scalar", group = "Breakout Settings")
 bo80Scalar                  = input.float(0.73,     step = 0.01, title = "Breakout 80 Scalar", group = "Breakout Settings")
@@ -36,8 +36,8 @@ bo80Scalar                  = input.float(0.73,     step = 0.01, title = "Breako
 //-----------------------------------------------------------------------------}
 //Carry Settings
 //-----------------------------------------------------------------------------{
-crProp                      = input.float(0.4,      maxval = 0.99, step = 0.1, title = "Carry Proportion (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
-expectedDiv                 = input.float(0.03,     maxval = 0.99, step = 0.001, title = "Expected Annualised Return % (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
+crProp                      = input.float(0.4,      maxval = 0.99, step = 0.1, title = "Carry Weight (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
+expectedDiv                 = input.float(0.03,     maxval = 0.99, step = 0.001, title = "Expected Annualised Return (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
 crScalar                    = input.int(30,         step = 1, title = "Carry Scalar", group = "Carry Settings")
 
 //-----------------------------------------------------------------------------}
