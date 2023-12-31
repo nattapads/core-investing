@@ -71,19 +71,19 @@ else
         array.push(percentChange, returnChange)
 
 // Calculate the standard deviation of the percent change
-rawDailyPercentVol          = math.round(array.stdev(percentChange, false), 6)
+dailyPercentVolRecent       = math.round(array.stdev(percentChange, false), 6)
 
 // Calculate 8-year (2000 Records) average of SDs (for Exponential SD only)
 return8Yr                   = array.new_float(0)
 
 if useExpoStd == true
     for i = 0 to 2000
-        array.push(return8Yr, rawDailyPercentVol[i])
+        array.push(return8Yr, dailyPercentVolRecent[i])
 
 dailyPercentVol8Yr          = array.avg(return8Yr)
 
 // Annualising Instrument Risk
-dailyPercentVol             = useExpoStd ? ((0.3 * dailyPercentVol8Yr) + (0.7 * rawDailyPercentVol)) : rawDailyPercentVol
+dailyPercentVol             = useExpoStd ? ((0.3 * dailyPercentVol8Yr) + (0.7 * dailyPercentVolRecent)) : dailyPercentVolRecent
 instRisk                    = math.round((dailyPercentVol * 16), 6)
 dailyPriceVol               = dailyPercentVol * close
 
@@ -180,11 +180,11 @@ capForecastBo(BreakLength, ForecastScalar) =>
     scaledForcBo            = smoothForcBo * ForecastScalar
 
     if scaledForcBo <= -20
-        cappedForcBo             := -20
+        cappedForcBo        := -20
     else if scaledForcBo > -20 and scaledForcBo < 20
-        cappedForcBo             := scaledForcBo
+        cappedForcBo        := scaledForcBo
     else if scaledForcBo >= 20
-        cappedForcBo             := 20 
+        cappedForcBo        := 20 
 
 cappedForcBo20              = capForecastBo(20, bo20Scalar)
 cappedForcBo40              = capForecastBo(40, bo40Scalar)
