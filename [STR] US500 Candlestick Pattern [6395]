@@ -311,14 +311,17 @@ if ta.crossunder(close, ibtm_y) and ibtm_cross and btm_y != ibtm_y and bear_conc
     intTrend            := -1
 
 //-----------------------------------------------------------------------------}
-//Trend Calculation
+//Trend and Trading Session
 //-----------------------------------------------------------------------------{ 
 var trendUp             = false
 
-if trendFast[0] > trendFast[1]
+if trendFast[0] > trendFast[1] 
     trendUp             := true
 else if trendSlow[0] < trendSlow[1]
     trendUp             := false
+
+bullishTrend            = trendFast > trendSlow and intTrend == 1 and isTradingSession and atrOutput > 0
+bearishTrend            = trendFast < trendSlow and intTrend != 1 and isTradingSession and atrOutput > 0
 
 //-----------------------------------------------------------------------------}
 //Bar Colour
@@ -345,126 +348,121 @@ barcolor(trendColour)
 //-----------------------------------------------------------------------------{
 var stoOpenTrade        = false
 
-stoBuy                  = trendFast > trendSlow and ta.crossover(stochasticK, stocBuyTh) and enableStochastic and trendUp == true and intTrend == 1 and isTradingSession and stoOpenTrade == false and atrOutput > 0 
-stoSell                 = trendFast < trendSlow and ta.crossunder(stochasticK, stocSellTh) and enableStochastic and trendUp == false and intTrend != 1 and isTradingSession and stoOpenTrade == false and atrOutput > 0
+stoBuy                  = enableStochastic and ta.crossover(stochasticK, stocBuyTh) and trendUp == true and bullishTrend and stoOpenTrade == false
+stoSell                 = enableStochastic and ta.crossunder(stochasticK, stocSellTh) and trendUp == false and bearishTrend and stoOpenTrade == false
 
 var engOpenTrade        = false
 
-engBuy                  = trendFast > trendSlow and enableEngulfting and bullishEngulfing and trendUp == true and intTrend == 1 and isTradingSession and engOpenTrade == false and atrOutput > 0
-engSell                 = trendFast < trendSlow and enableEngulfting and bearishEngulfing and trendUp == false and intTrend != 1 and isTradingSession and engOpenTrade == false and atrOutput > 0
+engBuy                  = enableEngulfting and bullishEngulfing and trendUp == true and bullishTrend and engOpenTrade == false
+engSell                 = enableEngulfting and bearishEngulfing and trendUp == false and bearishTrend and engOpenTrade == false
 
 var canOpenTrade        = false
 
-canBuy                  = (trendFast > trendSlow and enableStar and morningStar and trendUp == true and intTrend == 1 and isTradingSession and canOpenTrade == false and atrOutput > 0) or (trendFast > trendSlow and enableHarami and bullishHarami and trendUp == true and intTrend == 1 and isTradingSession and canOpenTrade == false and atrOutput > 0) or (trendFast > trendSlow and bottomTweezer and trendUp == true and intTrend == 1 and isTradingSession and canOpenTrade == false and atrOutput > 0)
-canSell                 = (trendFast < trendSlow and enableStar and eveningStar and trendUp == false and intTrend != 1 and isTradingSession and canOpenTrade == false and atrOutput > 0) or (trendFast < trendSlow and enableHarami and bearishHarami and trendUp == false and intTrend != 1 and isTradingSession and canOpenTrade == false and atrOutput > 0) or trendFast < trendSlow and topTweezer and trendUp == false and intTrend != 1 and isTradingSession and canOpenTrade == false and atrOutput > 0
+canBuy                  = (enableStar and morningStar or enableHarami and bullishHarami or enableTweezer and bottomTweezer) and trendUp == true and bullishTrend and canOpenTrade == false
+canSell                 = (enableStar and eveningStar or enableHarami and bearishHarami or enableTweezer and topTweezer) and trendUp == false and bearishTrend and canOpenTrade == false
 
 //-----------------------------------------------------------------------------}
 //Take Profit & Stop Loss
 //-----------------------------------------------------------------------------{ 
-stoTpBuy                = stoBuy ? close + (atrOutput*atrReward) : na
-stoSlBuy                = stoBuy ? low - (atrOutput*atrLoss) : na
-stoTpSell               = stoSell ? close - (atrOutput*atrReward) : na 
-stoSlSell               = stoSell ? high + (atrOutput*atrLoss) : na  
+stoRawTP                = stoBuy ? close + (atrOutput * atrReward) : stoSell ? close - (atrOutput * atrReward) : na
+stoRawSL                = stoBuy ? low - (atrOutput * atrLoss) : stoSell ? high + (atrOutput * atrLoss) : na     
 
-engTpBuy                = engBuy ? close + (atrOutput*atrReward) : na
-engSlBuy                = engBuy ? low - (atrOutput*atrLoss) : na
-engTpSell               = engSell ? close - (atrOutput*atrReward) : na 
-engSlSell               = engSell ? high + (atrOutput*atrLoss) : na 
+engRawTP                = engBuy ? close + (atrOutput * atrReward) : engSell ? close - (atrOutput * atrReward) : na
+engRawSL                = engBuy ? low - (atrOutput * atrLoss) : engSell ? high + (atrOutput * atrLoss) : na     
 
-canTpBuy                = canBuy ? close + (atrOutput*atrReward) : na
-canSlBuy                = canBuy ? low - (atrOutput*atrLoss) : na
-canTpSell               = canSell ? close - (atrOutput*atrReward) : na 
-canSlSell               = canSell ? high + (atrOutput*atrLoss) : na 
+canRawTP                = canBuy ? close + (atrOutput * atrReward) : canSell ? close - (atrOutput * atrReward) : na
+canRawSL                = canBuy ? low - (atrOutput * atrLoss) : canSell ? high + (atrOutput * atrLoss) : na   
 
 //-----------------------------------------------------------------------------}
 //Lot Settings
 //-----------------------------------------------------------------------------{ 
-initialLot                  = input.float(0.1,      "Initial Lot",          minval=0.1, step=0.1, group = 'Account & Trade')
-drawDown                    = input.float(1.5,      "Drawdown Multiplier",  minval=0.1, step=0.1, group = 'Account & Trade')
+initialLot              = input.float(0.1,      "Initial Lot",          minval=0.1, step=0.1, group = 'Account & Trade')
+drawDown                = input.float(1.5,      "Drawdown Multiplier",  minval=0.1, step=0.1, group = 'Account & Trade')
 
 // Calculate diff and recommended lot size for different risk percentages
-var float stoCalTakePofit   = 0
-var float stoCalStopLoss    = 0
-var float engCalTakePofit   = 0
-var float engCalStopLoss    = 0
-var float canCalTakePofit   = 0
-var float canCalcanpLoss    = 0
+var float stoSlipTP     = 0
+var float stoSlipSL     = 0
+var float engSlipTP     = 0
+var float engSlipSL     = 0
+var float canSlipTP     = 0
+var float canSlipSL     = 0
 
 // Recent Loss
-var stoRecLot               = math.round(initialLot,1)
-var engRecLot               = math.round(initialLot,1)
-var canRecLot               = math.round(initialLot,1)
+var stoRecLot           = math.round(initialLot,1)
+var engRecLot           = math.round(initialLot,1)
+var canRecLot           = math.round(initialLot,1)
+
+// Consolidated Open Trade Conditions
+stoInitCond             = stoOpenTrade == false
+engInitCond             = engOpenTrade == false
+canInitCond             = canOpenTrade == false
+
+stoOpenCond             = stoOpenTrade == true
+engOpenCond             = engOpenTrade == true
+canOpenCond             = canOpenTrade == true
+
+stoCond                 = (stoBuy and stoInitCond) or (stoSell and stoInitCond)
+engCond                 = (engBuy and engInitCond) or (engSell and engInitCond)
+canCond                 = (canBuy and canInitCond) or (canSell and canInitCond)
 
 // Update TP & SL
-if stoBuy and stoOpenTrade == false
-    stoCalTakePofit         := math.round((stoTpBuy + slippageBuffer),2)
-    stoCalStopLoss          := math.round((stoSlBuy + slippageBuffer),2)
-    stoOpenTrade            := true
-else if stoSell and stoOpenTrade == false
-    stoCalTakePofit         := math.round((stoTpSell - slippageBuffer),2)
-    stoCalStopLoss          := math.round((stoSlSell - slippageBuffer),2)
-    stoOpenTrade            := true
-else if engBuy and engOpenTrade == false
-    engCalTakePofit         := math.round((engTpBuy + slippageBuffer),2)
-    engCalStopLoss          := math.round((engSlBuy + slippageBuffer),2)
-    engOpenTrade            := true
-else if engSell and engOpenTrade == false
-    engCalTakePofit         := math.round((engTpSell - slippageBuffer),2)
-    engCalStopLoss          := math.round((engSlSell - slippageBuffer),2)
-    engOpenTrade            := true
-else if canBuy and canOpenTrade == false
-    canCalTakePofit         := math.round((canTpBuy + slippageBuffer),2)
-    canCalcanpLoss          := math.round((canSlBuy + slippageBuffer),2)
-    canOpenTrade            := true
-else if canSell and canOpenTrade == false
-    canCalTakePofit         := math.round((canTpSell - slippageBuffer),2)
-    canCalcanpLoss          := math.round((canSlSell - slippageBuffer),2)
-    canOpenTrade            := true
+if stoCond
+    stoSlipTP           := stoBuy ? math.round((stoRawTP + slippageBuffer), 2) : math.round((stoRawTP - slippageBuffer), 2)
+    stoSlipSL           := stoBuy ? math.round((stoRawSL + slippageBuffer), 2) : math.round((stoRawSL - slippageBuffer), 2)
+    stoOpenTrade        := true
+else if engCond
+    engSlipTP           := engBuy ? math.round((engRawTP + slippageBuffer), 2) : math.round((engRawTP - slippageBuffer), 2)
+    engSlipSL           := engBuy ? math.round((engRawSL + slippageBuffer), 2) : math.round((engRawSL - slippageBuffer), 2)
+    engOpenTrade        := true
+else if canCond
+    canSlipTP           := canBuy ? math.round((canRawTP + slippageBuffer), 2) : math.round((canRawTP - slippageBuffer), 2)
+    canSlipSL           := canBuy ? math.round((canRawSL + slippageBuffer), 2) : math.round((canRawSL - slippageBuffer), 2)
+    canOpenTrade        := true
 
 // Reach SL
-if stoCalTakePofit > stoCalStopLoss and ta.crossunder(low, stoCalStopLoss) and stoOpenTrade == true
-    stoOpenTrade            := false
-    stoRecLot               := math.round(stoRecLot * drawDown,1)
-else if stoCalTakePofit < stoCalStopLoss and ta.crossover(high, stoCalStopLoss) and stoOpenTrade == true
-    stoOpenTrade            := false
-    stoRecLot               := math.round(stoRecLot * drawDown,1)
-else if stoCalTakePofit > stoCalStopLoss and ta.crossover(high, stoCalTakePofit) and stoOpenTrade == true
-    stoOpenTrade            := false
-    stoRecLot               := math.round(initialLot,1)
-else if stoCalTakePofit < stoCalStopLoss and ta.crossunder(low, stoCalTakePofit) and stoOpenTrade == true
-    stoOpenTrade            := false
-    stoRecLot               := math.round(initialLot,1)
-else if engCalTakePofit > engCalStopLoss and ta.crossunder(low, engCalStopLoss) and engOpenTrade == true
-    engOpenTrade            := false
-    engRecLot               := math.round(engRecLot * drawDown,1)
-else if engCalTakePofit < engCalStopLoss and ta.crossover(high, engCalStopLoss) and engOpenTrade == true
-    engOpenTrade            := false
-    engRecLot               := math.round(engRecLot * drawDown,1)
-else if engCalTakePofit > engCalStopLoss and ta.crossover(high, engCalTakePofit) and engOpenTrade == true
-    engOpenTrade            := false
-    engRecLot               := math.round(initialLot,1)
-else if engCalTakePofit < engCalStopLoss and ta.crossunder(low, engCalTakePofit) and engOpenTrade == true
-    engOpenTrade            := false
-    engRecLot               := math.round(initialLot,1)
-else if canCalTakePofit > canCalcanpLoss and ta.crossunder(low, canCalcanpLoss) and canOpenTrade == true
-    canOpenTrade            := false
-    canRecLot               := math.round(canRecLot * drawDown,1)
-else if canCalTakePofit < canCalcanpLoss and ta.crossover(high, canCalcanpLoss) and canOpenTrade == true
-    canOpenTrade            := false
-    canRecLot               := math.round(canRecLot * drawDown,1)
-else if canCalTakePofit > canCalcanpLoss and ta.crossover(high, canCalTakePofit) and canOpenTrade == true
-    canOpenTrade            := false
-    canRecLot               := math.round(initialLot,1)
-else if canCalTakePofit < canCalcanpLoss and ta.crossunder(low, canCalTakePofit) and canOpenTrade == true
-    canOpenTrade            := false
-    canRecLot               := math.round(initialLot,1)
+if stoSlipTP > stoSlipSL and ta.crossunder(low, stoSlipSL) and stoOpenCond
+    stoOpenTrade        := false
+    stoRecLot           := math.round(stoRecLot * drawDown,1)
+else if stoSlipTP < stoSlipSL and ta.crossover(high, stoSlipSL) and stoOpenCond
+    stoOpenTrade        := false
+    stoRecLot           := math.round(stoRecLot * drawDown,1)
+else if stoSlipTP > stoSlipSL and ta.crossover(high, stoSlipTP) and stoOpenCond
+    stoOpenTrade        := false
+    stoRecLot           := math.round(initialLot,1)
+else if stoSlipTP < stoSlipSL and ta.crossunder(low, stoSlipTP) and stoOpenCond
+    stoOpenTrade        := false
+    stoRecLot           := math.round(initialLot,1)
+else if engSlipTP > engSlipSL and ta.crossunder(low, engSlipSL) and engOpenCond
+    engOpenTrade        := false
+    engRecLot           := math.round(engRecLot * drawDown,1)
+else if engSlipTP < engSlipSL and ta.crossover(high, engSlipSL) and engOpenCond
+    engOpenTrade        := false
+    engRecLot           := math.round(engRecLot * drawDown,1)
+else if engSlipTP > engSlipSL and ta.crossover(high, engSlipTP) and engOpenCond
+    engOpenTrade        := false
+    engRecLot           := math.round(initialLot,1)
+else if engSlipTP < engSlipSL and ta.crossunder(low, engSlipTP) and engOpenCond
+    engOpenTrade        := false
+    engRecLot           := math.round(initialLot,1)
+else if canSlipTP > canSlipSL and ta.crossunder(low, canSlipSL) and canOpenCond
+    canOpenTrade        := false
+    canRecLot           := math.round(canRecLot * drawDown,1)
+else if canSlipTP < canSlipSL and ta.crossover(high, canSlipSL) and canOpenCond
+    canOpenTrade        := false
+    canRecLot           := math.round(canRecLot * drawDown,1)
+else if canSlipTP > canSlipSL and ta.crossover(high, canSlipTP) and canOpenCond
+    canOpenTrade        := false
+    canRecLot           := math.round(initialLot,1)
+else if canSlipTP < canSlipSL and ta.crossunder(low, canSlipTP) and canOpenCond
+    canOpenTrade        := false
+    canRecLot           := math.round(initialLot,1)
 
 //-----------------------------------------------------------------------------}
 //TP & SL Plot
 //-----------------------------------------------------------------------------{
-showTpSl                    = input(true, "Show TP/SL",     group = "ATR Settings")
-slColour                    = showTpSl ? color.rgb(242, 54, 70) : color.rgb(242, 54, 70, 100)
-tpColour                    = showTpSl ? color.rgb(8, 153, 129) : color.rgb(8, 153, 129, 100)
+showTpSl                = input(true, "Show TP/SL",     group = "ATR Settings")
+slColour                = showTpSl ? color.rgb(242, 54, 70) : color.rgb(242, 54, 70, 100)
+tpColour                = showTpSl ? color.rgb(8, 153, 129) : color.rgb(8, 153, 129, 100)
 
 //-----------------------------------------------------------------------------}
 //Plot
@@ -472,71 +470,43 @@ tpColour                    = showTpSl ? color.rgb(8, 153, 129) : color.rgb(8, 1
 plotshape(stoBuy, title='Buy', text="S▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
 plotshape(stoSell, title='Sell', text="S▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
 
-plot(stoSlBuy, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
-plot(stoTpBuy, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
+plot(stoRawSL, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
+plot(stoRawTP, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
 
-plot(stoSlSell, color=slColour, title='Sell Stop Loss', linewidth=2, style=plot.style_cross)
-plot(stoTpSell, color=tpColour, title='Sell Take Profit', linewidth=2, style=plot.style_cross)
+plot(stoRawSL, color=slColour, title='Sell Stop Loss', linewidth=2, style=plot.style_cross)
+plot(stoRawTP, color=tpColour, title='Sell Take Profit', linewidth=2, style=plot.style_cross)
 
 plotshape(engBuy, title='Buy', text="E▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
 plotshape(engSell, title='Sell', text="E▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
 
-plot(engSlBuy, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
-plot(engTpBuy, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
+plot(engRawSL, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
+plot(engRawTP, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
 
-plot(engSlSell, color=slColour, title='Sell Stop Loss', linewidth=2, style=plot.style_cross)
-plot(engTpSell, color=tpColour, title='Sell Take Profit', linewidth=2, style=plot.style_cross)
+plot(engRawSL, color=slColour, title='Sell Stop Loss', linewidth=2, style=plot.style_cross)
+plot(engRawTP, color=tpColour, title='Sell Take Profit', linewidth=2, style=plot.style_cross)
 
 plotshape(canBuy, title='Buy', text="C▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
 plotshape(canSell, title='Sell', text="C▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
 
-plot(canSlBuy, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
-plot(canTpBuy, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
+plot(canRawSL, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
+plot(canRawTP, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
 
-plot(canSlSell, color=slColour, title='Sell Stop Loss', linewidth=2, style=plot.style_cross)
-plot(canTpSell, color=tpColour, title='Sell Take Profit', linewidth=2, style=plot.style_cross)
+plot(canRawSL, color=slColour, title='Sell Stop Loss', linewidth=2, style=plot.style_cross)
+plot(canRawTP, color=tpColour, title='Sell Take Profit', linewidth=2, style=plot.style_cross)
 
 //-----------------------------------------------------------------------------}
 //Strategy
 //-----------------------------------------------------------------------------{ 
-var float stoStopLoss   = na
-var float stoTakeProfit = na
-var float engStopLoss   = na
-var float engTakeProfit = na
-var float canStopLoss   = na
-var float canTakeProfit = na
-
 if inTimeWindow
-    if stoBuy
-        stoStopLoss     := low - (atrOutput * atrLoss) + slippageBuffer
-        stoTakeProfit   := close + (atrOutput * atrReward) + slippageBuffer
-        strategy.entry("stoL", strategy.long, qty = stoRecLot)
-        strategy.exit("stoExL", "stoL", stop = stoStopLoss, limit = stoTakeProfit)
-    else if stoSell
-        stoStopLoss     := high + (atrOutput * atrLoss) - slippageBuffer
-        stoTakeProfit   := close - (atrOutput * atrReward) - slippageBuffer
-        strategy.entry("stoS", strategy.short, qty = stoRecLot)
-        strategy.exit("stoExS", "stoS", stop = stoStopLoss, limit = stoTakeProfit)
-    else if engBuy
-        engStopLoss     := low - (atrOutput * atrLoss) + slippageBuffer
-        engTakeProfit   := close + (atrOutput * atrReward) + slippageBuffer
-        strategy.entry("engL", strategy.long, qty = engRecLot)
-        strategy.exit("engExL", "engL", stop = engStopLoss, limit = engTakeProfit)
-    else if engSell
-        engStopLoss     := high + (atrOutput * atrLoss) - slippageBuffer
-        engTakeProfit   := close - (atrOutput * atrReward) - slippageBuffer
-        strategy.entry("engS", strategy.short, qty = engRecLot)
-        strategy.exit("engExS", "engS", stop = engStopLoss, limit = engTakeProfit)
-    else if canBuy
-        canStopLoss     := low - (atrOutput * atrLoss) + slippageBuffer
-        canTakeProfit   := close + (atrOutput * atrReward) + slippageBuffer
-        strategy.entry("canL", strategy.long, qty = canRecLot)
-        strategy.exit("canExL", "canL", stop = canStopLoss, limit = canTakeProfit)
-    else if canSell
-        canStopLoss     := high + (atrOutput * atrLoss) - slippageBuffer
-        canTakeProfit   := close - (atrOutput * atrReward) - slippageBuffer
-        strategy.entry("canS", strategy.short, qty = canRecLot)
-        strategy.exit("canExS", "canS", stop = canStopLoss, limit = canTakeProfit)
+    if stoBuy or stoSell
+        strategy.entry("sto", stoBuy ? strategy.long : strategy.short, qty = stoRecLot)
+        strategy.exit("stoEx", "sto", stop = stoSlipSL, limit = stoSlipTP)
+    else if engBuy or engSell
+        strategy.entry("eng", engBuy ? strategy.long : strategy.short, qty = engRecLot)
+        strategy.exit("engEx", "eng", stop = engSlipSL, limit = engSlipTP)
+    else if canBuy or canSell
+        strategy.entry("can", canBuy ? strategy.long : strategy.short, qty = canRecLot)
+        strategy.exit("canEx", "can", stop = canSlipSL, limit = canSlipTP)
     
 // Calculate net profit and percentage profitable
 strNetProfit            = strategy.netprofit
@@ -544,14 +514,14 @@ strPercentProfitable    = math.round(strategy.wintrades / (strategy.wintrades + 
 strProfitFactor         = strategy.grossprofit / strategy.grossloss
     
 bgDarkColour            = color.rgb(0, 0, 0, 30)
-bgLightColour            = color.rgb(0, 0, 0, 20)
+bgLightColour           = color.rgb(0, 0, 0, 20)
     
 if strNetProfit > 0
     bgDarkColour        := color.rgb(8, 153, 129)
-    bgLightColour        := color.rgb(8, 153, 129, 20)
+    bgLightColour       := color.rgb(8, 153, 129, 20)
 else
     bgDarkColour        := color.rgb(242, 54, 69)
-    bgLightColour        := color.rgb(242, 54, 69, 20)
+    bgLightColour       := color.rgb(242, 54, 69, 20)
 
 stoPositionBg           = color.rgb(255, 255, 255, 90)
 engPositionBg           = color.rgb(255, 255, 255, 90)
@@ -588,15 +558,11 @@ table.cell(table_data, 0, 7, str.format("{0}", math.abs(canRecLot)), bgcolor = c
 //-----------------------------------------------------------------------------}
 //Alert
 //-----------------------------------------------------------------------------{
-if stoBuy
-    alert("US500 Buy lot "+str.tostring(math.round(stoRecLot,1))+" slprice "+str.tostring(math.round(stoSlBuy,1))+", tpprice "+str.tostring(math.round(stoTpBuy,1))+"", alert.freq_once_per_bar_close)
-else if stoSell
-    alert("US500 Sell lot "+str.tostring(math.round(stoRecLot,1))+" slprice "+str.tostring(math.round(stoSlSell,1))+", tpprice "+str.tostring(math.round(stoTpSell,1))+"", alert.freq_once_per_bar_close)
-else if engBuy
-    alert("US500 Buy lot "+str.tostring(math.round(engRecLot,1))+" slprice "+str.tostring(math.round(engSlBuy,1))+", tpprice "+str.tostring(math.round(engTpBuy,1))+"", alert.freq_once_per_bar_close)
-else if engSell
-    alert("US500 Sell lot "+str.tostring(math.round(engRecLot,1))+" slprice "+str.tostring(math.round(engSlSell,1))+", tpprice "+str.tostring(math.round(engTpSell,1))+"", alert.freq_once_per_bar_close)
-else if canBuy
-    alert("US500 Buy lot "+str.tostring(math.round(canRecLot,1))+" slprice "+str.tostring(math.round(canSlBuy,1))+", tpprice "+str.tostring(math.round(canTpBuy,1))+"", alert.freq_once_per_bar_close)
-else if canSell
-    alert("US500 Sell lot "+str.tostring(math.round(canRecLot,1))+" slprice "+str.tostring(math.round(canSlSell,1))+", tpprice "+str.tostring(math.round(canTpSell,1))+"", alert.freq_once_per_bar_close)
+if stoBuy or stoSell
+    alert("US500 " + (stoBuy ? "Buy" : "Sell") + " lot " + str.tostring(math.round(stoRecLot, 1)) + " slprice " + str.tostring(math.round(stoRawSL, 1)) + ", tpprice " + str.tostring(math.round(stoRawTP, 1)), alert.freq_once_per_bar_close)
+
+if engBuy or engSell
+    alert("US500 " + (engBuy ? "Buy" : "Sell") + " lot " + str.tostring(math.round(engRecLot, 1)) + " slprice " + str.tostring(math.round(engRawSL, 1)) + ", tpprice " + str.tostring(math.round(engRawTP, 1)), alert.freq_once_per_bar_close)
+
+if canBuy or canSell
+    alert("US500 " + (canBuy ? "Buy" : "Sell") + " lot " + str.tostring(math.round(canRecLot, 1)) + " slprice " + str.tostring(math.round(canRawSL, 1)) + ", tpprice " + str.tostring(math.round(canRawTP, 1)), alert.freq_once_per_bar_close)
