@@ -1,6 +1,6 @@
 //NSal
 //@version=5
-strategy("[STR] US500 RSI Divergence & Candlestick [6395]", overlay = true, margin_long = 100, margin_short = 100, pyramiding = 3, risk_free_rate = 0)
+strategy("[STR] US500 RSI Divergence & Candlestick [6395]", overlay = true, margin_long = 0.5, margin_short = 0.5, pyramiding = 3, risk_free_rate = 0)
 
 //------------------------------------------------------------------------------
 //Strategy Settings
@@ -33,7 +33,7 @@ stocSellTh              = input.int(75,         'Sell Threshold',       minval=1
 //-----------------------------------------------------------------------------}
 //Engulfing Settings
 //-----------------------------------------------------------------------------{
-enableEngulfting        = input(true,           'Enable Engulfing',     group="Engulfing Settings")
+enableEngulfting        = input(false,          'Enable Engulfing',     group="Engulfing Settings")
 
 //-----------------------------------------------------------------------------}
 //Morning & Evening Settings
@@ -70,7 +70,7 @@ atrLength               = input(14,             'ATR Length',           group="A
 atrMultiplier           = input(3.10,           'Multiplier',           group="ATR Settings")
 atrReward               = input(1.50,           'Reward Multiplier',    group="ATR Settings")
 atrLoss                 = input(1.00,           'Loss Multiplier',      group="ATR Settings")
-slippageBuffer          = input(0.5,            'slippageBuffer',       group="ATR Settings")
+slippageBuffer          = input(0.5,            'Slippage',             group="ATR Settings")
 atrOutput               = ta.atr(atrLength)*atrMultiplier
 
 //-----------------------------------------------------------------------------{
@@ -95,34 +95,34 @@ sesUseExchange          = input(false, 'Use Exchange Timezone', group = 'Session
 //-----------------------------------------------------------------------------}
 //RSI Calculation
 //-----------------------------------------------------------------------------{
-osc = ta.rsi(rsiSrc, rsiLen)
+osc                     = ta.rsi(rsiSrc, rsiLen)
 
-plFound = na(ta.pivotlow(osc, lbL, lbR)) ? false : true
-phFound = na(ta.pivothigh(osc, lbL, lbR)) ? false : true
+plFound                 = na(ta.pivotlow(osc, lbL, lbR)) ? false : true
+phFound                 = na(ta.pivothigh(osc, lbL, lbR)) ? false : true
 
 _inRange(cond) =>
-    bars = ta.barssince(cond == true)
-    rangeLower <= bars and bars <= rangeUpper
+    bars        = ta.barssince(cond == true)
+    rangeLower  <= bars and bars <= rangeUpper
 
 // Regular Bullish
-oscHL = osc[lbR] > ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
-priceLL = low[lbR] < ta.valuewhen(plFound, low[lbR], 1)
-bullCond = priceLL and oscHL and plFound
+oscHL                   = osc[lbR] > ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
+priceLL                 = low[lbR] < ta.valuewhen(plFound, low[lbR], 1)
+bullCond                = priceLL and oscHL and plFound
 
 // Regular Bearish
-oscLH = osc[lbR] < ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
-priceHH = high[lbR] > ta.valuewhen(phFound, high[lbR], 1)
-bearCond = priceHH and oscLH and phFound
+oscLH                   = osc[lbR] < ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
+priceHH                 = high[lbR] > ta.valuewhen(phFound, high[lbR], 1)
+bearCond                = priceHH and oscLH and phFound
 
 // Hidden Bullish
-oscLL = osc[lbR] < ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
-priceHL = low[lbR] > ta.valuewhen(plFound, low[lbR], 1)
-hiddenBullCond = priceHL and oscLL and plFound
+oscLL                   = osc[lbR] < ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
+priceHL                 = low[lbR] > ta.valuewhen(plFound, low[lbR], 1)
+hiddenBullCond          = priceHL and oscLL and plFound
 
 // Hidden Bearish
-oscHH = osc[lbR] > ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
-priceLH = high[lbR] < ta.valuewhen(phFound, high[lbR], 1)
-hiddenBearCond = priceLH and oscHH and phFound
+oscHH                   = osc[lbR] > ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
+priceLH                 = high[lbR] < ta.valuewhen(phFound, high[lbR], 1)
+hiddenBearCond          = priceLH and oscHH and phFound
 
 rsiBuyCon               = (enableRegular ? bullCond : false) or (enableHidden ? hiddenBullCond : false)
 rsiSellCon              = (enableRegular ? bearCond : false) or (enableHidden ? hiddenBearCond : false)
@@ -378,13 +378,13 @@ var bullColour          = #089981
 var bearColour          = #f23645
 
 if intTrend == 1 and trendUp == true and isTradingSession
-    trendColour         :=  bullColour
+    trendColour         := bullColour
 else if intTrend != 1 and trendUp == false and isTradingSession
-    trendColour         :=  bearColour
+    trendColour         := bearColour
 else if intTrend == 1 and trendUp == false and isTradingSession
-    trendColour         :=  color.rgb(8, 153, 129, 50)
+    trendColour         := color.rgb(8, 153, 129, 50)
 else if intTrend != 1 and trendUp == true and isTradingSession
-    trendColour         :=  color.rgb(242, 54, 70, 50)
+    trendColour         := color.rgb(242, 54, 70, 50)
 else
     trendColour         := color.rgb(120, 123, 134, 65)
 
@@ -446,8 +446,8 @@ var float canSlipSL     = 0
 
 // Recent Loss
 var rsiRecLot           = math.round(initialLot,1)
-var stoRecLot           = math.round(initialLot,1)
-var engRecLot           = math.round(initialLot,1)
+var stoRecLot           = enableStochastic ? math.round(initialLot,1) : 0.0
+var engRecLot           = enableEngulfting ? math.round(initialLot,1) : 0.0
 var canRecLot           = math.round(initialLot,1)
 
 // Consolidated Open Trade Conditions
@@ -544,29 +544,29 @@ tpColour                = showTpSl ? color.rgb(8, 153, 129) : color.rgb(8, 153, 
 //-----------------------------------------------------------------------------}
 //Plot
 //-----------------------------------------------------------------------------{
-plotshape(rsiBuy, title='Buy', text="R▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
-plotshape(rsiSell, title='Sell', text="R▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
+plotshape(rsiBuy, title='RSI Buy', text="R▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(rsiSell, title='RSI Sell', text="R▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
 
-plot(rsiRawSL, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
-plot(rsiRawTP, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
+plot(rsiRawSL, color=slColour, title='RSI Stop Loss', linewidth=2, style=plot.style_cross)
+plot(rsiRawTP, color=tpColour, title='RSI Take Profit', linewidth=2, style=plot.style_cross)
 
-plotshape(stoBuy, title='Buy', text="S▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
-plotshape(stoSell, title='Sell', text="S▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
+plotshape(stoBuy, title='STO Buy', text="S▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(stoSell, title='STO Sell', text="S▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
 
-plot(stoRawSL, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
-plot(stoRawTP, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
+plot(stoRawSL, color=slColour, title='STO Stop Loss', linewidth=2, style=plot.style_cross)
+plot(stoRawTP, color=tpColour, title='STO Take Profit', linewidth=2, style=plot.style_cross)
 
-plotshape(engBuy, title='Buy', text="E▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
-plotshape(engSell, title='Sell', text="E▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
+plotshape(engBuy, title='ENG Buy', text="E▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(engSell, title='ENG Sell', text="E▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
 
-plot(engRawSL, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
-plot(engRawTP, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
+plot(engRawSL, color=slColour, title='ENG Stop Loss', linewidth=2, style=plot.style_cross)
+plot(engRawTP, color=tpColour, title='ENG Take Profit', linewidth=2, style=plot.style_cross)
 
-plotshape(canBuy, title='Buy', text="C▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
-plotshape(canSell, title='Sell', text="C▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
+plotshape(canBuy, title='CAN Buy', text="C▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(canSell, title='CAN Sell', text="C▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
 
-plot(canRawSL, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
-plot(canRawTP, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
+plot(canRawSL, color=slColour, title='CAN Stop Loss', linewidth=2, style=plot.style_cross)
+plot(canRawTP, color=tpColour, title='CAN Take Profit', linewidth=2, style=plot.style_cross)
 
 //-----------------------------------------------------------------------------}
 //Strategy
