@@ -48,6 +48,8 @@ expoStdLength               = input.int(32,         title = "Exponential SD Leng
 targetRisk                  = input.float(0.23,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings", tooltip = "23% is recommended for trading less than 3 instruments")
 deviationChange             = input.float(0.1,      maxval = 1, step = 0.1, title = "Change Sensitivity (%)", group="Risk Settings", tooltip = "Higher sensitivity causes less frequent trades, and lower trading costs")
 forcastDiverMuliplier       = input.float(1.38,     step = 0.01, title = "Forecast Diversification Multiplier", group = "Risk Settings")
+upperForeCap                = input.int(20,         title = "Upper Forecast Cap", group="Risk Settings")
+lowerForeCap                = input.int(-20,        title = "Lower Forecast Cap", group="Risk Settings")
 riskFree                    = input.float(0.01,     step = 0.01, title = "Risk-free Rate (%)", group = "Risk Settings")
 useExpoStd                  = input(true,           title = "Use Exponential Standard Deviation", group="Risk Settings")
 useMarginAcc                = input(false,          title = "Margin Account", group="Risk Settings")
@@ -130,12 +132,12 @@ scaledForcS                 = scalForecastMo(slowEma, slowSEma, dailyPriceVol, s
 capForecastMo(scaledForc) =>
     var float cappedForcMo  = na
 
-    if scaledForc <= -20
-        cappedForcMo        := -20
-    else if scaledForc > -20 and scaledForc < 20
+    if scaledForc <= lowerForeCap
+        cappedForcMo        := lowerForeCap
+    else if scaledForc > lowerForeCap and scaledForc < upperForeCap
         cappedForcMo        := scaledForc
-    else if scaledForc >= 20
-        cappedForcMo        := 20
+    else if scaledForc >= upperForeCap
+        cappedForcMo        := upperForeCap
 
 cappedForcF                 = capForecastMo(scaledForcF)
 cappedForcM                 = capForecastMo(scaledForcM)
@@ -152,12 +154,12 @@ capForecastAc(fastEma, scaledForc, forecastAcScalar) =>
     forcAc                  = scaledForc - scaledForc[fastEma]
     scaledForcAc            = forcAc * forecastAcScalar
 
-    if scaledForcAc <= -20
-        cappedForcAc        := -20
-    else if scaledForcAc > -20 and scaledForcAc < 20
+    if scaledForcAc <= lowerForeCap
+        cappedForcAc        := lowerForeCap
+    else if scaledForcAc > lowerForeCap and scaledForcAc < upperForeCap
         cappedForcAc        := scaledForcAc
-    else if scaledForcAc >= 20
-        cappedForcAc        := 20
+    else if scaledForcAc >= upperForeCap
+        cappedForcAc        := upperForeCap
 
 cappedForcFAc               = capForecastAc(fastMoLength, scaledForcF, acFastScalar)
 cappedForcMAc               = capForecastAc(mediumMoLength, scaledForcM, acMediumScalar)
@@ -179,12 +181,12 @@ capForecastBo(BreakLength, ForecastScalar) =>
     smoothForcBo            = ta.ema(BoForc, smoothLength)
     scaledForcBo            = smoothForcBo * ForecastScalar
 
-    if scaledForcBo <= -20
-        cappedForcBo        := -20
-    else if scaledForcBo > -20 and scaledForcBo < 20
+    if scaledForcBo <= lowerForeCap
+        cappedForcBo        := lowerForeCap
+    else if scaledForcBo > lowerForeCap and scaledForcBo < upperForeCap
         cappedForcBo        := scaledForcBo
-    else if scaledForcBo >= 20
-        cappedForcBo        := 20 
+    else if scaledForcBo >= upperForeCap
+        cappedForcBo        := upperForeCap 
 
 cappedForcBo20              = capForecastBo(20, bo20Scalar)
 cappedForcBo40              = capForecastBo(40, bo40Scalar)
@@ -201,12 +203,12 @@ capForecastCr(expectedDiv, smoothLength, instRisk, ForecastScalar) =>
     CrForc                  = expectedDiv * ForecastScalar / instRisk
     scaledForcCr            = ta.ema(CrForc, smoothLength)
 
-    if scaledForcCr <= -20
-        cappedForcCr        := -20
-    else if scaledForcCr > -20 and scaledForcCr < 20
+    if scaledForcCr <= lowerForeCap
+        cappedForcCr        := lowerForeCap
+    else if scaledForcCr > lowerForeCap and scaledForcCr < upperForeCap
         cappedForcCr        := scaledForcCr
-    else if scaledForcCr >= 20
-        cappedForcCr        := 20 
+    else if scaledForcCr >= upperForeCap
+        cappedForcCr        := upperForeCap 
 
 cappedForcCr20              = capForecastCr(expectedDiv, 20, instRisk, crScalar)
 cappedForcCr60              = capForecastCr(expectedDiv, 60, instRisk, crScalar)
@@ -228,14 +230,14 @@ var float cappedCombForc    = na
 combForc                    = (cappedForcMo * moProp) + (cappedForcAc * acProp) + (cappedForcBo * boProp) + (cappedForcCr * crProp)
 scalCombForc                = combForc * forcastDiverMuliplier
 
-if scalCombForc <= -20
-    cappedCombForc          := -20
-else if scalCombForc > -20 and scalCombForc < 20
+if scalCombForc <= lowerForeCap
+    cappedCombForc          := lowerForeCap
+else if scalCombForc > lowerForeCap and scalCombForc < upperForeCap
     cappedCombForc          := scalCombForc
-else if scalCombForc >= 20
-    cappedCombForc          := 20 
+else if scalCombForc >= upperForeCap
+    cappedCombForc          := upperForeCap 
 
-adjCombForc                 = useMarginAcc ? cappedCombForc / 10 : cappedCombForc / 20
+adjCombForc                 = cappedCombForc / 10
 
 //-----------------------------------------------------------------------------}
 //Notional Exposure & Risk-Adjusted Position
