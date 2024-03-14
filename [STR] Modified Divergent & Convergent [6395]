@@ -263,7 +263,7 @@ maxPositionSize             = maxCapital / close
 buyQty                      = math.abs(math.round(lowerBuffer - currentSize, 0))
 adjBuyQty                   = math.abs(math.round(currentSize - upperBuffer, 0))
 
-Buy                         = useMarginAcc ? optimalPosition > 0 and optimalPosition > currentSize and currentSize < lowerBuffer and buyQty >= 1 and maxPositionSize >= 1 : optimalPosition > 0 and optimalPosition > currentSize and currentSize < lowerBuffer and buyQty >= 1 and strategy.equity > (optimalPosition * close)
+Buy                         = useMarginAcc ? optimalPosition > 0 and optimalPosition > currentSize and currentSize < lowerBuffer and buyQty >= 1 and maxPositionSize >= 1 : optimalPosition > 0 and currentSize < lowerBuffer and buyQty >= 1 and strategy.equity > ((currentSize + buyQty) * close)
 adjustBuy                   = currentSize > 0 and currentSize > upperBuffer and adjBuyQty >= 1
 
 //Current Proportion
