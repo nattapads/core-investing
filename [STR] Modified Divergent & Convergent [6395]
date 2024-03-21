@@ -11,7 +11,8 @@ inTimeWindow                = time >= startTime
 //-----------------------------------------------------------------------------}
 //Momentum  Settings
 //-----------------------------------------------------------------------------{
-moProp                      = input.float(0.2,      maxval = 0.99, step = 0.1, title = "Momentum Weight (%)", group="Momentum Settings")
+moProp                      = input.float(0.20,     maxval = 1.00, step = 0.1, title = "Momentum Weight (%)", group="Momentum Settings")
+rapidMoScalar               = input.float(5.95,     step = 0.01, title = "EMA 8 Scalar", group = "Momentum Settings")
 fastMoScalar                = input.float(4.10,     step = 0.01, title = "EMA 16 Scalar", group = "Momentum Settings")
 mediumMoScalar              = input.float(2.79,     step = 0.01, title = "EMA 32 Scalar", group = "Momentum Settings")
 slowMoScalar                = input.float(1.91,     step = 0.01, title = "EMA 64 Scalar", group = "Momentum Settings")
@@ -20,7 +21,7 @@ zeroLag                     = input(false,          title ="Acceleration-Adjuste
 //-----------------------------------------------------------------------------}
 //Acceleration Settings
 //-----------------------------------------------------------------------------{
-acProp                      = input.float(0.2,      maxval = 0.9, step = 0.1, title = "Acceleration Weight (%)", group = "Acceleration Settings")
+acProp                      = input.float(0.20,     maxval = 1.00, step = 0.1, title = "Acceleration Weight (%)", group = "Acceleration Settings")
 acFastScalar                = input.float(1.90,     step = 0.01, title = "EMA 16 Acceleration Scalar", group = "Acceleration Settings")
 acMediumScalar              = input.float(1.98,     step = 0.01, title = "EMA 32 Acceleration Scalar", group = "Acceleration Settings")
 acSlowScalar                = input.float(2.05,     step = 0.01, title = "EMA 64 Acceleration Scalar", group = "Acceleration Settings")
@@ -28,7 +29,7 @@ acSlowScalar                = input.float(2.05,     step = 0.01, title = "EMA 64
 //-----------------------------------------------------------------------------}
 //Breakout  Settings
 //-----------------------------------------------------------------------------{
-boProp                      = input.float(0.2,      maxval = 0.9, step = 0.1, title = "Breakout Weight (%)", group = "Breakout Settings")
+boProp                      = input.float(0.20,     maxval = 1.00, step = 0.1, title = "Breakout Weight (%)", group = "Breakout Settings")
 bo20Scalar                  = input.float(0.67,     step = 0.01, title = "Breakout 20 Scalar", group = "Breakout Settings")
 bo40Scalar                  = input.float(0.70,     step = 0.01, title = "Breakout 40 Scalar", group = "Breakout Settings")
 bo80Scalar                  = input.float(0.73,     step = 0.01, title = "Breakout 80 Scalar", group = "Breakout Settings")
@@ -36,7 +37,7 @@ bo80Scalar                  = input.float(0.73,     step = 0.01, title = "Breako
 //-----------------------------------------------------------------------------}
 //Carry Settings
 //-----------------------------------------------------------------------------{
-crProp                      = input.float(0.4,      maxval = 0.99, step = 0.1, title = "Carry Weight (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
+crProp                      = input.float(0.40,     maxval = 1.00, step = 0.1, title = "Carry Weight (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
 expectedDiv                 = input.float(0.03,     maxval = 0.99, step = 0.001, title = "Expected Annualised Return (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
 crScalar                    = input.int(30,         step = 1, title = "Carry Scalar", group = "Carry Settings")
 
@@ -104,10 +105,13 @@ momentumForcCal(length, multiplier) =>
     else
         zlEma               = ta.ema(close, EmaLength)
 
+rapidMoLength               = 8
 fastMoLength                = 16
 mediumMoLength              = 32
 slowMoLength                = 64
 
+rapidEma                    = momentumForcCal(rapidMoLength, 1)
+rapidSEma                   = momentumForcCal(rapidMoLength, 4)
 fastEma                     = momentumForcCal(fastMoLength, 1)
 fastSEma                    = momentumForcCal(fastMoLength, 4)
 mediumEma                   = momentumForcCal(mediumMoLength, 1)
@@ -124,6 +128,7 @@ scalForecastMo(fastEma, slowEma, volatility, scalar) =>
     riskAdjusted            = (fastEma - slowEma) / volatility
     scaledForecast          = riskAdjusted * scalar
 
+scaledForcR                 = scalForecastMo(rapidEma, rapidSEma, dailyPriceVol, rapidMoScalar)
 scaledForcF                 = scalForecastMo(fastEma, fastSEma, dailyPriceVol, fastMoScalar)
 scaledForcM                 = scalForecastMo(mediumEma, mediumSEma, dailyPriceVol, mediumMoScalar)
 scaledForcS                 = scalForecastMo(slowEma, slowSEma, dailyPriceVol, slowMoScalar)
@@ -140,11 +145,12 @@ capForecastMo(scaledForc) =>
     else if scaledForc >= upperForeCap
         cappedForcMo        := upperForeCap
 
+cappedForcR                 = capForecastMo(scaledForcR)
 cappedForcF                 = capForecastMo(scaledForcF)
 cappedForcM                 = capForecastMo(scaledForcM)
 cappedForcS                 = capForecastMo(scaledForcS)
 
-cappedForcMoAr              = array.from(cappedForcF, cappedForcM, cappedForcS)
+cappedForcMoAr              = array.from(cappedForcR, cappedForcF, cappedForcM, cappedForcS)
 
 //-----------------------------------------------------------------------------}
 //Acceleration Forcast Calculation
