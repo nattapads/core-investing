@@ -1,0 +1,644 @@
+//NSal
+//@version=5
+strategy("[STR] Gold Day [6395]", overlay = true, margin_long = 100, margin_short = 100, pyramiding = 100, initial_capital = 10000000)
+
+//-----------------------------------------------------------------------------}
+//RSI Divergence Settings
+//-----------------------------------------------------------------------------{
+enableRegular           = input(true,           'Enable Regular Divergence',    group="RSI Divergence Settings")
+enableHidden            = input(true,           'Enable Hidden Divergence',     group="RSI Divergence Settings")
+rsiLen                  = input.int(8,          'RSI Period',                   group="RSI Divergence Settings")
+lbR                     = input.int(1,          'Pivot Lookback Right',         group="RSI Divergence Settings")
+lbL                     = input.int(1,          'Pivot Lookback Left',          group="RSI Divergence Settings")
+rangeUpper              = input.int(60,         'Max of Lookback Range',        group="RSI Divergence Settings")
+rangeLower              = input.int(5,          'Min of Lookback Range',        group="RSI Divergence Settings")
+rsiSrc                  = input(close,          'RSI Source',                   group="RSI Divergence Settings")
+
+//-----------------------------------------------------------------------------}
+//Stochastic Settings
+//-----------------------------------------------------------------------------{
+enableStochastic        = input(true,           'Enable Stochastic',    group="Stochastic Settings")
+periodK                 = input.int(5,          '%K Length',            minval=1, group="Stochastic Settings")
+smoothK                 = input.int(3,          '%K Smoothing',         minval=1, group="Stochastic Settings")
+periodD                 = input.int(3,          '%D Smoothing',         minval=1, group="Stochastic Settings")
+stocBuyTh               = input.int(25,         'Buy Threshold',        minval=1, group="Stochastic Settings")
+stocSellTh              = input.int(75,         'Sell Threshold',       minval=1, group="Stochastic Settings")
+
+//-----------------------------------------------------------------------------}
+//Engulfing Settings
+//-----------------------------------------------------------------------------{
+enableEngulfting        = input(true,           'Enable Engulfing',     group="Engulfing Settings")
+
+//-----------------------------------------------------------------------------}
+//Morning & Evening Settings
+//-----------------------------------------------------------------------------{
+enableStar              = input(true,           'Enable Morning & Evening Star',    group="Morning & Evening Settings")
+emaStarLength           = input.int(5,          'EMA Morning & Evening Star',       minval=5, maxval=50, group="Morning & Evening Settings")
+
+//-----------------------------------------------------------------------------}
+//Harami Settings
+//-----------------------------------------------------------------------------{
+enableHarami            = input(true,           'Enable Harami',        group="Harami Settings")
+
+//-----------------------------------------------------------------------------}
+//Tweezer and Kangaroo Tail Settings
+//-----------------------------------------------------------------------------{
+enableTweezer           = input(true,           'Enable Tweezer',                   group="Tweezer and Kangaroo Tail Settings")
+maxRate                 = input(150.,           'Max Rate % Between Wick Sizes',    group="Tweezer and Kangaroo Tail Settings") / 100.
+levelDiff               = input(20.,            'Max Difference in level %',        group="Tweezer and Kangaroo Tail Settings") / 100.
+prdHighLow              = input(5,              'Highest/Lowest Period',            group="Tweezer and Kangaroo Tail Settings")
+maxDicannce             = input.int(12,         'Max Dicannce between Tweezers',    minval=1, group="Tweezer and Kangaroo Tail Settings")
+
+//-----------------------------------------------------------------------------}
+//Engulfing Candle Calculation
+//-----------------------------------------------------------------------------{
+openBarPrevious         = open[1]
+closeBarPrevious        = close[1]
+openBarCurrent          = open
+closeBarCurrent         = close
+
+bullishEngulfing        = openBarCurrent <= closeBarPrevious and openBarCurrent < openBarPrevious and closeBarCurrent > openBarPrevious
+bearishEngulfing        = openBarCurrent >= closeBarPrevious and openBarCurrent > openBarPrevious and closeBarCurrent < openBarPrevious
+
+//-----------------------------------------------------------------------------}
+//Morning & Evening Calculation
+//-----------------------------------------------------------------------------{
+emaStar                 = ta.ema(close, emaStarLength)
+openCloseMin            = math.min(close, open)
+openCloseMax            = math.max(close, open)
+prevBar0                = openCloseMax - openCloseMin
+prevClose1              = close[1]
+prevOpen1               = open[1]
+openCloseMin1           = math.min(close[1], open[1])
+openCloseMax1           = math.max(close[1], open[1])
+prevBar1                = openCloseMax1 - openCloseMin1
+prevClose2              = close[2]
+prevOpen2               = open[2]
+openCloseMin2           = math.min(close[2], open[2])
+openCloseMax2           = math.max(close[2], open[2])
+prevBar2                = openCloseMax2 - openCloseMin2
+prevClose3              = close[3]
+
+bodyTop                 = math.max(close[1], open[1])
+bodyLow                 = math.min(close[1], open[1])
+
+morningStar             = if prevBar0 > prevBar1 and prevBar2 > prevBar1 and prevBar0 > prevBar2 * 0.5 and openCloseMin2 > openCloseMin1 and openCloseMin > openCloseMin1 and emaStar > prevClose2 and emaStar > prevClose1 and close > prevClose1 and prevClose3 > prevClose2 and prevClose2 > prevClose1 and close > bodyTop and prevClose2 != prevClose1 and open != close and prevOpen2 != prevClose2
+    true
+
+eveningStar             = if prevBar0 > prevBar1 and prevBar2 > prevBar1 and prevBar0 > prevBar2 * 0.5 and openCloseMax2 < openCloseMax1 and openCloseMax < openCloseMax1 and emaStar < prevClose2 and emaStar < prevClose1 and close < prevClose1 and prevClose3 < prevClose2 and prevClose2 < prevClose1 and close < bodyLow and prevClose2 != prevClose1 and open != close and prevOpen2 != prevClose2
+    true
+
+//-----------------------------------------------------------------------------}
+//Harami Calculation
+//-----------------------------------------------------------------------------{
+bullishHarami           = close[0] > open[0] and high[0] <= open[1] and low[0] >= close[1] and close[1] < open[1]
+bearishHarami           = close[0] < open[0] and high[0] <= close[1] and low[0] >= open[1] and close[1] > open[1]
+
+//-----------------------------------------------------------------------------}
+//Tweezer and Kangaroo Tail Calculation
+//-----------------------------------------------------------------------------{
+topWick                 = high - math.max(close, open)
+bottomWick              = math.min(close, open) - low
+isHighestBar            = ta.highestbars(prdHighLow) == 0
+isLowestBar             = ta.lowestbars(prdHighLow) == 0
+aparttweezers_top(len) =>
+    ret         = 0
+    if topWick > 0
+        for x = 1 to maxDicannce by 1
+            if nz(topWick[x]) == 0
+                break
+            if math.max(topWick, topWick[x]) / math.min(topWick, topWick[x]) <= maxRate and math.abs(high - high[x]) < math.max(topWick, topWick[x]) * levelDiff and isHighestBar[x]
+                ret := x
+                break
+            else
+                if high[x] >= high
+                    ret := 0
+                    break
+    ret
+
+aparttweezers_bottom(len) =>
+    ret         = 0
+    if bottomWick > 0
+        for x = 1 to maxDicannce by 1
+            if nz(bottomWick[x]) == 0
+                break
+            if math.max(bottomWick, bottomWick[x]) / math.min(bottomWick, bottomWick[x]) <= maxRate and math.abs(low - low[x]) < math.max(bottomWick, bottomWick[x]) * levelDiff and isLowestBar[x]
+                ret := x
+                break
+            else
+                if low[x] <= low
+                    ret := 0
+                    break
+    ret
+
+topTweezer              = enableTweezer and aparttweezers_top(maxDicannce)
+bottomTweezer           = enableTweezer and aparttweezers_bottom(maxDicannce)
+
+//-----------------------------------------------------------------------------}
+//Momentum  Settings
+//-----------------------------------------------------------------------------{
+moProp                      = input.float(0.34,     maxval = 0.99, step = 0.1, title = "Momentum Weight (%)", group="Momentum Settings")
+fastMoScalar                = input.float(4.10,     step = 0.01, title = "EMA 16 Scalar", group = "Momentum Settings")
+mediumMoScalar              = input.float(2.79,     step = 0.01, title = "EMA 32 Scalar", group = "Momentum Settings")
+slowMoScalar                = input.float(1.91,     step = 0.01, title = "EMA 64 Scalar", group = "Momentum Settings")
+
+//-----------------------------------------------------------------------------}
+//Acceleration Settings
+//-----------------------------------------------------------------------------{
+acProp                      = input.float(0.33,     maxval = 0.9, step = 0.1, title = "Acceleration Weight (%)", group = "Acceleration Settings")
+acFastScalar                = input.float(1.90,     step = 0.01, title = "EMA 16 Acceleration Scalar", group = "Acceleration Settings")
+acMediumScalar              = input.float(1.98,     step = 0.01, title = "EMA 32 Acceleration Scalar", group = "Acceleration Settings")
+acSlowScalar                = input.float(2.05,     step = 0.01, title = "EMA 64 Acceleration Scalar", group = "Acceleration Settings")
+
+//-----------------------------------------------------------------------------}
+//Breakout  Settings
+//-----------------------------------------------------------------------------{
+boProp                      = input.float(0.33,     maxval = 0.9, step = 0.1, title = "Breakout Weight (%)", group = "Breakout Settings")
+bo20Scalar                  = input.float(0.67,     step = 0.01, title = "Breakout 20 Scalar", group = "Breakout Settings")
+bo40Scalar                  = input.float(0.70,     step = 0.01, title = "Breakout 40 Scalar", group = "Breakout Settings")
+bo80Scalar                  = input.float(0.73,     step = 0.01, title = "Breakout 80 Scalar", group = "Breakout Settings")
+
+//-----------------------------------------------------------------------------}
+//Risk Settings
+//-----------------------------------------------------------------------------{
+initialPercent              = input.float(0.1,      title = "Initial Buy Percent", group="Risk Settings")
+simpleStdLength             = input.int(22,         title = "Simple SD Length", group="Risk Settings")
+expoStdLength               = input.int(32,         title = "Exponential SD Length", group="Risk Settings")
+targetRisk                  = input.float(0.24,     maxval = 1, step = 0.01, title = "Target Risk (%)", group="Risk Settings", tooltip = "23% is recommended for trading less than 3 instruments")
+deviationChange             = input.float(0.1,      maxval = 1, step = 0.1, title = "Change Sensitivity (%)", group="Risk Settings", tooltip = "Higher sensitivity causes less frequent trades, and lower trading costs")
+forcastDiverMuliplier       = input.float(1.34,     step = 0.01, title = "Forecast Diversification Multiplier", group = "Risk Settings")
+minForeCapped               = input(0.1,            title = "Minimun Forecast", group="Risk Settings")
+maxForeCapped               = input(2.0,            title = "Maximum Forecast", group="Risk Settings")
+useExpoStd                  = input(true,           title = "Use Exponential Standard Deviation", group="Risk Settings")
+enableInitialBuy            = input(false,          title = "Enable Initial Buy", group="Risk Settings")
+
+//-----------------------------------------------------------------------------}
+//EMA Settings
+//-----------------------------------------------------------------------------{
+emaFastLength           = input(50,             'Fast SMA Length', group="EMA Settings")
+emaFastSrc              = close
+emaSlowLength           = input(200,            'Slow SMA Length', group="EMA Settings")
+emaSlowSrc              = close
+zeroLag                 = input(true,           'Acceleration-Adjusted Momentum', group = "EMA Settings")
+
+//-----------------------------------------------------------------------------{
+//Structure Settings
+//-----------------------------------------------------------------------------{
+strSwingLength          = input(30,             'Swing Length', group = 'Smart Money Concepts')
+strConfluence           = false
+strLength               = 50
+
+//-----------------------------------------------------------------------------}
+//RSI Calculation
+//-----------------------------------------------------------------------------{
+osc                     = ta.rsi(rsiSrc, rsiLen)
+
+plFound                 = na(ta.pivotlow(osc, lbL, lbR)) ? false : true
+phFound                 = na(ta.pivothigh(osc, lbL, lbR)) ? false : true
+
+_inRange(cond) =>
+    bars        = ta.barssince(cond == true)
+    rangeLower  <= bars and bars <= rangeUpper
+
+// Regular Bullish
+oscHL                   = osc[lbR] > ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
+priceLL                 = low[lbR] < ta.valuewhen(plFound, low[lbR], 1)
+bullCond                = priceLL and oscHL and plFound
+
+// Regular Bearish
+oscLH                   = osc[lbR] < ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
+priceHH                 = high[lbR] > ta.valuewhen(phFound, high[lbR], 1)
+bearCond                = priceHH and oscLH and phFound
+
+// Hidden Bullish
+oscLL                   = osc[lbR] < ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
+priceHL                 = low[lbR] > ta.valuewhen(plFound, low[lbR], 1)
+hiddenBullCond          = priceHL and oscLL and plFound
+
+// Hidden Bearish
+oscHH                   = osc[lbR] > ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
+priceLH                 = high[lbR] < ta.valuewhen(phFound, high[lbR], 1)
+hiddenBearCond          = priceLH and oscHH and phFound
+
+rsiBuyCon               = (enableRegular ? bullCond : false) or (enableHidden ? hiddenBullCond : false)
+rsiSellCon              = (enableRegular ? bearCond : false) or (enableHidden ? hiddenBearCond : false)
+
+//-----------------------------------------------------------------------------}
+//Stochastic Calculation
+//-----------------------------------------------------------------------------{
+stochasticK             = ta.sma(ta.stoch(close, high, low, periodK), smoothK)
+
+//-----------------------------------------------------------------------------}
+//EMA Calculation
+//-----------------------------------------------------------------------------{
+momentumCal(src, length) =>
+    if zeroLag == true
+        Ema                 = ta.ema(src, length)
+        smoEma              = ta.ema(Ema, length)
+        eq                  = Ema - smoEma
+        zlEma               = Ema + eq
+    else
+        zlEma               = ta.ema(src, length)
+
+trendFast               = momentumCal(emaFastSrc, emaFastLength)
+trendSlow               = momentumCal(emaSlowSrc, emaSlowLength)
+
+//-----------------------------------------------------------------------------}
+//Structure Functions
+//-----------------------------------------------------------------------------{
+n                       = bar_index
+atr                     = ta.atr(200)
+cmean_range             = ta.cum(high - low) / n
+
+//HL Output function
+hl() => [high, low]
+
+//Get ohlc values function
+get_ohlc() => [close[1], open[1], high, low, high[2], low[2]]
+
+//Swings detection/measurements
+swings(len)=>
+    var os              = 0
+    
+    upper               = ta.highest(len)
+    lower               = ta.lowest(len)
+
+    os                  := high[len] > upper ? 0 : low[len] < lower ? 1 : os[1]
+
+    top                 = os == 0 and os[1] != 0 ? high[len] : 0
+    btm                 = os == 1 and os[1] != 1 ? low[len] : 0
+
+    [top, btm]
+
+//-----------------------------------------------------------------------------}
+//Structure variables
+//-----------------------------------------------------------------------------{
+var trend               = 0, var intTrend = 0
+
+var top_y               = 0., var top_x = 0
+var btm_y               = 0., var btm_x = 0
+
+var itop_y              = 0., var itop_x = 0
+var ibtm_y              = 0., var ibtm_x = 0
+
+var trail_up            = high, var trail_dn = low
+var trail_up_x          = 0,  var trail_dn_x = 0
+
+var top_cross           = true,  var btm_cross = true
+var itop_cross          = true, var ibtm_cross = true
+
+//Swings
+[top, btm]              = swings(strLength)
+[itop, ibtm]            = swings(strSwingLength)
+
+//-----------------------------------------------------------------------------}
+//Structure Pivot High
+//-----------------------------------------------------------------------------{
+var line extend_top     = na
+
+if top
+    top_cross           := true
+
+if itop
+    itop_cross          := true
+
+    itop_y              := itop
+    itop_x              := n - 5
+
+//Trailing maximum
+trail_up                := math.max(high, trail_up)
+trail_up_x              := trail_up == high ? n : trail_up_x
+
+//-----------------------------------------------------------------------------}
+//Structure Pivot Low
+//-----------------------------------------------------------------------------{
+var line extend_btm     = na 
+
+if btm
+    btm_cross           := true
+
+if ibtm
+    ibtm_cross          := true
+
+    ibtm_y              := ibtm
+    ibtm_x              := n - 5
+
+//Trailing minimum
+trail_dn                := math.min(low, trail_dn)
+trail_dn_x              := trail_dn == low ? n : trail_dn_x
+
+//-----------------------------------------------------------------------------}
+//Structure Pivot High BOS/CHoCH
+//-----------------------------------------------------------------------------{
+//Filtering
+var bull_concordant     = true
+
+if strConfluence
+    bull_concordant     := high - math.max(close, open) > math.min(close, open - low)
+
+//Detect internal bullish Structure
+if ta.crossover(close, itop_y) and itop_cross and top_y != itop_y and bull_concordant
+    bool choch          = na
+    
+    if intTrend < 0
+        choch           := true
+    
+    itop_cross          := false
+    intTrend            := 1
+
+//-----------------------------------------------------------------------------}
+//Structure Pivot Low BOS/CHoCH
+//-----------------------------------------------------------------------------{
+var bear_concordant     = true
+
+if strConfluence
+    bear_concordant     := high - math.max(close, open) < math.min(close, open - low)
+
+//Detect internal bearish Structure
+if ta.crossunder(close, ibtm_y) and ibtm_cross and btm_y != ibtm_y and bear_concordant
+    bool choch          = false
+    
+    if intTrend > 0
+        choch           := true
+    
+    ibtm_cross          := false
+    intTrend            := -1
+
+//-----------------------------------------------------------------------------}
+//Trend and Trading Session
+//-----------------------------------------------------------------------------{ 
+var trendUp             = false
+
+if trendFast[0] > trendFast[1] 
+    trendUp             := true
+else if trendSlow[0] < trendSlow[1]
+    trendUp             := false
+
+bullishTrend            = trendFast > trendSlow and intTrend == 1
+bearishTrend            = trendFast < trendSlow and intTrend != 1
+
+//-----------------------------------------------------------------------------{
+//Instrument Risk Calculation
+//-----------------------------------------------------------------------------{
+percentChange               = array.new_float(0)
+var float returnChange      = 0
+lamda                       = 2.0 / (expoStdLength + 1.0)
+
+// Loop through the last price change and add them to the array
+if useExpoStd == true
+    for i = 0 to expoStdLength
+        returnChange        = (close[i] - close[i+1]) / close[i+1]
+        LambaWeight         = math.pow((1 - lamda), i)
+        array.push(percentChange, (returnChange * LambaWeight))
+else
+    for i = 0 to simpleStdLength
+        returnChange        = (close[i] - close[i+1]) / close[i+1]
+        array.push(percentChange, returnChange)
+
+// Calculate the standard deviation of the percent change
+dailyPercentVolRecent       = math.round(array.stdev(percentChange, false), 6)
+
+// Calculate 8-year (2000 Records) average of SDs (for Exponential SD only)
+return8Yr                   = array.new_float(0)
+
+if useExpoStd == true
+    for i = 0 to 2000
+        array.push(return8Yr, dailyPercentVolRecent[i])
+
+dailyPercentVol8Yr          = array.avg(return8Yr)
+
+// Annualising Instrument Risk
+dailyPercentVol             = useExpoStd ? ((0.3 * dailyPercentVol8Yr) + (0.7 * dailyPercentVolRecent)) : dailyPercentVolRecent
+instRisk                    = math.round((dailyPercentVol * 16), 6)
+dailyPriceVol               = dailyPercentVol * close
+
+//-----------------------------------------------------------------------------}
+//Momentum Calculation
+//-----------------------------------------------------------------------------{
+momentumForcCal(length, multiplier) =>
+    EmaLength               = length * multiplier
+
+    if zeroLag == true
+        Ema                 = ta.ema(close, EmaLength)
+        smoEma              = ta.ema(Ema, EmaLength)
+        eq                  = Ema - smoEma
+        zlEma               = Ema + eq
+    else
+        zlEma               = ta.ema(close, EmaLength)
+
+fastMoLength                = 16
+mediumMoLength              = 32
+slowMoLength                = 64
+
+fastEma                     = momentumForcCal(fastMoLength, 1)
+fastSEma                    = momentumForcCal(fastMoLength, 4)
+mediumEma                   = momentumForcCal(mediumMoLength, 1)
+mediumSEma                  = momentumForcCal(mediumMoLength, 4)
+slowEma                     = momentumForcCal(slowMoLength, 1)
+slowSEma                    = momentumForcCal(slowMoLength, 4)
+
+//-----------------------------------------------------------------------------}
+//Momentum Forcast Calculation
+//-----------------------------------------------------------------------------{
+//Scale Momentum Forecast
+//-----------------------------------------------------------------------------{
+scalForecastMo(fastEma, slowEma, volatility, scalar) =>
+    riskAdjusted            = (fastEma - slowEma) / volatility
+    scaledForecast          = riskAdjusted * scalar
+
+scaledForcF                 = scalForecastMo(fastEma, fastSEma, dailyPriceVol, fastMoScalar)
+scaledForcM                 = scalForecastMo(mediumEma, mediumSEma, dailyPriceVol, mediumMoScalar)
+scaledForcS                 = scalForecastMo(slowEma, slowSEma, dailyPriceVol, slowMoScalar)
+
+//Capped Momentum Forecast
+//-----------------------------------------------------------------------------{
+capForecastMo(scaledForc) =>
+    var float cappedForcMo  = na
+
+    if scaledForc <= -20
+        cappedForcMo        := -20
+    else if scaledForc > -20 and scaledForc < 20
+        cappedForcMo        := scaledForc
+    else if scaledForc >= 20
+        cappedForcMo        := 20
+
+cappedForcF                 = capForecastMo(scaledForcF)
+cappedForcM                 = capForecastMo(scaledForcM)
+cappedForcS                 = capForecastMo(scaledForcS)
+
+cappedForcMoAr              = array.from(cappedForcF, cappedForcM, cappedForcS)
+
+//-----------------------------------------------------------------------------}
+//Acceleration Forcast Calculation
+//-----------------------------------------------------------------------------{
+capForecastAc(fastEma, scaledForc, forecastAcScalar) =>
+    var float cappedForcAc  = na
+
+    forcAc                  = scaledForc - scaledForc[fastEma]
+    scaledForcAc            = forcAc * forecastAcScalar
+
+    if scaledForcAc <= -20
+        cappedForcAc        := -20
+    else if scaledForcAc > -20 and scaledForcAc < 20
+        cappedForcAc        := scaledForcAc
+    else if scaledForcAc >= 20
+        cappedForcAc        := 20
+
+cappedForcFAc               = capForecastAc(fastMoLength, scaledForcF, acFastScalar)
+cappedForcMAc               = capForecastAc(mediumMoLength, scaledForcM, acMediumScalar)
+cappedForcSAc               = capForecastAc(slowMoLength, scaledForcS, acSlowScalar)
+
+cappedForcAcAr              = array.from(cappedForcFAc, cappedForcMAc, cappedForcSAc)
+
+//-----------------------------------------------------------------------------}
+//Breakout Forcast Calculation
+//-----------------------------------------------------------------------------{
+capForecastBo(BreakLength, ForecastScalar) =>
+    var float cappedForcBo  = na
+
+    max                     = ta.highest(high, BreakLength)
+    min                     = ta.lowest(low, BreakLength)
+    mean                    = (max + min) / 2
+    BoForc                  = (40 * (close - mean)) /  (max - min)
+    smoothLength            = BreakLength / 4
+    smoothForcBo            = ta.ema(BoForc, smoothLength)
+    scaledForcBo            = smoothForcBo * ForecastScalar
+
+    if scaledForcBo <= -20
+        cappedForcBo        := -20
+    else if scaledForcBo > -20 and scaledForcBo < 20
+        cappedForcBo        := scaledForcBo
+    else if scaledForcBo >= 20
+        cappedForcBo        := 20 
+
+cappedForcBo20              = capForecastBo(20, bo20Scalar)
+cappedForcBo40              = capForecastBo(40, bo40Scalar)
+cappedForcBo80              = capForecastBo(80, bo80Scalar)
+
+cappedForcBoAr              = array.from(cappedForcBo20, cappedForcBo40, cappedForcBo80)
+
+//All Forecast Combination
+//-----------------------------------------------------------------------------{
+cappedForcMo                = array.avg(cappedForcMoAr)
+cappedForcAc                = array.avg(cappedForcAcAr)
+cappedForcBo                = array.avg(cappedForcBoAr)
+
+//All Forecast Combination
+//-----------------------------------------------------------------------------{
+var float cappedCombForc    = na
+
+combForc                    = (cappedForcMo * moProp) + (cappedForcAc * acProp) + (cappedForcBo * boProp)
+scalCombForc                = combForc * forcastDiverMuliplier
+
+if scalCombForc < 0
+    cappedCombForc          := 0
+else if scalCombForc >= 0 and scalCombForc < 20
+    cappedCombForc          := scalCombForc
+else if scalCombForc >= 20
+    cappedCombForc          := 20 
+
+//Final Forecast Calculation
+//-----------------------------------------------------------------------------{
+adjCombForc                 = cappedCombForc / 20
+
+//-----------------------------------------------------------------------------}
+//Bar Colour
+//-----------------------------------------------------------------------------{
+var color trendColour   = na
+var bullColour          = #089981
+var bearColour          = #f23645
+
+if intTrend == 1 and trendUp == true
+    trendColour         :=  bullColour
+else if intTrend != 1 and trendUp == false
+    trendColour         :=  bearColour
+else if intTrend == 1 and trendUp == false
+    trendColour         :=  color.rgb(8, 153, 129, 50)
+else if intTrend != 1 and trendUp == true
+    trendColour         :=  color.rgb(120, 123, 134, 65)
+else
+    trendColour         := color.rgb(120, 123, 134, 65)
+
+barcolor(trendColour)
+
+//-----------------------------------------------------------------------------}
+//Notional Exposure & Risk-Adjusted Position
+//-----------------------------------------------------------------------------{
+currentSize             = strategy.position_size
+optimalSizing           = (adjCombForc * strategy.equity * targetRisk) / (instRisk * close)
+optimalPosition         = math.round(optimalSizing, 0)
+buyQty                  = optimalPosition - currentSize
+
+
+//-----------------------------------------------------------------------------}
+//Entry Exit Signal
+//-----------------------------------------------------------------------------{
+var iniNoTrade          = true
+
+initialBuy              = intTrend == 1 and ta.crossover(trendFast[0], trendFast[1]) and iniNoTrade and enableInitialBuy
+rsiBuy                  = rsiBuyCon and trendFast > trendSlow and trendUp == true and buyQty > 0
+stoBuy                  = enableStochastic and ta.crossover(stochasticK, stocBuyTh) and trendUp == true and bullishTrend and buyQty > 0
+engBuy                  = enableEngulfting and bullishEngulfing and trendUp == true and bullishTrend and buyQty > 0
+canBuy                  = (enableStar and morningStar or enableHarami and bullishHarami or enableTweezer and bottomTweezer) and trendUp == true and bullishTrend and buyQty > 0
+
+initialBuyRawQty        = (strategy.equity * initialPercent) / close
+initialBuyQty           = math.round(initialBuyRawQty, 0)
+
+if initialBuy
+    iniNoTrade          := false
+else if intTrend != 1 and trendUp == false
+    iniNoTrade          := true
+
+//-----------------------------------------------------------------------------}
+//Strategy
+//-----------------------------------------------------------------------------{ 
+if initialBuy
+    strategy.entry("B", strategy.long, qty = initialBuyQty)
+else if rsiBuy or stoBuy or engBuy or canBuy
+    strategy.entry("B", strategy.long, qty = buyQty)
+else if intTrend != 1 and trendUp == false
+    strategy.close("B", qty_percent = 100)
+
+// Calculate net profit and percentage profitable
+strNetProfit            = strategy.netprofit
+strPercentProfitable    = math.round(strategy.wintrades / (strategy.wintrades + strategy.losstrades), 2)
+strProfitFactor         = strategy.grossprofit / strategy.grossloss
+
+//Current Proportion
+//-----------------------------------------------------------------------------{
+currentHoldingValue         = strategy.position_size * close
+currentProportion           = currentHoldingValue / strategy.equity
+
+//Table Styling
+//-----------------------------------------------------------------------------{ 
+bgMColour                   = color.rgb(0, 0, 0, 30)
+bgSColour                   = color.rgb(0, 0, 0, 20)
+    
+if strategy.netprofit > 0
+    bgMColour               := color.rgb(8, 153, 129)
+    bgSColour               := color.rgb(8, 153, 129, 20)
+else
+    bgMColour               := color.rgb(242, 54, 69)
+    bgSColour               := color.rgb(242, 54, 69, 20)
+
+//-----------------------------------------------------------------------------}
+//Summary Table
+//-----------------------------------------------------------------------------{ 
+table_data          = table.new(position = position.top_right, columns = 1, rows = 3, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)   
+table.cell(table_data, 0, 0, 'GLD782', bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))
+table.cell(table_data, 0, 1, str.tostring(str.tostring(math.round(strPercentProfitable * 100,0)) + "%"), text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Profitability")
+table.cell(table_data, 0, 2, str.tostring(currentProportion * 100, format.percent), bgcolor = color.rgb(255, 255, 255, 90), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Percent Risk")
+
+//-----------------------------------------------------------------------------}
+//Plot
+//-----------------------------------------------------------------------------{
+plotshape(rsiBuy, title='Buy', text="R▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(stoBuy, title='Buy', text="S▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(engBuy, title='Buy', text="E▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(canBuy, title='Buy', text="C▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+
+//-----------------------------------------------------------------------------}
+//Alert
+//-----------------------------------------------------------------------------{
+if rsiBuy or stoBuy or engBuy or canBuy
+    alert(("Gold Buy"), alert.freq_once_per_bar_close)
