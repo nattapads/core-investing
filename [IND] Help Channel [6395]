@@ -1,0 +1,155 @@
+//@version=5
+indicator("[IND] Help Channel [6395]", overlay = false)
+
+//-----------------------------------------------------------------------------}
+// Help Settings
+//-----------------------------------------------------------------------------{
+newHighSrc      = input.symbol(defval = "M3HP", title = "New High", group = "Help Settings", inline = "Source")
+newLowSrc       = input.symbol(defval = "M3LP", title = "New Low",  group = "Help Settings", inline = "Source")
+totalStock      = input.int(defval = 500,       title = "Total no. of stocks",  group = "Help Settings")
+helpThres       = input.float(-0.1,             title = "Help Threshold",       group = "Help Settings")
+pessThres       = input.float(0.1,              title = "Pessimism Threshold",  group = "Help Settings")
+emaLength       = input.int(21, minval=1,       title = 'EMA Length',           group = "Help Settings")
+emaSmooth       = input.int(5,  minval=1,       title = 'EMA Smooth Length',    group = "Help Settings")
+smoothLine      = input(true,                   title = "Smooth Help & Pessimism", group = "Help Settings")
+
+//-----------------------------------------------------------------------------}
+//Momentum  Settings
+//-----------------------------------------------------------------------------{
+slowMoLength    = input.int(64,         step = 1, title = "Slow Momentum Length", group = "Momentum Settings")
+zeroLag         = input(true,           title = "Acceleration-Adjusted Momentum", group = "Momentum Settings")
+
+//-----------------------------------------------------------------------------}
+//Colour  Settings
+//-----------------------------------------------------------------------------{
+buffettColour   = input(true,           title = "Coloured by Buffett Indicator", group = "Colour Settings")
+
+//-----------------------------------------------------------------------------}
+// Help & Pessimism calculation
+//-----------------------------------------------------------------------------{
+newHighValue    = request.security(newHighSrc, "1D", close)
+newLowValue     = request.security(newLowSrc, "1D", close)
+diffHighLow     = newHighValue - newLowValue
+
+helpIndi        = diffHighLow / totalStock
+pessiIndi       = newLowValue / totalStock
+
+emaHelp         = ta.ema(helpIndi, 5)
+emaPessi        = ta.ema(pessiIndi, 5)
+
+diffHelpPessi   = helpIndi - pessiIndi
+emaDiff         = ta.ema(diffHelpPessi, emaSmooth)
+
+diffStrBullish  = emaDiff > 0 and emaDiff[0] > emaDiff[1]
+diffBullish     = emaDiff > 0 and emaDiff[0] < emaDiff[1]
+diffStrBearish  = emaDiff < 0 and emaDiff[0] < emaDiff[1]
+diffBearish     = emaDiff < 0 and emaDiff[0] > emaDiff[1]
+
+//-----------------------------------------------------------------------------}
+// ATR calculation
+//-----------------------------------------------------------------------------{
+ema             = ta.ema(close, emaLength)
+atr             = ta.rma(ta.tr(true), emaLength)
+emaMinusAtr     = ema - atr
+
+var atrCross    = false
+
+if ta.crossunder(low, emaMinusAtr)
+    atrCross    := true
+else if ta.crossunder(pessiIndi, helpIndi)
+    atrCross    := false
+
+//-----------------------------------------------------------------------------}
+// Entry calculation
+//-----------------------------------------------------------------------------{
+pessBullishTrig = ta.crossunder(pessiIndi, pessThres)
+helpBullishTrig = ta.crossover(helpIndi, helpThres)
+
+helpBullish     = helpIndi > pessiIndi
+helpBearish     = helpIndi < pessiIndi
+helpAbove       = helpIndi > helpThres
+pessiAbove      = pessiIndi > pessThres
+
+helpBuy         = smoothLine ? ta.crossunder(emaPessi, emaHelp) : ta.crossunder(pessiIndi, pessThres) and atrCross
+
+//-----------------------------------------------------------------------------}
+//Momentum Calculation
+//-----------------------------------------------------------------------------{
+momentumCal(length, multiplier) =>
+    EmaLength               = length * multiplier
+
+    if zeroLag == true
+        Ema                 = ta.ema(close, EmaLength)
+        smoEma              = ta.ema(Ema, EmaLength)
+        eq                  = Ema - smoEma
+        zlEma               = Ema + eq
+    else
+        zlEma               = ta.ema(close, EmaLength)
+
+slowEma                     = momentumCal(slowMoLength, 1)
+slowSEma                    = momentumCal(slowMoLength, 4)
+
+//-----------------------------------------------------------------------------}
+//Momentum Filter Calculation
+//-----------------------------------------------------------------------------{
+trendDiff                   = slowEma - slowSEma
+strongBullish               = trendDiff[0] > trendDiff[1] and trendDiff >= 0
+strongBearish               = trendDiff[0] < trendDiff[1] and trendDiff < 0
+bullish                     = trendDiff[0] < trendDiff[1] and trendDiff >= 0
+bearish                     = trendDiff[0] > trendDiff[1] and trendDiff < 0
+
+//-----------------------------------------------------------------------------}
+// Styling
+//-----------------------------------------------------------------------------{
+neutralColor    = color.rgb(129, 129, 129, 70)
+strBullColor    = color.rgb(8, 153, 129)
+bullColor       = color.rgb(8, 153, 129, 40)
+strBearColor    = color.rgb(242, 54, 69)
+bearColor       = color.rgb(242, 54, 69, 40)
+
+helpColor       = helpAbove ? strBullColor : bullColor
+pessiColor      = pessiAbove ? strBearColor : bearColor
+fillColor       = helpBullish ? color.rgb(8, 153, 129, 90) : helpBearish ? color.rgb(242, 54, 69, 90) : neutralColor
+barColor        = helpBullish ? strBullColor : helpBearish ? strBearColor : neutralColor
+
+//-----------------------------------------------------------------------------}
+// Ratio Calculation
+//-----------------------------------------------------------------------------{
+ratio = request.security('FRED:WILL5000PR', "1D", close) / request.security('FRED:GDP', "1D", close / 1000000000) * 100
+
+strOverValued               = ratio > 200
+overValued                  = ratio <= 200 and ratio > 150
+fairValued                  = ratio <= 150 and ratio > 100
+underValued                 = ratio <= 100 and ratio > 50
+strUnderValued              = ratio <= 50
+
+
+strBuy                      = emaDiff >= 0 and ratio <= 150
+buy                         = emaDiff >= 0 and ratio > 150
+strSell                     = emaDiff < 0 and ratio > 150
+sell                        = emaDiff < 0 and ratio <= 150
+
+//-----------------------------------------------------------------------------}
+// Line Colour
+//-----------------------------------------------------------------------------{
+diffColor       = diffStrBullish ? strBullColor : diffBullish ? bullColor : diffStrBearish ? strBearColor : bearColor
+ratioColor      = strUnderValued ? strBullColor : strOverValued ? strBearColor : underValued ? strBullColor : overValued ? bearColor : bullColor
+tradeColor      = strBuy ? strBullColor : buy ? bullColor : strSell ? strBearColor : bullColor
+
+lineColor       = buffettColour ? tradeColor : diffColor
+
+//-----------------------------------------------------------------------------}
+// Plot
+//-----------------------------------------------------------------------------{
+//plotHelp      = plot(smoothLine ? emaHelp : helpIndi,     title = "Help Line", color = helpColor)
+//plolPess      = plot(smoothLine ? emaPessi : pessiIndi,   title = "Pessimism Line", color = pessiColor)
+plotDiff        = plot(emaDiff, title = "Pessimism line", color = lineColor, style = plot.style_columns)
+hline(0, color = color.gray, title = 'Zero line', linewidth = 1, linestyle = hline.style_dotted)
+
+//plotshape(helpBuy ? smoothLine ? emaHelp : helpIndi : na, title='Help Buy', style=shape.circle, location=location.absolute, color=strBullColor, size=size.tiny)
+//fill(plotHelp, plolPess, title='Oscillator Fill', color = fillColor)
+
+//hline(helpThres, color = color.gray, title = 'Help Threshold', linewidth = 1, linestyle = hline.style_dotted)
+//hline(pessThres, color = color.gray, title = 'Pessimism Threshold', linewidth = 1, linestyle = hline.style_dotted)
+
+//barcolor(strongBullish ? strBullColor : strongBearish ? strBearColor : bullish ? bullColor : bearish ? bearColor : neutralColor)
