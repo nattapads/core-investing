@@ -1,6 +1,6 @@
 //NSal
 //@version=5
-indicator("[STR] Forecast Divergent & Convergent [6395]", overlay = true)
+indicator("[IND] Forecast Divergent & Convergent [6395]", overlay = true)
 
 //-----------------------------------------------------------------------------}
 //Momentum  Settings
@@ -47,6 +47,18 @@ minForeCapped               = input(0.1,            title = "Minimun Forecast", 
 maxForeCapped               = input(2.0,            title = "Maximum Forecast", group="Risk Settings")
 useExpoStd                  = input(true,           title = "Use Exponential Standard Deviation", group="Risk Settings")
 useMarginAcc                = input(false,          title = "Margin Account", group="Risk Settings")
+
+//-----------------------------------------------------------------------------}
+// Help Settings
+//-----------------------------------------------------------------------------{
+newHighSrc      = input.symbol(defval = "M3HP", title = "New High", group = "Help Settings", inline = "Source")
+newLowSrc       = input.symbol(defval = "M3LP", title = "New Low",  group = "Help Settings", inline = "Source")
+totalStock      = input.int(defval = 500,       title = "Total no. of stocks",  group = "Help Settings")
+helpThres       = input.float(-0.1,             title = "Help Threshold",       group = "Help Settings")
+pessThres       = input.float(0.1,              title = "Pessimism Threshold",  group = "Help Settings")
+emaLength       = input.int(21, minval=1,       title = 'EMA Length',           group = "Help Settings")
+emaSmooth       = input.int(5,  minval=1,       title = 'EMA Smooth Length',    group = "Help Settings")
+smoothLine      = input(true,                   title = "Smooth Help & Pessimism", group = "Help Settings")
 
 //-----------------------------------------------------------------------------{
 //Instrument Risk Calculation
@@ -249,6 +261,42 @@ else if percentCombForc > minForeCapped and percentCombForc < maxForeCapped
 else if percentCombForc >= maxForeCapped
     capPerCombForc          := maxForeCapped
 
+//-----------------------------------------------------------------------------}
+// Help & Pessimism calculation
+//-----------------------------------------------------------------------------{
+newHighValue    = request.security(newHighSrc, "1D", close)
+newLowValue     = request.security(newLowSrc, "1D", close)
+diffHighLow     = newHighValue - newLowValue
+
+helpIndi        = diffHighLow / totalStock
+pessiIndi       = newLowValue / totalStock
+
+emaHelp         = ta.ema(helpIndi, 5)
+emaPessi        = ta.ema(pessiIndi, 5)
+
+diffHelpPessi   = helpIndi - pessiIndi
+emaDiff         = ta.ema(diffHelpPessi, emaSmooth)
+
+//-----------------------------------------------------------------------------}
+// Ratio Calculation
+//-----------------------------------------------------------------------------{
+ratio = request.security('FRED:WILL5000PR', "1D", close) / request.security('FRED:GDP', "1D", close / 1000000000) * 100
+
+strOverValued               = ratio > 200
+overValued                  = ratio <= 200 and ratio > 150
+fairValued                  = ratio <= 150 and ratio > 100
+underValued                 = ratio <= 100 and ratio > 50
+strUnderValued              = ratio <= 50
+
+//-----------------------------------------------------------------------------}
+//Bar & Trend Line Colours
+//-----------------------------------------------------------------------------{
+neutralColor                = #56328f
+strongbullColor             = color.rgb(8, 153, 129)
+bullColor                   = color.rgb(8, 153, 129, 50)
+strongBearishColor          = color.rgb(242, 54, 69)
+bearColor                   = color.rgb(242, 54, 69, 50)
+
 //Table Styling
 //-----------------------------------------------------------------------------{ 
 bgMColour                   = color.rgb(0, 0, 0, 30)
@@ -260,24 +308,32 @@ if percentCombForc > 0
 else
     bgMColour               := color.rgb(242, 54, 69)
     bgSColour               := color.rgb(242, 54, 69, 20)
-    
+
+bgValueColour               = color.rgb(0, 0, 0, 30)
+trendValue                  = "N/A"
+
+if emaDiff >= 0 and ratio <= 150
+    bgValueColour           := strongbullColor
+    trendValue              := "▲"
+else if emaDiff >= 0 and ratio > 150
+    bgValueColour           := bullColor
+    trendValue              := "▲"
+else if emaDiff < 0 and ratio > 150
+    bgValueColour           := strongBearishColor
+    trendValue              := "▼"
+else if emaDiff < 0 and ratio <= 150
+    bgValueColour           := bullColor
+    trendValue              := "▼"
+
 //-----------------------------------------------------------------------------}
 //Performance Table
 //-----------------------------------------------------------------------------{ 
-table_data                  = table.new(position = position.top_right, columns = 1, rows = 3, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
+table_data                  = table.new(position = position.top_right, columns = 1, rows = 4, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
 
 table.cell(table_data, 0, 0, "FOR782", bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
 table.cell(table_data, 0, 1, str.tostring(math.round(capPerCombForc, 2)), text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Forecast")
 table.cell(table_data, 0, 2, str.tostring(math.round(instRisk * 100, 2), format.percent), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Standard Deviation")
-
-//-----------------------------------------------------------------------------}
-//Bar & Trend Line Colours
-//-----------------------------------------------------------------------------{
-neutralColor                = #56328f
-strongbullColor             = color.rgb(8, 153, 129)
-bullColor                   = color.rgb(8, 153, 129, 50)
-strongBearishColor          = color.rgb(242, 54, 69)
-bearColor                   = color.rgb(242, 54, 69, 50)
+table.cell(table_data, 0, 3, text = trendValue, text_size = size.normal, bgcolor = bgValueColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Help & Pessimism")
 
 //-----------------------------------------------------------------------------}
 //Momentum Filter Calculation
@@ -290,3 +346,17 @@ bearish                     = percentCombForc < 0 and percentCombForc > -0.5
 //Bar Colour
 //-----------------------------------------------------------------------------{
 barcolor(strongBullish ? strongbullColor : strongBearish ? strongBearishColor : bullish ? bullColor : bearish ? bearColor : neutralColor)
+
+//Washout
+//-----------------------------------------------------------------------------{
+washBullish                 = capPerCombForc > 0.1
+
+newLow                      = low < low[1] and low[1] > low[2]
+newLower                    = low < low[1] and low[1] < low[2]
+higherClose                 = close > close[1]
+
+washOut                     = newLow and higherClose and washBullish
+strWashOut                  = newLower and higherClose and washBullish
+
+plotshape(washOut, title = "Wash Out", color = bullColor, style = shape.circle, location = location.belowbar)
+plotshape(strWashOut, title = "Strong Wash Out", color = strongbullColor, style = shape.triangleup, location = location.belowbar)
