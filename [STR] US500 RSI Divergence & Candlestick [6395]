@@ -1,6 +1,6 @@
 //NSal
 //@version=5
-strategy("[STR] US500 RSI Divergence & Candlestick [6395]", overlay = true, margin_long = 0.5, margin_short = 0.5, pyramiding = 3, risk_free_rate = 0)
+strategy("[STR] US500 RSI Divergence & Candlestick [6395]", overlay = true, margin_long = 100, margin_short = 100, pyramiding = 3, risk_free_rate = 0)
 
 //------------------------------------------------------------------------------
 //Strategy Settings
@@ -33,7 +33,7 @@ stocSellTh              = input.int(75,         'Sell Threshold',       minval=1
 //-----------------------------------------------------------------------------}
 //Engulfing Settings
 //-----------------------------------------------------------------------------{
-enableEngulfting        = input(false,          'Enable Engulfing',     group="Engulfing Settings")
+enableEngulfting        = input(true,           'Enable Engulfing',     group="Engulfing Settings")
 
 //-----------------------------------------------------------------------------}
 //Morning & Evening Settings
@@ -70,7 +70,7 @@ atrLength               = input(14,             'ATR Length',           group="A
 atrMultiplier           = input(3.10,           'Multiplier',           group="ATR Settings")
 atrReward               = input(1.50,           'Reward Multiplier',    group="ATR Settings")
 atrLoss                 = input(1.00,           'Loss Multiplier',      group="ATR Settings")
-slippageBuffer          = input(0.5,            'Slippage',             group="ATR Settings")
+slippageBuffer          = input(0.6,            'slippageBuffer',       group="ATR Settings")
 atrOutput               = ta.atr(atrLength)*atrMultiplier
 
 //-----------------------------------------------------------------------------{
@@ -95,34 +95,34 @@ sesUseExchange          = input(false, 'Use Exchange Timezone', group = 'Session
 //-----------------------------------------------------------------------------}
 //RSI Calculation
 //-----------------------------------------------------------------------------{
-osc                     = ta.rsi(rsiSrc, rsiLen)
+osc = ta.rsi(rsiSrc, rsiLen)
 
-plFound                 = na(ta.pivotlow(osc, lbL, lbR)) ? false : true
-phFound                 = na(ta.pivothigh(osc, lbL, lbR)) ? false : true
+plFound = na(ta.pivotlow(osc, lbL, lbR)) ? false : true
+phFound = na(ta.pivothigh(osc, lbL, lbR)) ? false : true
 
 _inRange(cond) =>
-    bars        = ta.barssince(cond == true)
-    rangeLower  <= bars and bars <= rangeUpper
+    bars = ta.barssince(cond == true)
+    rangeLower <= bars and bars <= rangeUpper
 
 // Regular Bullish
-oscHL                   = osc[lbR] > ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
-priceLL                 = low[lbR] < ta.valuewhen(plFound, low[lbR], 1)
-bullCond                = priceLL and oscHL and plFound
+oscHL = osc[lbR] > ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
+priceLL = low[lbR] < ta.valuewhen(plFound, low[lbR], 1)
+bullCond = priceLL and oscHL and plFound
 
 // Regular Bearish
-oscLH                   = osc[lbR] < ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
-priceHH                 = high[lbR] > ta.valuewhen(phFound, high[lbR], 1)
-bearCond                = priceHH and oscLH and phFound
+oscLH = osc[lbR] < ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
+priceHH = high[lbR] > ta.valuewhen(phFound, high[lbR], 1)
+bearCond = priceHH and oscLH and phFound
 
 // Hidden Bullish
-oscLL                   = osc[lbR] < ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
-priceHL                 = low[lbR] > ta.valuewhen(plFound, low[lbR], 1)
-hiddenBullCond          = priceHL and oscLL and plFound
+oscLL = osc[lbR] < ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
+priceHL = low[lbR] > ta.valuewhen(plFound, low[lbR], 1)
+hiddenBullCond = priceHL and oscLL and plFound
 
 // Hidden Bearish
-oscHH                   = osc[lbR] > ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
-priceLH                 = high[lbR] < ta.valuewhen(phFound, high[lbR], 1)
-hiddenBearCond          = priceLH and oscHH and phFound
+oscHH = osc[lbR] > ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
+priceLH = high[lbR] < ta.valuewhen(phFound, high[lbR], 1)
+hiddenBearCond = priceLH and oscHH and phFound
 
 rsiBuyCon               = (enableRegular ? bullCond : false) or (enableHidden ? hiddenBullCond : false)
 rsiSellCon              = (enableRegular ? bearCond : false) or (enableHidden ? hiddenBearCond : false)
@@ -378,13 +378,13 @@ var bullColour          = #089981
 var bearColour          = #f23645
 
 if intTrend == 1 and trendUp == true and isTradingSession
-    trendColour         := bullColour
+    trendColour         :=  bullColour
 else if intTrend != 1 and trendUp == false and isTradingSession
-    trendColour         := bearColour
+    trendColour         :=  bearColour
 else if intTrend == 1 and trendUp == false and isTradingSession
-    trendColour         := color.rgb(8, 153, 129, 50)
+    trendColour         :=  color.rgb(8, 153, 129, 50)
 else if intTrend != 1 and trendUp == true and isTradingSession
-    trendColour         := color.rgb(242, 54, 70, 50)
+    trendColour         :=  color.rgb(242, 54, 70, 50)
 else
     trendColour         := color.rgb(120, 123, 134, 65)
 
@@ -432,7 +432,7 @@ canRawSL                = canBuy ? low - (atrOutput * atrLoss) : canSell ? high 
 //Lot Settings
 //-----------------------------------------------------------------------------{ 
 initialLot              = input.float(0.1,      "Initial Lot",          minval=0.1, step=0.1, group = 'Account & Trade')
-drawDown                = input.float(1.5,      "Drawdown Multiplier",  minval=0.1, step=0.1, group = 'Account & Trade')
+drawDown                = input.float(1.4,      "Drawdown Multiplier",  minval=0.1, step=0.1, group = 'Account & Trade')
 
 // Calculate diff and recommended lot size for different risk percentages
 var float rsiSlipTP     = 0
@@ -445,10 +445,15 @@ var float canSlipTP     = 0
 var float canSlipSL     = 0
 
 // Recent Loss
-var rsiRecLot           = math.round(initialLot,1)
-var stoRecLot           = enableStochastic ? math.round(initialLot,1) : 0.0
-var engRecLot           = enableEngulfting ? math.round(initialLot,1) : 0.0
-var canRecLot           = math.round(initialLot,1)
+var rsiRawLot           = initialLot
+var stoRawLot           = initialLot
+var engRawLot           = initialLot
+var canRawLot           = initialLot
+
+var rsiRecLot           = math.round(rsiRawLot,1)
+var stoRecLot           = math.round(stoRawLot,1)
+var engRecLot           = math.round(engRawLot,1)
+var canRecLot           = math.round(canRawLot,1)
 
 // Consolidated Open Trade Conditions
 rsiInitCond             = rsiOpenTrade == false
@@ -471,15 +476,18 @@ if rsiCond
     rsiSlipTP           := rsiBuy ? math.round((rsiRawTP + slippageBuffer), 2) : math.round((rsiRawTP - slippageBuffer), 2)
     rsiSlipSL           := rsiBuy ? math.round((rsiRawSL + slippageBuffer), 2) : math.round((rsiRawSL - slippageBuffer), 2)
     rsiOpenTrade        := true
-else if stoCond
+
+if stoCond
     stoSlipTP           := stoBuy ? math.round((stoRawTP + slippageBuffer), 2) : math.round((stoRawTP - slippageBuffer), 2)
     stoSlipSL           := stoBuy ? math.round((stoRawSL + slippageBuffer), 2) : math.round((stoRawSL - slippageBuffer), 2)
     stoOpenTrade        := true
-else if engCond
+
+if engCond
     engSlipTP           := engBuy ? math.round((engRawTP + slippageBuffer), 2) : math.round((engRawTP - slippageBuffer), 2)
     engSlipSL           := engBuy ? math.round((engRawSL + slippageBuffer), 2) : math.round((engRawSL - slippageBuffer), 2)
     engOpenTrade        := true
-else if canCond
+
+if canCond
     canSlipTP           := canBuy ? math.round((canRawTP + slippageBuffer), 2) : math.round((canRawTP - slippageBuffer), 2)
     canSlipSL           := canBuy ? math.round((canRawSL + slippageBuffer), 2) : math.round((canRawSL - slippageBuffer), 2)
     canOpenTrade        := true
@@ -487,52 +495,71 @@ else if canCond
 // Reach SL
 if rsiSlipTP > rsiSlipSL and ta.crossunder(low, rsiSlipSL) and rsiOpenCond
     rsiOpenTrade        := false
-    rsiRecLot           := math.round(rsiRecLot * drawDown,1)
+    rsiRawLot           := rsiRawLot * drawDown
+    rsiRecLot           := math.round(rsiRawLot,1)
 else if rsiSlipTP < rsiSlipSL and ta.crossover(high, rsiSlipSL) and rsiOpenCond
     rsiOpenTrade        := false
-    rsiRecLot           := math.round(rsiRecLot * drawDown,1)
+    rsiRawLot           := rsiRawLot * drawDown
+    rsiRecLot           := math.round(rsiRawLot,1)
 else if rsiSlipTP > rsiSlipSL and ta.crossover(high, rsiSlipTP) and rsiOpenCond
     rsiOpenTrade        := false
-    rsiRecLot           := math.round(initialLot,1)
+    rsiRawLot           := initialLot
+    rsiRecLot           := math.round(rsiRawLot,1)
 else if rsiSlipTP < rsiSlipSL and ta.crossunder(low, rsiSlipTP) and rsiOpenCond
     rsiOpenTrade        := false
-    rsiRecLot           := math.round(initialLot,1)
-else if stoSlipTP > stoSlipSL and ta.crossunder(low, stoSlipSL) and stoOpenCond
+    rsiRawLot           := initialLot
+    rsiRecLot           := math.round(rsiRawLot,1)
+
+if stoSlipTP > stoSlipSL and ta.crossunder(low, stoSlipSL) and stoOpenCond
     stoOpenTrade        := false
-    stoRecLot           := math.round(stoRecLot * drawDown,1)
+    stoRawLot           := stoRawLot * drawDown
+    stoRecLot           := math.round(stoRawLot,1)
 else if stoSlipTP < stoSlipSL and ta.crossover(high, stoSlipSL) and stoOpenCond
     stoOpenTrade        := false
-    stoRecLot           := math.round(stoRecLot * drawDown,1)
+    stoRawLot           := stoRawLot * drawDown
+    stoRecLot           := math.round(stoRawLot,1)
 else if stoSlipTP > stoSlipSL and ta.crossover(high, stoSlipTP) and stoOpenCond
     stoOpenTrade        := false
-    stoRecLot           := math.round(initialLot,1)
+    stoRawLot           := initialLot
+    stoRecLot           := math.round(stoRawLot,1)
 else if stoSlipTP < stoSlipSL and ta.crossunder(low, stoSlipTP) and stoOpenCond
     stoOpenTrade        := false
-    stoRecLot           := math.round(initialLot,1)
-else if engSlipTP > engSlipSL and ta.crossunder(low, engSlipSL) and engOpenCond
+    stoRawLot           := initialLot
+    stoRecLot           := math.round(stoRawLot,1)
+
+if engSlipTP > engSlipSL and ta.crossunder(low, engSlipSL) and engOpenCond
     engOpenTrade        := false
-    engRecLot           := math.round(engRecLot * drawDown,1)
+    engRawLot           := engRawLot * drawDown
+    engRecLot           := math.round(engRawLot,1)
 else if engSlipTP < engSlipSL and ta.crossover(high, engSlipSL) and engOpenCond
     engOpenTrade        := false
-    engRecLot           := math.round(engRecLot * drawDown,1)
+    engRawLot           := engRawLot * drawDown
+    engRecLot           := math.round(engRawLot,1)
 else if engSlipTP > engSlipSL and ta.crossover(high, engSlipTP) and engOpenCond
     engOpenTrade        := false
-    engRecLot           := math.round(initialLot,1)
+    engRawLot           := initialLot
+    engRecLot           := math.round(engRawLot,1)
 else if engSlipTP < engSlipSL and ta.crossunder(low, engSlipTP) and engOpenCond
     engOpenTrade        := false
-    engRecLot           := math.round(initialLot,1)
-else if canSlipTP > canSlipSL and ta.crossunder(low, canSlipSL) and canOpenCond
+    engRawLot           := initialLot
+    engRecLot           := math.round(engRawLot,1)
+
+if canSlipTP > canSlipSL and ta.crossunder(low, canSlipSL) and canOpenCond
     canOpenTrade        := false
-    canRecLot           := math.round(canRecLot * drawDown,1)
+    canRawLot           := canRawLot * drawDown
+    canRecLot           := math.round(canRawLot,1)
 else if canSlipTP < canSlipSL and ta.crossover(high, canSlipSL) and canOpenCond
     canOpenTrade        := false
-    canRecLot           := math.round(canRecLot * drawDown,1)
+    canRawLot           := canRawLot * drawDown
+    canRecLot           := math.round(canRawLot,1)
 else if canSlipTP > canSlipSL and ta.crossover(high, canSlipTP) and canOpenCond
     canOpenTrade        := false
-    canRecLot           := math.round(initialLot,1)
+    canRawLot           := initialLot
+    canRecLot           := math.round(canRawLot,1)
 else if canSlipTP < canSlipSL and ta.crossunder(low, canSlipTP) and canOpenCond
     canOpenTrade        := false
-    canRecLot           := math.round(initialLot,1)
+    canRawLot           := initialLot
+    canRecLot           := math.round(canRawLot,1)
 
 //-----------------------------------------------------------------------------}
 //TP & SL Plot
@@ -544,29 +571,29 @@ tpColour                = showTpSl ? color.rgb(8, 153, 129) : color.rgb(8, 153, 
 //-----------------------------------------------------------------------------}
 //Plot
 //-----------------------------------------------------------------------------{
-plotshape(rsiBuy, title='RSI Buy', text="R▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
-plotshape(rsiSell, title='RSI Sell', text="R▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
+plotshape(rsiBuy, title='Buy', text="R▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(rsiSell, title='Sell', text="R▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
 
-plot(rsiRawSL, color=slColour, title='RSI Stop Loss', linewidth=2, style=plot.style_cross)
-plot(rsiRawTP, color=tpColour, title='RSI Take Profit', linewidth=2, style=plot.style_cross)
+plot(rsiRawSL, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
+plot(rsiRawTP, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
 
-plotshape(stoBuy, title='STO Buy', text="S▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
-plotshape(stoSell, title='STO Sell', text="S▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
+plotshape(stoBuy, title='Buy', text="S▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(stoSell, title='Sell', text="S▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
 
-plot(stoRawSL, color=slColour, title='STO Stop Loss', linewidth=2, style=plot.style_cross)
-plot(stoRawTP, color=tpColour, title='STO Take Profit', linewidth=2, style=plot.style_cross)
+plot(stoRawSL, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
+plot(stoRawTP, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
 
-plotshape(engBuy, title='ENG Buy', text="E▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
-plotshape(engSell, title='ENG Sell', text="E▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
+plotshape(engBuy, title='Buy', text="E▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(engSell, title='Sell', text="E▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
 
-plot(engRawSL, color=slColour, title='ENG Stop Loss', linewidth=2, style=plot.style_cross)
-plot(engRawTP, color=tpColour, title='ENG Take Profit', linewidth=2, style=plot.style_cross)
+plot(engRawSL, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
+plot(engRawTP, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
 
-plotshape(canBuy, title='CAN Buy', text="C▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
-plotshape(canSell, title='CAN Sell', text="C▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
+plotshape(canBuy, title='Buy', text="C▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(canSell, title='Sell', text="C▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
 
-plot(canRawSL, color=slColour, title='CAN Stop Loss', linewidth=2, style=plot.style_cross)
-plot(canRawTP, color=tpColour, title='CAN Take Profit', linewidth=2, style=plot.style_cross)
+plot(canRawSL, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
+plot(canRawTP, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
 
 //-----------------------------------------------------------------------------}
 //Strategy
@@ -634,22 +661,22 @@ table.cell(table_data, 0, 1, str.tostring("$" + str.tostring(math.round(strNetPr
 table.cell(table_data, 0, 2, str.tostring(str.tostring(math.round(strPercentProfitable * 100,0)) + "%"), text_size = size.normal, bgcolor = bgLightColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Percent Profitable")
 table.cell(table_data, 0, 3, str.tostring((math.round(strProfitFactor,2))), text_size = size.normal, bgcolor = bgDarkColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Profit Factor")
 table.cell(table_data, 0, 4, str.tostring("$" + str.tostring(math.round(strategy.max_drawdown, 0))), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Max Drawdown")
-table.cell(table_data, 0, 5, str.format("{0}", math.abs(rsiRecLot)), bgcolor = rsiPositionBg, text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "RSI Lot Size")
-table.cell(table_data, 0, 6, str.format("{0}", math.abs(stoRecLot)), bgcolor = stoPositionBg, text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "STO Lot Size")
-table.cell(table_data, 0, 7, str.format("{0}", math.abs(engRecLot)), bgcolor = engPositionBg, text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "ENG Lot Size")
-table.cell(table_data, 0, 8, str.format("{0}", math.abs(canRecLot)), bgcolor = canPositionBg, text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "CAN Lot Size")
+table.cell(table_data, 0, 5, str.format("{0}", math.abs(rsiRecLot)), bgcolor = rsiPositionBg, text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "RSI Lot")
+table.cell(table_data, 0, 6, str.format("{0}", math.abs(stoRecLot)), bgcolor = stoPositionBg, text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "STO Lot")
+table.cell(table_data, 0, 7, str.format("{0}", math.abs(engRecLot)), bgcolor = engPositionBg, text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "ENG Lot")
+table.cell(table_data, 0, 8, str.format("{0}", math.abs(canRecLot)), bgcolor = canPositionBg, text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "CAN Lot")
 
 //-----------------------------------------------------------------------------}
 //Alert
 //-----------------------------------------------------------------------------{
 if rsiBuy or rsiSell
-    alert("US500 " + (rsiBuy ? "Buy" : "Sell") + " lot " + str.tostring(math.round(rsiRecLot, 1)) + " slprice " + str.tostring(math.round(rsiRawSL, 1)) + ", tpprice " + str.tostring(math.round(rsiRawTP, 1)), alert.freq_once_per_bar_close)
+    alert("US500Cash " + (rsiBuy ? "Buy" : "Sell") + " lot " + str.tostring(math.round(rsiRecLot, 1)) + " slprice " + str.tostring(math.round(rsiRawSL, 1)) + ", tpprice " + str.tostring(math.round(rsiRawTP, 1)), alert.freq_once_per_bar_close)
 
 if stoBuy or stoSell
-    alert("US500 " + (stoBuy ? "Buy" : "Sell") + " lot " + str.tostring(math.round(stoRecLot, 1)) + " slprice " + str.tostring(math.round(stoRawSL, 1)) + ", tpprice " + str.tostring(math.round(stoRawTP, 1)), alert.freq_once_per_bar_close)
+    alert("US500Cash " + (stoBuy ? "Buy" : "Sell") + " lot " + str.tostring(math.round(stoRecLot, 1)) + " slprice " + str.tostring(math.round(stoRawSL, 1)) + ", tpprice " + str.tostring(math.round(stoRawTP, 1)), alert.freq_once_per_bar_close)
 
 if engBuy or engSell
-    alert("US500 " + (engBuy ? "Buy" : "Sell") + " lot " + str.tostring(math.round(engRecLot, 1)) + " slprice " + str.tostring(math.round(engRawSL, 1)) + ", tpprice " + str.tostring(math.round(engRawTP, 1)), alert.freq_once_per_bar_close)
+    alert("US500Cash " + (engBuy ? "Buy" : "Sell") + " lot " + str.tostring(math.round(engRecLot, 1)) + " slprice " + str.tostring(math.round(engRawSL, 1)) + ", tpprice " + str.tostring(math.round(engRawTP, 1)), alert.freq_once_per_bar_close)
 
 if canBuy or canSell
-    alert("US500 " + (canBuy ? "Buy" : "Sell") + " lot " + str.tostring(math.round(canRecLot, 1)) + " slprice " + str.tostring(math.round(canRawSL, 1)) + ", tpprice " + str.tostring(math.round(canRawTP, 1)), alert.freq_once_per_bar_close)
+    alert("US500Cash " + (canBuy ? "Buy" : "Sell") + " lot " + str.tostring(math.round(canRecLot, 1)) + " slprice " + str.tostring(math.round(canRawSL, 1)) + ", tpprice " + str.tostring(math.round(canRawTP, 1)), alert.freq_once_per_bar_close)
