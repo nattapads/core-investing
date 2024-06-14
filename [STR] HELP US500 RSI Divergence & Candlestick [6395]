@@ -1,0 +1,710 @@
+//NSal
+//@version=5
+strategy("[STR] HELP US500 RSI Divergence & Candlestick [6395]", overlay = true, margin_long = 100, margin_short = 100, pyramiding = 3, risk_free_rate = 0)
+
+//------------------------------------------------------------------------------
+//Strategy Settings
+//-----------------------------------------------------------------------------{
+startTime               = input.time(timestamp("Feb 01 2018 00:00:00"), title="Start Time")
+inTimeWindow            = time >= startTime
+
+//-----------------------------------------------------------------------------}
+//RSI Divergence Settings
+//-----------------------------------------------------------------------------{
+enableRegular           = input(true,           'Enable Regular Divergence',    group="RSI Divergence Settings")
+enableHidden            = input(true,           'Enable Hidden Divergence',     group="RSI Divergence Settings")
+rsiLen                  = input.int(9,          'RSI Period',                   group="RSI Divergence Settings")
+lbR                     = input.int(1,          'Pivot Lookback Right',         group="RSI Divergence Settings")
+lbL                     = input.int(1,          'Pivot Lookback Left',          group="RSI Divergence Settings")
+rangeUpper              = input.int(60,         'Max of Lookback Range',        group="RSI Divergence Settings")
+rangeLower              = input.int(5,          'Min of Lookback Range',        group="RSI Divergence Settings")
+rsiSrc                  = input(close,          'RSI Source',                   group="RSI Divergence Settings")
+
+//-----------------------------------------------------------------------------}
+//Stochastic Settings
+//-----------------------------------------------------------------------------{
+enableStochastic        = input(true,           'Enable Stochastic',    group="Stochastic Settings")
+periodK                 = input.int(14,         '%K Length',            minval=1, group="Stochastic Settings")
+smoothK                 = input.int(3,          '%K Smoothing',         minval=1, group="Stochastic Settings")
+periodD                 = input.int(3,          '%D Smoothing',         minval=1, group="Stochastic Settings")
+stocBuyTh               = input.int(25,         'Buy Threshold',        minval=1, group="Stochastic Settings")
+stocSellTh              = input.int(75,         'Sell Threshold',       minval=1, group="Stochastic Settings")
+
+//-----------------------------------------------------------------------------}
+//Engulfing Settings
+//-----------------------------------------------------------------------------{
+enableEngulfting        = input(true,           'Enable Engulfing',     group="Engulfing Settings")
+
+//-----------------------------------------------------------------------------}
+//Morning & Evening Settings
+//-----------------------------------------------------------------------------{
+enableStar              = input(true,           'Enable Morning & Evening Star',    group="Morning & Evening Settings")
+emaStarLength           = input.int(5,          'EMA Morning & Evening Star',       minval=5, maxval=50, group="Morning & Evening Settings")
+
+//-----------------------------------------------------------------------------}
+//Harami Settings
+//-----------------------------------------------------------------------------{
+enableHarami            = input(true,           'Enable Harami',        group="Harami Settings")
+
+//-----------------------------------------------------------------------------}
+//Tweezer and Kangaroo Tail Settings
+//-----------------------------------------------------------------------------{
+enableTweezer           = input(true,           'Enable Tweezer',                   group="Tweezer and Kangaroo Tail Settings")
+maxRate                 = input(150.,           'Max Rate % Between Wick Sizes',    group="Tweezer and Kangaroo Tail Settings") / 100.
+levelDiff               = input(20.,            'Max Difference in level %',        group="Tweezer and Kangaroo Tail Settings") / 100.
+prdHighLow              = input(5,              'Highest/Lowest Period',            group="Tweezer and Kangaroo Tail Settings")
+maxDicannce             = input.int(12,         'Max Dicannce between Tweezers',    minval=1, group="Tweezer and Kangaroo Tail Settings")
+
+//-----------------------------------------------------------------------------}
+//EMA Settings
+//-----------------------------------------------------------------------------{
+emaFastLen              = input(20,             'Fast SMA Length',      group="EMA Settings")
+emaFastSrc              = close
+emaSlowLen              = input(50,             'Slow SMA Length',      group="EMA Settings")
+emaSlowSrc              = close
+
+//-----------------------------------------------------------------------------}
+// Help Settings
+//-----------------------------------------------------------------------------{
+newHighSrc      = input.symbol(defval = "M3HP", title = "New High", group = "Help Settings", inline = "Source")
+newLowSrc       = input.symbol(defval = "M3LP", title = "New Low",  group = "Help Settings", inline = "Source")
+totalStock      = input.int(defval = 500,       title = "Total no. of stocks",  group = "Help Settings")
+helpThres       = input.float(-0.1,             title = "Help Threshold",       group = "Help Settings")
+pessThres       = input.float(0.1,              title = "Pessimism Threshold",  group = "Help Settings")
+emaLength       = input.int(21, minval=1,       title = 'EMA Length',           group = "Help Settings")
+emaSmooth       = input.int(5,  minval=1,       title = 'EMA Smooth Length',    group = "Help Settings")
+smoothLine      = input(true,                   title = "Smooth Help & Pessimism", group = "Help Settings")
+
+//-----------------------------------------------------------------------------}
+//ATR Settings
+//-----------------------------------------------------------------------------{
+atrLength               = input(14,             'ATR Length',           group="ATR Settings")
+atrMultiplier           = input(3.10,           'Multiplier',           group="ATR Settings")
+atrReward               = input(1.50,           'Reward Multiplier',    group="ATR Settings")
+atrLoss                 = input(1.00,           'Loss Multiplier',      group="ATR Settings")
+slippageBuffer          = input(0.6,            'slippageBuffer',       group="ATR Settings")
+atrOutput               = ta.atr(atrLength)*atrMultiplier
+
+//-----------------------------------------------------------------------------{
+//Structure Settings
+//-----------------------------------------------------------------------------{
+strSwingLength          = input(50,             'Swing Length', group = 'Smart Money Concepts')
+strConfluence           = false
+strLength               = 50
+
+//------------------------------------------------------------------------------
+//Session Settings
+//-----------------------------------------------------------------------------{
+sesUsTxt                = input('New York', '',             inline = 'sesa', group = 'Session Settings')
+sesUsPeriod             = input.session('1300-1900', '',    inline = 'sesa', group = 'Session Settings')
+
+sesEuTxt                = input('London', '',               inline = 'sesb', group = 'Session Settings')
+sesEuPeriod             = input.session('0000-1600', '',    inline = 'sesb', group = 'Session Settings')
+
+sesUTC                  = input.int(0, 'UTC (+/-)',             group = 'Session Settings')
+sesUseExchange          = input(false, 'Use Exchange Timezone', group = 'Session Settings')
+
+//-----------------------------------------------------------------------------}
+// Help & Pessimism calculation
+//-----------------------------------------------------------------------------{
+newHighValue    = request.security(newHighSrc, "1D", close)
+newLowValue     = request.security(newLowSrc, "1D", close)
+diffHighLow     = newHighValue - newLowValue
+
+helpIndi        = diffHighLow / totalStock
+pessiIndi       = newLowValue / totalStock
+
+emaHelp         = ta.ema(helpIndi, 5)
+emaPessi        = ta.ema(pessiIndi, 5)
+
+diffHelpPessi   = helpIndi - pessiIndi
+emaDiff         = ta.ema(diffHelpPessi, emaSmooth)
+
+//-----------------------------------------------------------------------------}
+//RSI Calculation
+//-----------------------------------------------------------------------------{
+osc = ta.rsi(rsiSrc, rsiLen)
+
+plFound = na(ta.pivotlow(osc, lbL, lbR)) ? false : true
+phFound = na(ta.pivothigh(osc, lbL, lbR)) ? false : true
+
+_inRange(cond) =>
+    bars = ta.barssince(cond == true)
+    rangeLower <= bars and bars <= rangeUpper
+
+// Regular Bullish
+oscHL = osc[lbR] > ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
+priceLL = low[lbR] < ta.valuewhen(plFound, low[lbR], 1)
+bullCond = priceLL and oscHL and plFound
+
+// Regular Bearish
+oscLH = osc[lbR] < ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
+priceHH = high[lbR] > ta.valuewhen(phFound, high[lbR], 1)
+bearCond = priceHH and oscLH and phFound
+
+// Hidden Bullish
+oscLL = osc[lbR] < ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
+priceHL = low[lbR] > ta.valuewhen(plFound, low[lbR], 1)
+hiddenBullCond = priceHL and oscLL and plFound
+
+// Hidden Bearish
+oscHH = osc[lbR] > ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
+priceLH = high[lbR] < ta.valuewhen(phFound, high[lbR], 1)
+hiddenBearCond = priceLH and oscHH and phFound
+
+rsiBuyCon               = (enableRegular ? bullCond : false) or (enableHidden ? hiddenBullCond : false)
+rsiSellCon              = (enableRegular ? bearCond : false) or (enableHidden ? hiddenBearCond : false)
+
+//-----------------------------------------------------------------------------}
+//Stochastic Calculation
+//-----------------------------------------------------------------------------{
+stochasticK             = ta.sma(ta.stoch(close, high, low, periodK), smoothK)
+
+//-----------------------------------------------------------------------------}
+//EMA Calculation
+//-----------------------------------------------------------------------------{
+trendFast               = ta.sma(emaFastSrc, emaFastLen)
+trendSlow               = ta.sma(emaSlowSrc, emaSlowLen)
+
+//-----------------------------------------------------------------------------}
+//Engulfing Candle Calculation
+//-----------------------------------------------------------------------------{
+openBarPrevious         = open[1]
+closeBarPrevious        = close[1]
+openBarCurrent          = open
+closeBarCurrent         = close
+
+bullishEngulfing        = openBarCurrent <= closeBarPrevious and openBarCurrent < openBarPrevious and closeBarCurrent > openBarPrevious
+bearishEngulfing        = openBarCurrent >= closeBarPrevious and openBarCurrent > openBarPrevious and closeBarCurrent < openBarPrevious
+
+//-----------------------------------------------------------------------------}
+//Morning & Evening Calculation
+//-----------------------------------------------------------------------------{
+emaStar                 = ta.ema(close, emaStarLength)
+openCloseMin            = math.min(close, open)
+openCloseMax            = math.max(close, open)
+prevBar0                = openCloseMax - openCloseMin
+prevClose1              = close[1]
+prevOpen1               = open[1]
+openCloseMin1           = math.min(close[1], open[1])
+openCloseMax1           = math.max(close[1], open[1])
+prevBar1                = openCloseMax1 - openCloseMin1
+prevClose2              = close[2]
+prevOpen2               = open[2]
+openCloseMin2           = math.min(close[2], open[2])
+openCloseMax2           = math.max(close[2], open[2])
+prevBar2                = openCloseMax2 - openCloseMin2
+prevClose3              = close[3]
+
+bodyTop                 = math.max(close[1], open[1])
+bodyLow                 = math.min(close[1], open[1])
+
+morningStar             = if prevBar0 > prevBar1 and prevBar2 > prevBar1 and prevBar0 > prevBar2 * 0.5 and openCloseMin2 > openCloseMin1 and openCloseMin > openCloseMin1 and emaStar > prevClose2 and emaStar > prevClose1 and close > prevClose1 and prevClose3 > prevClose2 and prevClose2 > prevClose1 and close > bodyTop and prevClose2 != prevClose1 and open != close and prevOpen2 != prevClose2
+    true
+
+eveningStar             = if prevBar0 > prevBar1 and prevBar2 > prevBar1 and prevBar0 > prevBar2 * 0.5 and openCloseMax2 < openCloseMax1 and openCloseMax < openCloseMax1 and emaStar < prevClose2 and emaStar < prevClose1 and close < prevClose1 and prevClose3 < prevClose2 and prevClose2 < prevClose1 and close < bodyLow and prevClose2 != prevClose1 and open != close and prevOpen2 != prevClose2
+    true
+
+//-----------------------------------------------------------------------------}
+//Harami Calculation
+//-----------------------------------------------------------------------------{
+bullishHarami           = close[0] > open[0] and high[0] <= open[1] and low[0] >= close[1] and close[1] < open[1]
+bearishHarami           = close[0] < open[0] and high[0] <= close[1] and low[0] >= open[1] and close[1] > open[1]
+
+//-----------------------------------------------------------------------------}
+//Tweezer and Kangaroo Tail Calculation
+//-----------------------------------------------------------------------------{
+topWick                 = high - math.max(close, open)
+bottomWick              = math.min(close, open) - low
+isHighestBar            = ta.highestbars(prdHighLow) == 0
+isLowestBar             = ta.lowestbars(prdHighLow) == 0
+aparttweezers_top(len) =>
+    ret         = 0
+    if topWick > 0
+        for x = 1 to maxDicannce by 1
+            if nz(topWick[x]) == 0
+                break
+            if math.max(topWick, topWick[x]) / math.min(topWick, topWick[x]) <= maxRate and math.abs(high - high[x]) < math.max(topWick, topWick[x]) * levelDiff and isHighestBar[x]
+                ret := x
+                break
+            else
+                if high[x] >= high
+                    ret := 0
+                    break
+    ret
+
+aparttweezers_bottom(len) =>
+    ret         = 0
+    if bottomWick > 0
+        for x = 1 to maxDicannce by 1
+            if nz(bottomWick[x]) == 0
+                break
+            if math.max(bottomWick, bottomWick[x]) / math.min(bottomWick, bottomWick[x]) <= maxRate and math.abs(low - low[x]) < math.max(bottomWick, bottomWick[x]) * levelDiff and isLowestBar[x]
+                ret := x
+                break
+            else
+                if low[x] <= low
+                    ret := 0
+                    break
+    ret
+
+topTweezer              = enableTweezer and aparttweezers_top(maxDicannce)
+bottomTweezer           = enableTweezer and aparttweezers_bottom(maxDicannce)
+
+//-----------------------------------------------------------------------------}
+//Sessions
+//-----------------------------------------------------------------------------{
+tf                      = timeframe.period
+
+var tz                  = sesUseExchange ? syminfo.timezone :
+  str.format('UTC{0}{1}', sesUTC >= 0 ? '+' : '-', math.abs(sesUTC))
+
+isUsSession             = math.sign(nz(time(tf, sesUsPeriod, tz)))
+isEuSession             = math.sign(nz(time(tf, sesEuPeriod, tz)))
+
+isTradingSession        = isUsSession + isEuSession
+
+//-----------------------------------------------------------------------------}
+//Structure Functions
+//-----------------------------------------------------------------------------{
+n                       = bar_index
+atr                     = ta.atr(200)
+cmean_range             = ta.cum(high - low) / n
+
+//HL Output function
+hl() => [high, low]
+
+//Get ohlc values function
+get_ohlc() => [close[1], open[1], high, low, high[2], low[2]]
+
+//Swings detection/measurements
+swings(len)=>
+    var os              = 0
+    
+    upper               = ta.highest(len)
+    lower               = ta.lowest(len)
+
+    os                  := high[len] > upper ? 0 : low[len] < lower ? 1 : os[1]
+
+    top                 = os == 0 and os[1] != 0 ? high[len] : 0
+    btm                 = os == 1 and os[1] != 1 ? low[len] : 0
+
+    [top, btm]
+
+//-----------------------------------------------------------------------------}
+//Structure variables
+//-----------------------------------------------------------------------------{
+var trend               = 0, var intTrend = 0
+
+var top_y               = 0., var top_x = 0
+var btm_y               = 0., var btm_x = 0
+
+var itop_y              = 0., var itop_x = 0
+var ibtm_y              = 0., var ibtm_x = 0
+
+var trail_up            = high, var trail_dn = low
+var trail_up_x          = 0,  var trail_dn_x = 0
+
+var top_cross           = true,  var btm_cross = true
+var itop_cross          = true, var ibtm_cross = true
+
+//Swings
+[top, btm]              = swings(strLength)
+[itop, ibtm]            = swings(strSwingLength)
+
+//-----------------------------------------------------------------------------}
+//Structure Pivot High
+//-----------------------------------------------------------------------------{
+var line extend_top     = na
+
+if top
+    top_cross           := true
+
+if itop
+    itop_cross          := true
+
+    itop_y              := itop
+    itop_x              := n - 5
+
+//Trailing maximum
+trail_up                := math.max(high, trail_up)
+trail_up_x              := trail_up == high ? n : trail_up_x
+
+//-----------------------------------------------------------------------------}
+//Structure Pivot Low
+//-----------------------------------------------------------------------------{
+var line extend_btm     = na 
+
+if btm
+    btm_cross           := true
+
+if ibtm
+    ibtm_cross          := true
+
+    ibtm_y              := ibtm
+    ibtm_x              := n - 5
+
+//Trailing minimum
+trail_dn                := math.min(low, trail_dn)
+trail_dn_x              := trail_dn == low ? n : trail_dn_x
+
+//-----------------------------------------------------------------------------}
+//Structure Pivot High BOS/CHoCH
+//-----------------------------------------------------------------------------{
+//Filtering
+var bull_concordant     = true
+
+if strConfluence
+    bull_concordant     := high - math.max(close, open) > math.min(close, open - low)
+
+//Detect internal bullish Structure
+if ta.crossover(close, itop_y) and itop_cross and top_y != itop_y and bull_concordant
+    bool choch          = na
+    
+    if intTrend < 0
+        choch           := true
+    
+    itop_cross          := false
+    intTrend            := 1
+
+//-----------------------------------------------------------------------------}
+//Structure Pivot Low BOS/CHoCH
+//-----------------------------------------------------------------------------{
+var bear_concordant     = true
+
+if strConfluence
+    bear_concordant     := high - math.max(close, open) < math.min(close, open - low)
+
+//Detect internal bearish Structure
+if ta.crossunder(close, ibtm_y) and ibtm_cross and btm_y != ibtm_y and bear_concordant
+    bool choch          = false
+    
+    if intTrend > 0
+        choch           := true
+    
+    ibtm_cross          := false
+    intTrend            := -1
+
+//-----------------------------------------------------------------------------}
+//Trend and Trading Session
+//-----------------------------------------------------------------------------{ 
+var trendUp             = false
+
+if trendFast[0] > trendFast[1] 
+    trendUp             := true
+else if trendSlow[0] < trendSlow[1]
+    trendUp             := false
+
+bullishTrend            = trendFast > trendSlow and intTrend == 1 and isTradingSession and atrOutput > 0 and emaDiff > 0
+bearishTrend            = trendFast < trendSlow and intTrend != 1 and isTradingSession and atrOutput > 0 and emaDiff < 0
+
+//-----------------------------------------------------------------------------}
+//Bar Colour
+//-----------------------------------------------------------------------------{
+var color trendColour   = na
+var bullColour          = #089981
+var bearColour          = #f23645
+
+if intTrend == 1 and trendUp == true and isTradingSession
+    trendColour         :=  bullColour
+else if intTrend != 1 and trendUp == false and isTradingSession
+    trendColour         :=  bearColour
+else if intTrend == 1 and trendUp == false and isTradingSession
+    trendColour         :=  color.rgb(8, 153, 129, 50)
+else if intTrend != 1 and trendUp == true and isTradingSession
+    trendColour         :=  color.rgb(242, 54, 70, 50)
+else
+    trendColour         := color.rgb(120, 123, 134, 65)
+
+barcolor(trendColour)
+
+//-----------------------------------------------------------------------------}
+//Entry Exit Signal
+//-----------------------------------------------------------------------------{
+var rsiOpenTrade        = false
+
+rsiBuy                  = rsiBuyCon and trendFast > trendSlow and trendUp == true and rsiOpenTrade == false
+rsiSell                 = rsiSellCon and trendFast < trendSlow and trendUp == false and rsiOpenTrade == false
+
+var stoOpenTrade        = false
+
+stoBuy                  = enableStochastic and ta.crossover(stochasticK, stocBuyTh) and trendUp == true and bullishTrend and stoOpenTrade == false
+stoSell                 = enableStochastic and ta.crossunder(stochasticK, stocSellTh) and trendUp == false and bearishTrend and stoOpenTrade == false
+
+var engOpenTrade        = false
+
+engBuy                  = enableEngulfting and bullishEngulfing and trendUp == true and bullishTrend and engOpenTrade == false
+engSell                 = enableEngulfting and bearishEngulfing and trendUp == false and bearishTrend and engOpenTrade == false
+
+var canOpenTrade        = false
+
+canBuy                  = (enableStar and morningStar or enableHarami and bullishHarami or enableTweezer and bottomTweezer) and trendUp == true and bullishTrend and canOpenTrade == false
+canSell                 = (enableStar and eveningStar or enableHarami and bearishHarami or enableTweezer and topTweezer) and trendUp == false and bearishTrend and canOpenTrade == false
+
+//-----------------------------------------------------------------------------}
+//Take Profit & Stop Loss
+//-----------------------------------------------------------------------------{ 
+rsiRawTP                = rsiBuy ? close + (atrOutput * atrReward) : rsiSell ? close - (atrOutput * atrReward) : na
+rsiRawSL                = rsiBuy ? low - (atrOutput * atrLoss) : rsiSell ? high + (atrOutput * atrLoss) : na     
+
+stoRawTP                = stoBuy ? close + (atrOutput * atrReward) : stoSell ? close - (atrOutput * atrReward) : na
+stoRawSL                = stoBuy ? low - (atrOutput * atrLoss) : stoSell ? high + (atrOutput * atrLoss) : na     
+
+engRawTP                = engBuy ? close + (atrOutput * atrReward) : engSell ? close - (atrOutput * atrReward) : na
+engRawSL                = engBuy ? low - (atrOutput * atrLoss) : engSell ? high + (atrOutput * atrLoss) : na     
+
+canRawTP                = canBuy ? close + (atrOutput * atrReward) : canSell ? close - (atrOutput * atrReward) : na
+canRawSL                = canBuy ? low - (atrOutput * atrLoss) : canSell ? high + (atrOutput * atrLoss) : na   
+
+//-----------------------------------------------------------------------------}
+//Lot Settings
+//-----------------------------------------------------------------------------{ 
+initialLot              = input.float(0.1,      "Initial Lot",          minval=0.1, step=0.1, group = 'Account & Trade')
+drawDown                = input.float(1.4,      "Drawdown Multiplier",  minval=0.1, step=0.1, group = 'Account & Trade')
+
+// Calculate diff and recommended lot size for different risk percentages
+var float rsiSlipTP     = 0
+var float rsiSlipSL     = 0
+var float stoSlipTP     = 0
+var float stoSlipSL     = 0
+var float engSlipTP     = 0
+var float engSlipSL     = 0
+var float canSlipTP     = 0
+var float canSlipSL     = 0
+
+// Recent Loss
+var rsiRawLot           = initialLot
+var stoRawLot           = initialLot
+var engRawLot           = initialLot
+var canRawLot           = initialLot
+
+var rsiRecLot           = math.round(rsiRawLot,1)
+var stoRecLot           = math.round(stoRawLot,1)
+var engRecLot           = math.round(engRawLot,1)
+var canRecLot           = math.round(canRawLot,1)
+
+// Consolidated Open Trade Conditions
+rsiInitCond             = rsiOpenTrade == false
+stoInitCond             = stoOpenTrade == false
+engInitCond             = engOpenTrade == false
+canInitCond             = canOpenTrade == false
+
+rsiOpenCond             = rsiOpenTrade == true
+stoOpenCond             = stoOpenTrade == true
+engOpenCond             = engOpenTrade == true
+canOpenCond             = canOpenTrade == true
+
+rsiCond                 = (rsiBuy and rsiInitCond) or (rsiSell and rsiInitCond)
+stoCond                 = (stoBuy and stoInitCond) or (stoSell and stoInitCond)
+engCond                 = (engBuy and engInitCond) or (engSell and engInitCond)
+canCond                 = (canBuy and canInitCond) or (canSell and canInitCond)
+
+// Update TP & SL
+if rsiCond
+    rsiSlipTP           := rsiBuy ? math.round((rsiRawTP + slippageBuffer), 2) : math.round((rsiRawTP - slippageBuffer), 2)
+    rsiSlipSL           := rsiBuy ? math.round((rsiRawSL + slippageBuffer), 2) : math.round((rsiRawSL - slippageBuffer), 2)
+    rsiOpenTrade        := true
+
+if stoCond
+    stoSlipTP           := stoBuy ? math.round((stoRawTP + slippageBuffer), 2) : math.round((stoRawTP - slippageBuffer), 2)
+    stoSlipSL           := stoBuy ? math.round((stoRawSL + slippageBuffer), 2) : math.round((stoRawSL - slippageBuffer), 2)
+    stoOpenTrade        := true
+
+if engCond
+    engSlipTP           := engBuy ? math.round((engRawTP + slippageBuffer), 2) : math.round((engRawTP - slippageBuffer), 2)
+    engSlipSL           := engBuy ? math.round((engRawSL + slippageBuffer), 2) : math.round((engRawSL - slippageBuffer), 2)
+    engOpenTrade        := true
+
+if canCond
+    canSlipTP           := canBuy ? math.round((canRawTP + slippageBuffer), 2) : math.round((canRawTP - slippageBuffer), 2)
+    canSlipSL           := canBuy ? math.round((canRawSL + slippageBuffer), 2) : math.round((canRawSL - slippageBuffer), 2)
+    canOpenTrade        := true
+
+// Reach SL
+if rsiSlipTP > rsiSlipSL and ta.crossunder(low, rsiSlipSL) and rsiOpenCond
+    rsiOpenTrade        := false
+    rsiRawLot           := rsiRawLot * drawDown
+    rsiRecLot           := math.round(rsiRawLot,1)
+else if rsiSlipTP < rsiSlipSL and ta.crossover(high, rsiSlipSL) and rsiOpenCond
+    rsiOpenTrade        := false
+    rsiRawLot           := rsiRawLot * drawDown
+    rsiRecLot           := math.round(rsiRawLot,1)
+else if rsiSlipTP > rsiSlipSL and ta.crossover(high, rsiSlipTP) and rsiOpenCond
+    rsiOpenTrade        := false
+    rsiRawLot           := initialLot
+    rsiRecLot           := math.round(rsiRawLot,1)
+else if rsiSlipTP < rsiSlipSL and ta.crossunder(low, rsiSlipTP) and rsiOpenCond
+    rsiOpenTrade        := false
+    rsiRawLot           := initialLot
+    rsiRecLot           := math.round(rsiRawLot,1)
+
+if stoSlipTP > stoSlipSL and ta.crossunder(low, stoSlipSL) and stoOpenCond
+    stoOpenTrade        := false
+    stoRawLot           := stoRawLot * drawDown
+    stoRecLot           := math.round(stoRawLot,1)
+else if stoSlipTP < stoSlipSL and ta.crossover(high, stoSlipSL) and stoOpenCond
+    stoOpenTrade        := false
+    stoRawLot           := stoRawLot * drawDown
+    stoRecLot           := math.round(stoRawLot,1)
+else if stoSlipTP > stoSlipSL and ta.crossover(high, stoSlipTP) and stoOpenCond
+    stoOpenTrade        := false
+    stoRawLot           := initialLot
+    stoRecLot           := math.round(stoRawLot,1)
+else if stoSlipTP < stoSlipSL and ta.crossunder(low, stoSlipTP) and stoOpenCond
+    stoOpenTrade        := false
+    stoRawLot           := initialLot
+    stoRecLot           := math.round(stoRawLot,1)
+
+if engSlipTP > engSlipSL and ta.crossunder(low, engSlipSL) and engOpenCond
+    engOpenTrade        := false
+    engRawLot           := engRawLot * drawDown
+    engRecLot           := math.round(engRawLot,1)
+else if engSlipTP < engSlipSL and ta.crossover(high, engSlipSL) and engOpenCond
+    engOpenTrade        := false
+    engRawLot           := engRawLot * drawDown
+    engRecLot           := math.round(engRawLot,1)
+else if engSlipTP > engSlipSL and ta.crossover(high, engSlipTP) and engOpenCond
+    engOpenTrade        := false
+    engRawLot           := initialLot
+    engRecLot           := math.round(engRawLot,1)
+else if engSlipTP < engSlipSL and ta.crossunder(low, engSlipTP) and engOpenCond
+    engOpenTrade        := false
+    engRawLot           := initialLot
+    engRecLot           := math.round(engRawLot,1)
+
+if canSlipTP > canSlipSL and ta.crossunder(low, canSlipSL) and canOpenCond
+    canOpenTrade        := false
+    canRawLot           := canRawLot * drawDown
+    canRecLot           := math.round(canRawLot,1)
+else if canSlipTP < canSlipSL and ta.crossover(high, canSlipSL) and canOpenCond
+    canOpenTrade        := false
+    canRawLot           := canRawLot * drawDown
+    canRecLot           := math.round(canRawLot,1)
+else if canSlipTP > canSlipSL and ta.crossover(high, canSlipTP) and canOpenCond
+    canOpenTrade        := false
+    canRawLot           := initialLot
+    canRecLot           := math.round(canRawLot,1)
+else if canSlipTP < canSlipSL and ta.crossunder(low, canSlipTP) and canOpenCond
+    canOpenTrade        := false
+    canRawLot           := initialLot
+    canRecLot           := math.round(canRawLot,1)
+
+//-----------------------------------------------------------------------------}
+//TP & SL Plot
+//-----------------------------------------------------------------------------{
+showTpSl                = input(true, "Show TP/SL",     group = "ATR Settings")
+slColour                = showTpSl ? color.rgb(242, 54, 70) : color.rgb(242, 54, 70, 100)
+tpColour                = showTpSl ? color.rgb(8, 153, 129) : color.rgb(8, 153, 129, 100)
+
+//-----------------------------------------------------------------------------}
+//Plot
+//-----------------------------------------------------------------------------{
+plotshape(rsiBuy, title='Buy', text="R▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(rsiSell, title='Sell', text="R▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
+
+plot(rsiRawSL, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
+plot(rsiRawTP, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
+
+plotshape(stoBuy, title='Buy', text="S▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(stoSell, title='Sell', text="S▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
+
+plot(stoRawSL, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
+plot(stoRawTP, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
+
+plotshape(engBuy, title='Buy', text="E▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(engSell, title='Sell', text="E▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
+
+plot(engRawSL, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
+plot(engRawTP, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
+
+plotshape(canBuy, title='Buy', text="C▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+plotshape(canSell, title='Sell', text="C▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
+
+plot(canRawSL, color=slColour, title='Buy Stop Loss', linewidth=2, style=plot.style_cross)
+plot(canRawTP, color=tpColour, title='Buy Take Profit', linewidth=2, style=plot.style_cross)
+
+//-----------------------------------------------------------------------------}
+//Strategy
+//-----------------------------------------------------------------------------{ 
+if inTimeWindow
+    if rsiBuy or rsiSell
+        strategy.entry("rsi", rsiBuy ? strategy.long : strategy.short, qty = rsiRecLot)
+        strategy.exit("rsiEx", "rsi", stop = rsiSlipSL, limit = rsiSlipTP)
+    else if stoBuy or stoSell
+        strategy.entry("sto", stoBuy ? strategy.long : strategy.short, qty = stoRecLot)
+        strategy.exit("stoEx", "sto", stop = stoSlipSL, limit = stoSlipTP)
+    else if engBuy or engSell
+        strategy.entry("eng", engBuy ? strategy.long : strategy.short, qty = engRecLot)
+        strategy.exit("engEx", "eng", stop = engSlipSL, limit = engSlipTP)
+    else if canBuy or canSell
+        strategy.entry("can", canBuy ? strategy.long : strategy.short, qty = canRecLot)
+        strategy.exit("canEx", "can", stop = canSlipSL, limit = canSlipTP)
+    
+// Calculate net profit and percentage profitable
+strNetProfit            = strategy.netprofit
+strPercentProfitable    = math.round(strategy.wintrades / (strategy.wintrades + strategy.losstrades), 2)
+strProfitFactor         = strategy.grossprofit / strategy.grossloss
+    
+bgDarkColour            = color.rgb(0, 0, 0, 30)
+bgLightColour           = color.rgb(0, 0, 0, 20)
+    
+if strNetProfit > 0
+    bgDarkColour        := color.rgb(8, 153, 129)
+    bgLightColour       := color.rgb(8, 153, 129, 20)
+else
+    bgDarkColour        := color.rgb(242, 54, 69)
+    bgLightColour       := color.rgb(242, 54, 69, 20)
+
+rsiPositionBg           = color.rgb(255, 255, 255, 90)
+stoPositionBg           = color.rgb(255, 255, 255, 90)
+engPositionBg           = color.rgb(255, 255, 255, 90)
+canPositionBg           = color.rgb(255, 255, 255, 90)
+
+if rsiOpenTrade == true
+    rsiPositionBg       := color.rgb(255, 255, 255, 65)
+else
+    rsiPositionBg       := color.rgb(255, 255, 255, 90)
+
+if stoOpenTrade == true
+    stoPositionBg       := color.rgb(255, 255, 255, 65)
+else
+    stoPositionBg       := color.rgb(255, 255, 255, 90)
+
+if engOpenTrade == true
+    engPositionBg       := color.rgb(255, 255, 255, 65)
+else
+    engPositionBg       := color.rgb(255, 255, 255, 90)
+
+if canOpenTrade == true
+    canPositionBg       := color.rgb(255, 255, 255, 65)
+else
+    canPositionBg       := color.rgb(255, 255, 255, 90)
+
+//-----------------------------------------------------------------------------}
+//Summary Table
+//-----------------------------------------------------------------------------{ 
+table_data          = table.new(position = position.bottom_right, columns = 1, rows = 9, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)   
+table.cell(table_data, 0, 0, 'RS782', bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))
+table.cell(table_data, 0, 1, str.tostring("$" + str.tostring(math.round(strNetProfit,0))), text_size = size.normal, bgcolor = bgDarkColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Net Profit")
+table.cell(table_data, 0, 2, str.tostring(str.tostring(math.round(strPercentProfitable * 100,0)) + "%"), text_size = size.normal, bgcolor = bgLightColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Percent Profitable")
+table.cell(table_data, 0, 3, str.tostring((math.round(strProfitFactor,2))), text_size = size.normal, bgcolor = bgDarkColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Profit Factor")
+table.cell(table_data, 0, 4, str.tostring("$" + str.tostring(math.round(strategy.max_drawdown, 0))), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Max Drawdown")
+table.cell(table_data, 0, 5, str.format("{0}", math.abs(rsiRecLot)), bgcolor = rsiPositionBg, text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "RSI Lot")
+table.cell(table_data, 0, 6, str.format("{0}", math.abs(stoRecLot)), bgcolor = stoPositionBg, text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "STO Lot")
+table.cell(table_data, 0, 7, str.format("{0}", math.abs(engRecLot)), bgcolor = engPositionBg, text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "ENG Lot")
+table.cell(table_data, 0, 8, str.format("{0}", math.abs(canRecLot)), bgcolor = canPositionBg, text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "CAN Lot")
+
+//-----------------------------------------------------------------------------}
+//Alert
+//-----------------------------------------------------------------------------{
+if rsiBuy or rsiSell
+    alert("US500Cash " + (rsiBuy ? "Buy" : "Sell") + " lot " + str.tostring(math.round(rsiRecLot, 1)) + " slprice " + str.tostring(math.round(rsiRawSL, 1)) + ", tpprice " + str.tostring(math.round(rsiRawTP, 1)), alert.freq_once_per_bar_close)
+
+if stoBuy or stoSell
+    alert("US500Cash " + (stoBuy ? "Buy" : "Sell") + " lot " + str.tostring(math.round(stoRecLot, 1)) + " slprice " + str.tostring(math.round(stoRawSL, 1)) + ", tpprice " + str.tostring(math.round(stoRawTP, 1)), alert.freq_once_per_bar_close)
+
+if engBuy or engSell
+    alert("US500Cash " + (engBuy ? "Buy" : "Sell") + " lot " + str.tostring(math.round(engRecLot, 1)) + " slprice " + str.tostring(math.round(engRawSL, 1)) + ", tpprice " + str.tostring(math.round(engRawTP, 1)), alert.freq_once_per_bar_close)
+
+if canBuy or canSell
+    alert("US500Cash " + (canBuy ? "Buy" : "Sell") + " lot " + str.tostring(math.round(canRecLot, 1)) + " slprice " + str.tostring(math.round(canRawSL, 1)) + ", tpprice " + str.tostring(math.round(canRawTP, 1)), alert.freq_once_per_bar_close)
