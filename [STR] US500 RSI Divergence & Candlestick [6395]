@@ -58,39 +58,36 @@ maxDicannce             = input.int(12,         'Max Dicannce between Tweezers',
 //-----------------------------------------------------------------------------}
 //EMA Settings
 //-----------------------------------------------------------------------------{
-emaFastLen              = input(20,             'Fast SMA Length',      group="EMA Settings")
+maFastLen               = input.int(20,         'Fast MA Length',       step = 1, group = "MA Settings")
+maSlowLen               = input.int(50,         'Slow MA Length',       step = 1, group = "MA Settings")
+useEma                  = input(false,          'Use EMA',              group="EMA Settings")
 emaFastSrc              = close
-emaSlowLen              = input(50,             'Slow SMA Length',      group="EMA Settings")
 emaSlowSrc              = close
 
 //-----------------------------------------------------------------------------}
 //ATR Settings
 //-----------------------------------------------------------------------------{
-atrLength               = input(14,             'ATR Length',           group="ATR Settings")
-atrMultiplier           = input(3.10,           'Multiplier',           group="ATR Settings")
-atrReward               = input(1.50,           'Reward Multiplier',    group="ATR Settings")
-atrLoss                 = input(1.00,           'Loss Multiplier',      group="ATR Settings")
-slippageBuffer          = input(0.6,            'slippageBuffer',       group="ATR Settings")
+atrLength               = input.int(14,         'ATR Length',           step = 1, group = "ATR Settings")
+atrMultiplier           = input.float(3.10,     'Multiplier',           step = 0.1, group = "ATR Settings")
+atrReward               = input.float(1.50,     'Reward Multiplier',    step = 0.1, group = "ATR Settings")
+atrLoss                 = input.float(1.00,     'Loss Multiplier',      step = 0.1, group = "ATR Settings")
+slippageBuffer          = input.float(0.6,      'Slippage Buffer',      step = 0.1, group = "ATR Settings")
 atrOutput               = ta.atr(atrLength)*atrMultiplier
 
 //-----------------------------------------------------------------------------{
 //Structure Settings
 //-----------------------------------------------------------------------------{
-strSwingLength          = input(50,             'Swing Length', group = 'Smart Money Concepts')
+strSwingLength          = input.int(50,          'Swing Length',        step = 1, group = 'Smart Money Concepts')
 strConfluence           = false
 strLength               = 50
 
 //------------------------------------------------------------------------------
 //Session Settings
 //-----------------------------------------------------------------------------{
-sesUsTxt                = input('New York', '',             inline = 'sesa', group = 'Session Settings')
-sesUsPeriod             = input.session('1300-1900', '',    inline = 'sesa', group = 'Session Settings')
-
-sesEuTxt                = input('London', '',               inline = 'sesb', group = 'Session Settings')
-sesEuPeriod             = input.session('0000-1600', '',    inline = 'sesb', group = 'Session Settings')
-
-sesUTC                  = input.int(0, 'UTC (+/-)',             group = 'Session Settings')
-sesUseExchange          = input(false, 'Use Exchange Timezone', group = 'Session Settings')
+sesEuPeriod             = input.session('0000-1600',            'London',                   group = 'Session Settings')
+sesUsPeriod             = input.session('1300-1900',            'New York',                 group = 'Session Settings')
+sesUTC                  = input.int(0,                          'UTC (+/-)',                group = 'Session Settings')
+sesUseExchange          = input(false,                          'Use Exchange Timezone',    group = 'Session Settings')
 
 //-----------------------------------------------------------------------------}
 //RSI Calculation
@@ -135,8 +132,8 @@ stochasticK             = ta.sma(ta.stoch(close, high, low, periodK), smoothK)
 //-----------------------------------------------------------------------------}
 //EMA Calculation
 //-----------------------------------------------------------------------------{
-trendFast               = ta.sma(emaFastSrc, emaFastLen)
-trendSlow               = ta.sma(emaSlowSrc, emaSlowLen)
+trendFast               = useEma ? ta.ema(emaFastSrc, maFastLen) : ta.sma(emaFastSrc, maFastLen)
+trendSlow               = useEma ? ta.ema(emaSlowSrc, maSlowLen) : ta.sma(emaSlowSrc, maSlowLen)
 
 //-----------------------------------------------------------------------------}
 //Engulfing Candle Calculation
@@ -431,8 +428,8 @@ canRawSL                = canBuy ? low - (atrOutput * atrLoss) : canSell ? high 
 //-----------------------------------------------------------------------------}
 //Lot Settings
 //-----------------------------------------------------------------------------{ 
-initialLot              = input.float(0.1,      "Initial Lot",          minval=0.1, step=0.1, group = 'Account & Trade')
-drawDown                = input.float(1.4,      "Drawdown Multiplier",  minval=0.1, step=0.1, group = 'Account & Trade')
+initialLot              = input.float(0.1,      "Initial Lot",          minval = 0.1, step = 0.1, group = 'Account & Trade')
+drawDown                = input.float(1.4,      "Drawdown Multiplier",  minval = 0.1, step = 0.1, group = 'Account & Trade')
 
 // Calculate diff and recommended lot size for different risk percentages
 var float rsiSlipTP     = 0
