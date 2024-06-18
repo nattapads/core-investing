@@ -332,7 +332,7 @@ table_data                  = table.new(position = position.top_right, columns =
 
 table.cell(table_data, 0, 0, "FOR782", bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
 table.cell(table_data, 0, 1, str.tostring(math.round(capPerCombForc, 2)), text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Forecast")
-table.cell(table_data, 0, 2, str.tostring(math.round(instRisk * 100, 2), format.percent), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Standard Deviation")
+table.cell(table_data, 0, 2, str.tostring(math.round(instRisk * 100, 2), format.percent), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Annualized Volatility")
 table.cell(table_data, 0, 3, text = trendValue, text_size = size.normal, bgcolor = bgValueColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Help & Pessimism")
 
 //-----------------------------------------------------------------------------}
