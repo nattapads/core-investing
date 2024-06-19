@@ -1,6 +1,6 @@
 //NSal
 //@version=5
-strategy("[STR] US500 RSI Divergence & Candlestick [6395]", overlay = true, margin_long = 100, margin_short = 100, pyramiding = 3, risk_free_rate = 0)
+strategy("[STR] US500 RSI Divergence & Candlestick [6395]", overlay = true, margin_long = 100, margin_short = 100, pyramiding = 10, risk_free_rate = 0, slippage = 4)
 
 //------------------------------------------------------------------------------
 //Strategy Settings
@@ -60,26 +60,16 @@ maxDicannce             = input.int(12,         'Max Dicannce between Tweezers',
 //-----------------------------------------------------------------------------{
 maFastLen               = input.int(20,         'Fast MA Length',       step = 1, group = "MA Settings")
 maSlowLen               = input.int(50,         'Slow MA Length',       step = 1, group = "MA Settings")
-useEma                  = input(false,          'Use EMA',              group="EMA Settings")
+useEma                  = input(false,          'Use EMA',              group="MA Settings")
 emaFastSrc              = close
 emaSlowSrc              = close
-
-//-----------------------------------------------------------------------------}
-//ATR Settings
-//-----------------------------------------------------------------------------{
-atrLength               = input.int(14,         'ATR Length',           step = 1, group = "ATR Settings")
-atrMultiplier           = input.float(3.10,     'Multiplier',           step = 0.1, group = "ATR Settings")
-atrReward               = input.float(1.50,     'Reward Multiplier',    step = 0.1, group = "ATR Settings")
-atrLoss                 = input.float(1.00,     'Loss Multiplier',      step = 0.1, group = "ATR Settings")
-slippageBuffer          = input.float(0.6,      'Slippage Buffer',      step = 0.1, group = "ATR Settings")
-atrOutput               = ta.atr(atrLength)*atrMultiplier
 
 //-----------------------------------------------------------------------------{
 //Structure Settings
 //-----------------------------------------------------------------------------{
-strSwingLength          = input.int(50,          'Swing Length',        step = 1, group = 'Smart Money Concepts')
+strSwingLength          = input.int(50,          'Swing Length',        step = 1, group = 'Structure Settings')
 strConfluence           = false
-strLength               = 50
+strLength               = strSwingLength
 
 //------------------------------------------------------------------------------
 //Session Settings
@@ -88,6 +78,16 @@ sesEuPeriod             = input.session('0000-1600',            'London',       
 sesUsPeriod             = input.session('1300-1900',            'New York',                 group = 'Session Settings')
 sesUTC                  = input.int(0,                          'UTC (+/-)',                group = 'Session Settings')
 sesUseExchange          = input(false,                          'Use Exchange Timezone',    group = 'Session Settings')
+
+//-----------------------------------------------------------------------------}
+//ATR Settings
+//-----------------------------------------------------------------------------{
+atrLength               = input.int(20,         'ATR Length',           step = 1, group = "ATR Settings")
+atrMultiplier           = input.float(3.10,     'Multiplier',           step = 0.1, group = "ATR Settings")
+atrReward               = input.float(1.55,     'Reward Multiplier',    step = 0.1, group = "ATR Settings")
+atrLoss                 = input.float(1.00,     'Loss Multiplier',      step = 0.1, group = "ATR Settings")
+slippageBuffer          = input.float(0.6,      'Slippage Buffer',      step = 0.1, group = "ATR Settings")
+atrOutput               = ta.atr(atrLength)*atrMultiplier
 
 //-----------------------------------------------------------------------------}
 //RSI Calculation
@@ -392,8 +392,8 @@ barcolor(trendColour)
 //-----------------------------------------------------------------------------{
 var rsiOpenTrade        = false
 
-rsiBuy                  = rsiBuyCon and trendFast > trendSlow and trendUp == true and rsiOpenTrade == false
-rsiSell                 = rsiSellCon and trendFast < trendSlow and trendUp == false and rsiOpenTrade == false
+rsiBuy                  = rsiBuyCon and trendFast > trendSlow and trendUp == true and rsiOpenTrade == false and isTradingSession
+rsiSell                 = rsiSellCon and trendFast < trendSlow and trendUp == false and rsiOpenTrade == false and isTradingSession
 
 var stoOpenTrade        = false
 
