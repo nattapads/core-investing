@@ -51,14 +51,11 @@ useMarginAcc                = input(false,          title = "Margin Account", gr
 //-----------------------------------------------------------------------------}
 // Help Settings
 //-----------------------------------------------------------------------------{
-newHighSrc      = input.symbol(defval = "M3HP", title = "New High", group = "Help Settings", inline = "Source")
-newLowSrc       = input.symbol(defval = "M3LP", title = "New Low",  group = "Help Settings", inline = "Source")
-totalStock      = input.int(defval = 500,       title = "Total no. of stocks",  group = "Help Settings")
-helpThres       = input.float(-0.1,             title = "Help Threshold",       group = "Help Settings")
-pessThres       = input.float(0.1,              title = "Pessimism Threshold",  group = "Help Settings")
-emaLength       = input.int(21, minval=1,       title = 'EMA Length',           group = "Help Settings")
-emaSmooth       = input.int(5,  minval=1,       title = 'EMA Smooth Length',    group = "Help Settings")
-smoothLine      = input(true,                   title = "Smooth Help & Pessimism", group = "Help Settings")
+newHighSrc      = input.symbol(defval = "M3HP",     title = "New High", group = "Help Settings", inline = "Source")
+newLowSrc       = input.symbol(defval = "M3LP",     title = "New Low",  group = "Help Settings", inline = "Source")
+totalStock      = input.int(defval = 500,           title = "Total no. of stocks",  group = "Help Settings")
+emaLength       = input.int(21, minval=1,           title = 'EMA Length',           group = "Help Settings")
+emaSmooth       = input.int(5,  minval=1,           title = 'EMA Smooth Length',    group = "Help Settings")
 
 //-----------------------------------------------------------------------------{
 //Instrument Risk Calculation
@@ -332,7 +329,7 @@ table_data                  = table.new(position = position.top_right, columns =
 
 table.cell(table_data, 0, 0, "FOR782", bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
 table.cell(table_data, 0, 1, str.tostring(math.round(capPerCombForc, 2)), text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Forecast")
-table.cell(table_data, 0, 2, str.tostring(math.round(instRisk * 100, 2), format.percent), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Annualized Volatility")
+table.cell(table_data, 0, 2, str.tostring(math.round(instRisk * 100, 2), format.percent), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Standard Deviation")
 table.cell(table_data, 0, 3, text = trendValue, text_size = size.normal, bgcolor = bgValueColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Help & Pessimism")
 
 //-----------------------------------------------------------------------------}
