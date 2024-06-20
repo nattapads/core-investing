@@ -261,18 +261,18 @@ else if percentCombForc >= maxForeCapped
 //-----------------------------------------------------------------------------}
 // Help & Pessimism calculation
 //-----------------------------------------------------------------------------{
-newHighValue    = request.security(newHighSrc, "1D", close)
-newLowValue     = request.security(newLowSrc, "1D", close)
-diffHighLow     = newHighValue - newLowValue
+newHighValue                = request.security(newHighSrc, "1D", close)
+newLowValue                 = request.security(newLowSrc, "1D", close)
+diffHighLow                 = newHighValue - newLowValue
 
-helpIndi        = diffHighLow / totalStock
-pessiIndi       = newLowValue / totalStock
+helpIndi                    = diffHighLow / totalStock
+pessiIndi                   = newLowValue / totalStock
 
-emaHelp         = ta.ema(helpIndi, 5)
-emaPessi        = ta.ema(pessiIndi, 5)
+emaHelp                     = ta.ema(helpIndi, 5)
+emaPessi                    = ta.ema(pessiIndi, 5)
 
-diffHelpPessi   = helpIndi - pessiIndi
-emaDiff         = ta.ema(diffHelpPessi, emaSmooth)
+diffHelpPessi               = helpIndi - pessiIndi
+emaDiff                     = ta.ema(diffHelpPessi, emaSmooth)
 
 //-----------------------------------------------------------------------------}
 // Ratio Calculation
