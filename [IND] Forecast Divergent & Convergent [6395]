@@ -5,57 +5,57 @@ indicator("[IND] Forecast Divergent & Convergent [6395]", overlay = true)
 //-----------------------------------------------------------------------------}
 //Momentum  Settings
 //-----------------------------------------------------------------------------{
-moProp                      = input.float(0.20,     maxval = 1.00, step = 0.1, title = "Momentum Weight (%)", group="Momentum Settings")
-rapidMoScalar               = input.float(5.95,     step = 0.01, title = "EMA 8 Scalar", group = "Momentum Settings")
-fastMoScalar                = input.float(4.10,     step = 0.01, title = "EMA 16 Scalar", group = "Momentum Settings")
-mediumMoScalar              = input.float(2.79,     step = 0.01, title = "EMA 32 Scalar", group = "Momentum Settings")
-slowMoScalar                = input.float(1.91,     step = 0.01, title = "EMA 64 Scalar", group = "Momentum Settings")
-zeroLag                     = input(false,          title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
+moProp                      = input.float(0.20,             maxval = 1.00, step = 0.1, title = "Momentum Weight (%)", group="Momentum Settings")
+rapidMoScalar               = input.float(5.95,             step = 0.01, title = "EMA 8 Scalar", group = "Momentum Settings")
+fastMoScalar                = input.float(4.10,             step = 0.01, title = "EMA 16 Scalar", group = "Momentum Settings")
+mediumMoScalar              = input.float(2.79,             step = 0.01, title = "EMA 32 Scalar", group = "Momentum Settings")
+slowMoScalar                = input.float(1.91,             step = 0.01, title = "EMA 64 Scalar", group = "Momentum Settings")
+zeroLag                     = input(false,                  title ="Acceleration-Adjusted Momentum", group = "Momentum Settings")
 
 //-----------------------------------------------------------------------------}
 //Acceleration Settings
 //-----------------------------------------------------------------------------{
-acProp                      = input.float(0.20,     maxval = 1.00, step = 0.1, title = "Acceleration Weight (%)", group = "Acceleration Settings")
-acFastScalar                = input.float(1.90,     step = 0.01, title = "EMA 16 Acceleration Scalar", group = "Acceleration Settings")
-acMediumScalar              = input.float(1.98,     step = 0.01, title = "EMA 32 Acceleration Scalar", group = "Acceleration Settings")
-acSlowScalar                = input.float(2.05,     step = 0.01, title = "EMA 64 Acceleration Scalar", group = "Acceleration Settings")
+acProp                      = input.float(0.20,             maxval = 1.00, step = 0.1, title = "Acceleration Weight (%)", group = "Acceleration Settings")
+acFastScalar                = input.float(1.90,             step = 0.01, title = "EMA 16 Acceleration Scalar", group = "Acceleration Settings")
+acMediumScalar              = input.float(1.98,             step = 0.01, title = "EMA 32 Acceleration Scalar", group = "Acceleration Settings")
+acSlowScalar                = input.float(2.05,             step = 0.01, title = "EMA 64 Acceleration Scalar", group = "Acceleration Settings")
 
 //-----------------------------------------------------------------------------}
 //Breakout  Settings
 //-----------------------------------------------------------------------------{
-boProp                      = input.float(0.20,     maxval = 1.00, step = 0.1, title = "Breakout Weight (%)", group = "Breakout Settings")
-bo20Scalar                  = input.float(0.67,     step = 0.01, title = "Breakout 20 Scalar", group = "Breakout Settings")
-bo40Scalar                  = input.float(0.70,     step = 0.01, title = "Breakout 40 Scalar", group = "Breakout Settings")
-bo80Scalar                  = input.float(0.73,     step = 0.01, title = "Breakout 80 Scalar", group = "Breakout Settings")
+boProp                      = input.float(0.20,             maxval = 1.00, step = 0.1, title = "Breakout Weight (%)", group = "Breakout Settings")
+bo20Scalar                  = input.float(0.67,             step = 0.01, title = "Breakout 20 Scalar", group = "Breakout Settings")
+bo40Scalar                  = input.float(0.70,             step = 0.01, title = "Breakout 40 Scalar", group = "Breakout Settings")
+bo80Scalar                  = input.float(0.73,             step = 0.01, title = "Breakout 80 Scalar", group = "Breakout Settings")
 
 //-----------------------------------------------------------------------------}
 //Carry Settings
 //-----------------------------------------------------------------------------{
-crProp                      = input.float(0.40,     maxval = 1.00, step = 0.1, title = "Carry Weight (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
-expectedDiv                 = input.float(0.030,    maxval = 0.99, step = 0.001, title = "Expected Annualised Return (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
-crScalar                    = input.int(30,         step = 1, title = "Carry Scalar", group = "Carry Settings")
+crProp                      = input.float(0.40,             maxval = 1.00, step = 0.1, title = "Carry Weight (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
+expectedDiv                 = input.float(0.030,            maxval = 0.99, step = 0.001, title = "Expected Annualised Return (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
+crScalar                    = input.int(30,                 step = 1, title = "Carry Scalar", group = "Carry Settings")
 
 //-----------------------------------------------------------------------------}
 //Risk Settings
 //-----------------------------------------------------------------------------{
-simpleStdLength             = input.int(22,         title = "Simple SD Length", group="Risk Settings")
-expoStdLength               = input.int(32,         title = "Exponential SD Length", group="Risk Settings")
-forcastDiverMuliplier       = input.float(1.39,     step = 0.01, title = "Forecast Diversification Multiplier", group = "Risk Settings")
-upperForeCap                = input.int(20,         title = "Upper Forecast Cap", group="Risk Settings")
-lowerForeCap                = input.int(-20,        title = "Lower Forecast Cap", group="Risk Settings")
-minForeCapped               = input(0.1,            title = "Minimun Forecast", group="Risk Settings")
-maxForeCapped               = input(2.0,            title = "Maximum Forecast", group="Risk Settings")
-useExpoStd                  = input(true,           title = "Use Exponential Standard Deviation", group="Risk Settings")
-useMarginAcc                = input(false,          title = "Margin Account", group="Risk Settings")
+simpleStdLength             = input.int(22,                 title = "Simple SD Length", group="Risk Settings")
+expoStdLength               = input.int(32,                 title = "Exponential SD Length", group="Risk Settings")
+forcastDiverMuliplier       = input.float(1.39,             step = 0.01, title = "Forecast Diversification Multiplier", group = "Risk Settings")
+upperForeCap                = input.int(20,                 title = "Upper Forecast Cap", group="Risk Settings")
+lowerForeCap                = input.int(-20,                title = "Lower Forecast Cap", group="Risk Settings")
+minForeCapped               = input(0.1,                    title = "Minimun Forecast", group="Risk Settings")
+maxForeCapped               = input(2.0,                    title = "Maximum Forecast", group="Risk Settings")
+useExpoStd                  = input(true,                   title = "Use Exponential Standard Deviation", group="Risk Settings")
+useMarginAcc                = input(false,                  title = "Margin Account", group="Risk Settings")
 
 //-----------------------------------------------------------------------------}
 // Help Settings
 //-----------------------------------------------------------------------------{
-newHighSrc      = input.symbol(defval = "M3HP",     title = "New High", group = "Help Settings", inline = "Source")
-newLowSrc       = input.symbol(defval = "M3LP",     title = "New Low",  group = "Help Settings", inline = "Source")
-totalStock      = input.int(defval = 500,           title = "Total no. of stocks",  group = "Help Settings")
-emaLength       = input.int(21, minval=1,           title = 'EMA Length',           group = "Help Settings")
-emaSmooth       = input.int(5,  minval=1,           title = 'EMA Smooth Length',    group = "Help Settings")
+newHighSrc                  = input.symbol(defval = "M3HP", title = "New High", group = "Help Settings", inline = "Source")
+newLowSrc                   = input.symbol(defval = "M3LP", title = "New Low",  group = "Help Settings", inline = "Source")
+totalStock                  = input.int(defval = 500,       title = "Total no. of stocks",  group = "Help Settings")
+emaLength                   = input.int(21, minval=1,       title = 'EMA Length',           group = "Help Settings")
+emaSmooth                   = input.int(5,  minval=1,       title = 'EMA Smooth Length',    group = "Help Settings")
 
 //-----------------------------------------------------------------------------{
 //Instrument Risk Calculation
