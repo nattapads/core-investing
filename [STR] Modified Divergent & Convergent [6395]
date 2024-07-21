@@ -9,6 +9,28 @@ startTime                   = input.time(timestamp("Jan 01 1970 00:00:00"), titl
 inTimeWindow                = time >= startTime
 
 //-----------------------------------------------------------------------------}
+//Carry Settings
+//-----------------------------------------------------------------------------{
+crProp                      = input.float(0.40,             maxval = 1.00, step = 0.1, title = "Carry Weight (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
+crScalar                    = input.int(30,                 step = 1, title = "Carry Scalar", group = "Carry Settings")
+dividendSchedule            = input.string("Monthly",       title = "Dividend Payment Frequency", options = ["Annual","Semi-Annual", "Quarterly", "Monthly"], group = "Carry Settings")
+manDiv                      = input.float(0.03,             step = 0.01, title = "Manual Dividend Yield (%)", group="Carry Settings")
+enableManDiv                = input(false,                  title = "Enable Manual Dividend Yield", group = "Carry Settings")
+dividend                    = request.dividends(syminfo.tickerid)
+
+var dividendFrequency       = 0
+if dividendSchedule         == "Annual"
+    dividendFrequency       := 1
+else if dividendSchedule    == "Semi-Annual"
+    dividendFrequency       := 2
+else if dividendSchedule    == "Quarterly"
+    dividendFrequency       := 4
+else 
+    dividendFrequency       := 12
+
+expectedDiv                 = enableManDiv ? manDiv : (dividend * dividendFrequency)/close
+
+//-----------------------------------------------------------------------------}
 //Momentum  Settings
 //-----------------------------------------------------------------------------{
 moProp                      = input.float(0.20,     maxval = 1.00, step = 0.1, title = "Momentum Weight (%)", group="Momentum Settings")
@@ -33,26 +55,6 @@ boProp                      = input.float(0.20,     maxval = 1.00, step = 0.1, t
 bo20Scalar                  = input.float(0.67,     step = 0.01, title = "Breakout 20 Scalar", group = "Breakout Settings")
 bo40Scalar                  = input.float(0.70,     step = 0.01, title = "Breakout 40 Scalar", group = "Breakout Settings")
 bo80Scalar                  = input.float(0.73,     step = 0.01, title = "Breakout 80 Scalar", group = "Breakout Settings")
-
-//-----------------------------------------------------------------------------}
-//Carry Settings
-//-----------------------------------------------------------------------------{
-crProp                      = input.float(0.40,             maxval = 1.00, step = 0.1, title = "Carry Weight (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
-crScalar                    = input.int(30,                 step = 1, title = "Carry Scalar", group = "Carry Settings")
-dividendSchedule            = input.string("Monthly",       title="Dividend Payment Frequency",options=["Annual","Semi-Annual", "Quarterly", "Monthly"], group = "Carry Settings")
-dividend                    = request.dividends(syminfo.tickerid)
-
-var dividendFrequency       = 0
-if dividendSchedule         == "Annual"
-    dividendFrequency       := 1
-else if dividendSchedule    == "Semi-Annual"
-    dividendFrequency       := 2
-else if dividendSchedule    == "Quarterly"
-    dividendFrequency       := 4
-else 
-    dividendFrequency       := 12
-
-expectedDiv                 = dividend * dividendFrequency
 
 //-----------------------------------------------------------------------------}
 //Risk Settings
@@ -257,7 +259,7 @@ else if scalCombForc > lowerForeCap and scalCombForc < upperForeCap
 else if scalCombForc >= upperForeCap
     cappedCombForc          := upperForeCap 
 
-adjCombForc                 = useMarginAcc ?  cappedCombForc / 10 : cappedCombForc / capAdjust
+adjCombForc                 = useMarginAcc ? cappedCombForc / 10 : cappedCombForc / capAdjust
 
 //-----------------------------------------------------------------------------}
 //Notional Exposure & Risk-Adjusted Position
@@ -344,14 +346,16 @@ else
 //-----------------------------------------------------------------------------}
 //Performance Table
 //-----------------------------------------------------------------------------{ 
-table_data                  = table.new(position = position.bottom_right, columns = 1, rows = 6, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
+table_data                  = table.new(position = position.top_right, columns = 1, rows = 8, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
 
 table.cell(table_data, 0, 0, "MDC782", bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))   
 table.cell(table_data, 0, 1, str.tostring(avgAnnualReturn, format.percent) , text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Annual Return")
 table.cell(table_data, 0, 2, str.tostring(math.round(sharpeRatio, 3)), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Sharpe Ratio")
 table.cell(table_data, 0, 3, str.tostring(avgDD * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Average Drawdown")
-table.cell(table_data, 0, 4, str.tostring(instRisk * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 70, 70), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Standard Deviation")
-table.cell(table_data, 0, 5, str.tostring(currentProportion * 100, format.percent), bgcolor = color.rgb(255, 255, 255, 90), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Percent Risk")
+table.cell(table_data, 0, 4, str.tostring(expectedDiv * 100, format.percent), bgcolor = color.rgb(255, 255, 255, 80), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Dividend Yield")
+table.cell(table_data, 0, 5, str.tostring(math.round(adjCombForc, 2)), bgcolor = color.rgb(255, 255, 255, 90), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Forecast")
+table.cell(table_data, 0, 6, str.tostring(instRisk * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 70, 70), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Standard Deviation")
+table.cell(table_data, 0, 7, str.tostring(currentProportion * 100, format.percent), bgcolor = color.rgb(255, 255, 255, 90), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = "Percent Risk")
 
 //-----------------------------------------------------------------------------}
 //Entry & Exit Signal
