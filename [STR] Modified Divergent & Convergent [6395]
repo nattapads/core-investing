@@ -290,7 +290,7 @@ adjustBuy                   = currentSize > 0 and currentSize > upperBuffer and 
 //Current Proportion
 //-----------------------------------------------------------------------------{
 currentHoldingValue         = strategy.position_size * close
-currentProportion           = currentHoldingValue / strategy.equity
+currentProportion           = math.round((currentHoldingValue / strategy.equity), 2)
 
 //-----------------------------------------------------------------------------}
 //Strategy
