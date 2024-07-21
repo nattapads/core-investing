@@ -37,9 +37,22 @@ bo80Scalar                  = input.float(0.73,     step = 0.01, title = "Breako
 //-----------------------------------------------------------------------------}
 //Carry Settings
 //-----------------------------------------------------------------------------{
-crProp                      = input.float(0.40,     maxval = 1.00, step = 0.1, title = "Carry Weight (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
-expectedDiv                 = input.float(0.03,     maxval = 0.99, step = 0.001, title = "Expected Annualised Return (%)", group="Carry Settings", tooltip = "Expacted dividend yield or Median dividend yield")
-crScalar                    = input.int(30,         step = 1, title = "Carry Scalar", group = "Carry Settings")
+crProp                      = input.float(0.40,             maxval = 1.00, step = 0.1, title = "Carry Weight (%)", group="Carry Settings", tooltip = "Higher proportion causes higher percent risk")
+crScalar                    = input.int(30,                 step = 1, title = "Carry Scalar", group = "Carry Settings")
+dividendSchedule            = input.string("Monthly",       title="Dividend Payment Frequency",options=["Annual","Semi-Annual", "Quarterly", "Monthly"], group = "Carry Settings")
+dividend                    = request.dividends(syminfo.tickerid)
+
+var dividendFrequency       = 0
+if dividendSchedule         == "Annual"
+    dividendFrequency       := 1
+else if dividendSchedule    == "Semi-Annual"
+    dividendFrequency       := 2
+else if dividendSchedule    == "Quarterly"
+    dividendFrequency       := 4
+else 
+    dividendFrequency       := 12
+
+expectedDiv                 = dividend * dividendFrequency
 
 //-----------------------------------------------------------------------------}
 //Risk Settings
