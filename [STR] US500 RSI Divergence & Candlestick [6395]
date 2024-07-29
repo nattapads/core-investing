@@ -11,55 +11,55 @@ inTimeWindow            = time >= startTime
 //-----------------------------------------------------------------------------}
 //RSI Divergence Settings
 //-----------------------------------------------------------------------------{
-enableRegular           = input(true,           'Enable Regular Divergence',    group="RSI Divergence Settings")
-enableHidden            = input(true,           'Enable Hidden Divergence',     group="RSI Divergence Settings")
-rsiLen                  = input.int(9,          'RSI Period',                   group="RSI Divergence Settings")
-lbR                     = input.int(1,          'Pivot Lookback Right',         group="RSI Divergence Settings")
-lbL                     = input.int(1,          'Pivot Lookback Left',          group="RSI Divergence Settings")
-rangeUpper              = input.int(60,         'Max of Lookback Range',        group="RSI Divergence Settings")
-rangeLower              = input.int(5,          'Min of Lookback Range',        group="RSI Divergence Settings")
-rsiSrc                  = input(close,          'RSI Source',                   group="RSI Divergence Settings")
+enableRegular           = input(true,           'Enable Regular Divergence',    group = "RSI Divergence Settings")
+enableHidden            = input(true,           'Enable Hidden Divergence',     group = "RSI Divergence Settings")
+rsiLen                  = input.int(9,          'RSI Period',                   group = "RSI Divergence Settings")
+lbR                     = input.int(1,          'Pivot Lookback Right',         group = "RSI Divergence Settings")
+lbL                     = input.int(1,          'Pivot Lookback Left',          group = "RSI Divergence Settings")
+rangeUpper              = input.int(60,         'Max of Lookback Range',        group = "RSI Divergence Settings")
+rangeLower              = input.int(5,          'Min of Lookback Range',        group = "RSI Divergence Settings")
+rsiSrc                  = input(close,          'RSI Source',                   group = "RSI Divergence Settings")
 
 //-----------------------------------------------------------------------------}
 //Stochastic Settings
 //-----------------------------------------------------------------------------{
-enableStochastic        = input(true,           'Enable Stochastic',    group="Stochastic Settings")
-periodK                 = input.int(14,         '%K Length',            minval=1, group="Stochastic Settings")
-smoothK                 = input.int(3,          '%K Smoothing',         minval=1, group="Stochastic Settings")
-periodD                 = input.int(3,          '%D Smoothing',         minval=1, group="Stochastic Settings")
-stocBuyTh               = input.int(25,         'Buy Threshold',        minval=1, group="Stochastic Settings")
-stocSellTh              = input.int(75,         'Sell Threshold',       minval=1, group="Stochastic Settings")
+enableStochastic        = input(true,           'Enable Stochastic',    group = "Stochastic Settings")
+periodK                 = input.int(14,         '%K Length',            minval=1, group = "Stochastic Settings")
+smoothK                 = input.int(3,          '%K Smoothing',         minval=1, group = "Stochastic Settings")
+periodD                 = input.int(3,          '%D Smoothing',         minval=1, group = "Stochastic Settings")
+stocBuyTh               = input.int(25,         'Buy Threshold',        minval=1, group = "Stochastic Settings")
+stocSellTh              = input.int(75,         'Sell Threshold',       minval=1, group = "Stochastic Settings")
 
 //-----------------------------------------------------------------------------}
 //Engulfing Settings
 //-----------------------------------------------------------------------------{
-enableEngulfting        = input(true,           'Enable Engulfing',     group="Engulfing Settings")
+enableEngulfting        = input(true,           'Enable Engulfing',     group = "Engulfing Settings")
 
 //-----------------------------------------------------------------------------}
 //Morning & Evening Settings
 //-----------------------------------------------------------------------------{
-enableStar              = input(true,           'Enable Morning & Evening Star',    group="Morning & Evening Settings")
-emaStarLength           = input.int(5,          'EMA Morning & Evening Star',       minval=5, maxval=50, group="Morning & Evening Settings")
+enableStar              = input(true,           'Enable Morning & Evening Star',    group = "Morning & Evening Settings")
+emaStarLength           = input.int(5,          'EMA Morning & Evening Star',       minval = 5, maxval = 50, group = "Morning & Evening Settings")
 
 //-----------------------------------------------------------------------------}
 //Harami Settings
 //-----------------------------------------------------------------------------{
-enableHarami            = input(true,           'Enable Harami',        group="Harami Settings")
+enableHarami            = input(true,           'Enable Harami',        group = "Harami Settings")
 
 //-----------------------------------------------------------------------------}
 //Tweezer and Kangaroo Tail Settings
 //-----------------------------------------------------------------------------{
-enableTweezer           = input(true,           'Enable Tweezer',                   group="Tweezer and Kangaroo Tail Settings")
-maxRate                 = input(150.,           'Max Rate % Between Wick Sizes',    group="Tweezer and Kangaroo Tail Settings") / 100.
-levelDiff               = input(20.,            'Max Difference in level %',        group="Tweezer and Kangaroo Tail Settings") / 100.
-prdHighLow              = input(5,              'Highest/Lowest Period',            group="Tweezer and Kangaroo Tail Settings")
-maxDicannce             = input.int(12,         'Max Dicannce between Tweezers',    minval=1, group="Tweezer and Kangaroo Tail Settings")
+enableTweezer           = input(true,           'Enable Tweezer',                   group = "Tweezer and Kangaroo Tail Settings")
+maxRate                 = input(150.,           'Max Rate % Between Wick Sizes',    group = "Tweezer and Kangaroo Tail Settings") / 100.
+levelDiff               = input(20.,            'Max Difference in level %',        group = "Tweezer and Kangaroo Tail Settings") / 100.
+prdHighLow              = input(5,              'Highest/Lowest Period',            group = "Tweezer and Kangaroo Tail Settings")
+maxDicannce             = input.int(12,         'Max Dicannce between Tweezers',    minval = 1, group = "Tweezer and Kangaroo Tail Settings")
 
 //-----------------------------------------------------------------------------}
 //EMA Settings
 //-----------------------------------------------------------------------------{
-maFastLen               = input.int(20,         'Fast MA Length',       step = 1, group = "MA Settings")
-maSlowLen               = input.int(50,         'Slow MA Length',       step = 1, group = "MA Settings")
+maFastLen               = input.int(20,         'Fast MA Length',       step = 1,   group = "MA Settings")
+maSlowLen               = input.int(50,         'Slow MA Length',       step = 1,   group = "MA Settings")
 useEma                  = input(false,          'Use EMA',              group="MA Settings")
 emaFastSrc              = close
 emaSlowSrc              = close
@@ -67,22 +67,20 @@ emaSlowSrc              = close
 //-----------------------------------------------------------------------------{
 //Structure Settings
 //-----------------------------------------------------------------------------{
-strSwingLength          = input.int(50,          'Swing Length',        step = 1, group = 'Structure Settings')
+strSwingLength          = input.int(50,          'Swing Length',        step = 1,   group = 'Structure Settings')
 strConfluence           = false
 strLength               = strSwingLength
 
 //------------------------------------------------------------------------------
 //Session Settings
 //-----------------------------------------------------------------------------{
-sesEuPeriod             = input.session('0000-1600',            'London',                   group = 'Session Settings')
-sesUsPeriod             = input.session('1300-1900',            'New York',                 group = 'Session Settings')
-sesUTC                  = input.int(0,                          'UTC (+/-)',                group = 'Session Settings')
-sesUseExchange          = input(false,                          'Use Exchange Timezone',    group = 'Session Settings')
+sesEuPeriod             = input.session('0000-1600',                    'London',   group = 'Session Settings')
+sesUsPeriod             = input.session('1300-1900',                    'New York', group = 'Session Settings')
 
 //-----------------------------------------------------------------------------}
 //ATR Settings
 //-----------------------------------------------------------------------------{
-atrLength               = input.int(20,         'ATR Length',           step = 1, group = "ATR Settings")
+atrLength               = input.int(20,         'ATR Length',           step = 1,   group = "ATR Settings")
 atrMultiplier           = input.float(3.10,     'Multiplier',           step = 0.1, group = "ATR Settings")
 atrReward               = input.float(1.55,     'Reward Multiplier',    step = 0.1, group = "ATR Settings")
 atrLoss                 = input.float(1.00,     'Loss Multiplier',      step = 0.1, group = "ATR Settings")
@@ -92,34 +90,34 @@ atrOutput               = ta.atr(atrLength)*atrMultiplier
 //-----------------------------------------------------------------------------}
 //RSI Calculation
 //-----------------------------------------------------------------------------{
-osc = ta.rsi(rsiSrc, rsiLen)
+osc                     = ta.rsi(rsiSrc, rsiLen)
 
-plFound = na(ta.pivotlow(osc, lbL, lbR)) ? false : true
-phFound = na(ta.pivothigh(osc, lbL, lbR)) ? false : true
+plFound                 = na(ta.pivotlow(osc, lbL, lbR)) ? false : true
+phFound                 = na(ta.pivothigh(osc, lbL, lbR)) ? false : true
 
 _inRange(cond) =>
-    bars = ta.barssince(cond == true)
-    rangeLower <= bars and bars <= rangeUpper
+    bars                = ta.barssince(cond == true)
+    rangeLower          <= bars and bars <= rangeUpper
 
 // Regular Bullish
-oscHL = osc[lbR] > ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
-priceLL = low[lbR] < ta.valuewhen(plFound, low[lbR], 1)
-bullCond = priceLL and oscHL and plFound
+oscHL                   = osc[lbR] > ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
+priceLL                 = low[lbR] < ta.valuewhen(plFound, low[lbR], 1)
+bullCond                = priceLL and oscHL and plFound
 
 // Regular Bearish
-oscLH = osc[lbR] < ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
-priceHH = high[lbR] > ta.valuewhen(phFound, high[lbR], 1)
-bearCond = priceHH and oscLH and phFound
+oscLH                   = osc[lbR] < ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
+priceHH                 = high[lbR] > ta.valuewhen(phFound, high[lbR], 1)
+bearCond                = priceHH and oscLH and phFound
 
 // Hidden Bullish
-oscLL = osc[lbR] < ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
-priceHL = low[lbR] > ta.valuewhen(plFound, low[lbR], 1)
-hiddenBullCond = priceHL and oscLL and plFound
+oscLL                   = osc[lbR] < ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
+priceHL                 = low[lbR] > ta.valuewhen(plFound, low[lbR], 1)
+hiddenBullCond          = priceHL and oscLL and plFound
 
 // Hidden Bearish
-oscHH = osc[lbR] > ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
-priceLH = high[lbR] < ta.valuewhen(phFound, high[lbR], 1)
-hiddenBearCond = priceLH and oscHH and phFound
+oscHH                   = osc[lbR] > ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
+priceLH                 = high[lbR] < ta.valuewhen(phFound, high[lbR], 1)
+hiddenBearCond          = priceLH and oscHH and phFound
 
 rsiBuyCon               = (enableRegular ? bullCond : false) or (enableHidden ? hiddenBullCond : false)
 rsiSellCon              = (enableRegular ? bearCond : false) or (enableHidden ? hiddenBearCond : false)
@@ -225,8 +223,7 @@ bottomTweezer           = enableTweezer and aparttweezers_bottom(maxDicannce)
 //-----------------------------------------------------------------------------{
 tf                      = timeframe.period
 
-var tz                  = sesUseExchange ? syminfo.timezone :
-  str.format('UTC{0}{1}', sesUTC >= 0 ? '+' : '-', math.abs(sesUTC))
+var tz                  = str.format('UTC{0}{1}', '+', math.abs(0))
 
 isUsSession             = math.sign(nz(time(tf, sesUsPeriod, tz)))
 isEuSession             = math.sign(nz(time(tf, sesEuPeriod, tz)))
@@ -388,27 +385,31 @@ else
 barcolor(trendColour)
 
 //-----------------------------------------------------------------------------}
+//Lot Settings
+//-----------------------------------------------------------------------------{ 
+initialLot              = input.float(0.1,      "Initial Lot",          minval = 0.1, step = 0.1, group = 'Account & Trade')
+drawDown                = input.float(1.4,      "Drawdown Multiplier",  minval = 0.1, step = 0.1, group = 'Account & Trade')
+enableLong              = input.bool(true,      'Allow Long',           group = 'Account & Trade')
+enableShort             = input.bool(true,      'Allow Short',          group = 'Account & Trade')
+
+//-----------------------------------------------------------------------------}
 //Entry Exit Signal
 //-----------------------------------------------------------------------------{
 var rsiOpenTrade        = false
-
-rsiBuy                  = rsiBuyCon and trendFast > trendSlow and trendUp == true and rsiOpenTrade == false and isTradingSession
-rsiSell                 = rsiSellCon and trendFast < trendSlow and trendUp == false and rsiOpenTrade == false and isTradingSession
-
 var stoOpenTrade        = false
-
-stoBuy                  = enableStochastic and ta.crossover(stochasticK, stocBuyTh) and trendUp == true and bullishTrend and stoOpenTrade == false
-stoSell                 = enableStochastic and ta.crossunder(stochasticK, stocSellTh) and trendUp == false and bearishTrend and stoOpenTrade == false
-
 var engOpenTrade        = false
-
-engBuy                  = enableEngulfting and bullishEngulfing and trendUp == true and bullishTrend and engOpenTrade == false
-engSell                 = enableEngulfting and bearishEngulfing and trendUp == false and bearishTrend and engOpenTrade == false
-
 var canOpenTrade        = false
 
-canBuy                  = (enableStar and morningStar or enableHarami and bullishHarami or enableTweezer and bottomTweezer) and trendUp == true and bullishTrend and canOpenTrade == false
-canSell                 = (enableStar and eveningStar or enableHarami and bearishHarami or enableTweezer and topTweezer) and trendUp == false and bearishTrend and canOpenTrade == false
+
+rsiBuy                  = enableLong and rsiBuyCon and trendFast > trendSlow and trendUp == true and rsiOpenTrade == false and isTradingSession
+stoBuy                  = enableLong and enableStochastic and ta.crossover(stochasticK, stocBuyTh) and trendUp == true and bullishTrend and stoOpenTrade == false
+engBuy                  = enableLong and enableEngulfting and bullishEngulfing and trendUp == true and bullishTrend and engOpenTrade == false
+canBuy                  = (enableStar and morningStar or enableHarami and bullishHarami or enableTweezer and bottomTweezer) and enableLong and trendUp == true and bullishTrend and canOpenTrade == false
+
+rsiSell                 = enableShort and rsiSellCon and trendFast < trendSlow and trendUp == false and rsiOpenTrade == false and isTradingSession
+stoSell                 = enableShort and enableStochastic and ta.crossunder(stochasticK, stocSellTh) and trendUp == false and bearishTrend and stoOpenTrade == false
+engSell                 = enableShort and enableEngulfting and bearishEngulfing and trendUp == false and bearishTrend and engOpenTrade == false
+canSell                 = (enableStar and eveningStar or enableHarami and bearishHarami or enableTweezer and topTweezer) and enableShort and trendUp == false and bearishTrend and canOpenTrade == false
 
 //-----------------------------------------------------------------------------}
 //Take Profit & Stop Loss
@@ -424,12 +425,6 @@ engRawSL                = engBuy ? low - (atrOutput * atrLoss) : engSell ? high 
 
 canRawTP                = canBuy ? close + (atrOutput * atrReward) : canSell ? close - (atrOutput * atrReward) : na
 canRawSL                = canBuy ? low - (atrOutput * atrLoss) : canSell ? high + (atrOutput * atrLoss) : na   
-
-//-----------------------------------------------------------------------------}
-//Lot Settings
-//-----------------------------------------------------------------------------{ 
-initialLot              = input.float(0.1,      "Initial Lot",          minval = 0.1, step = 0.1, group = 'Account & Trade')
-drawDown                = input.float(1.4,      "Drawdown Multiplier",  minval = 0.1, step = 0.1, group = 'Account & Trade')
 
 // Calculate diff and recommended lot size for different risk percentages
 var float rsiSlipTP     = 0
