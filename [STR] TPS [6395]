@@ -1,0 +1,248 @@
+//NSal
+//@version=5
+strategy("[STR] TPS [6395]", overlay = true, margin_long = 100, margin_short = 100, pyramiding = 10, risk_free_rate = 0, initial_capital = 10000)
+
+//-----------------------------------------------------------------------------}
+//RSI Divergence Settings
+//-----------------------------------------------------------------------------{
+rsiLen                  = input.int(2,          'RSI Period',                   group = "RSI Settings")
+rsiBuyThr               = input.int(25,         'RSI Buy Threshold',            group = "RSI Settings")
+rsiSellThr              = input.int(75,         'RSI Sell Threshold',           group = "RSI Settings")
+rsiSrc                  = input(close,          'RSI Source',                   group = "RSI Settings")
+
+//-----------------------------------------------------------------------------}
+//MA Settings
+//-----------------------------------------------------------------------------{
+maFastLen               = input.int(20,         'Fast MA Length',       step = 1,   group = "MA Settings")
+maSlowLen               = input.int(50,         'Slow MA Length',       step = 1,   group = "MA Settings")
+maType                  = input.string("EMA",   title = "MA Type", options = ["EMA", "SMA", "Zero-lag EMA"], group = "MA Settings")
+emaFastSrc              = close
+emaSlowSrc              = close
+
+//-----------------------------------------------------------------------------}
+//Strategy Settings
+//-----------------------------------------------------------------------------{
+enableBuy               = input(true,           'Enable Buy',           group = 'Strategy Settings')
+enableSell              = input(true,           'Enable Sell',          group = 'Strategy Settings')
+
+//-----------------------------------------------------------------------------}
+//RSI Calculation
+//-----------------------------------------------------------------------------{
+osc                     = ta.rsi(rsiSrc, rsiLen)
+rsiFirstBuy             = osc[0] < rsiBuyThr and ta.crossunder(osc[1], rsiBuyThr)
+rsiFirstSell            = osc[0] > rsiSellThr and ta.crossover(osc[1], rsiSellThr)
+
+//-----------------------------------------------------------------------------}
+//EMA Calculation
+//-----------------------------------------------------------------------------{
+var float trendFast     = 0
+var float trendSlow     = 0
+
+zeroLagEMA(source, length) =>
+    Ema                 = ta.ema(source, length)
+    smoEma              = ta.ema(Ema, length)
+    eq                  = Ema - smoEma
+    zlEma               = Ema + eq
+
+if maType               == "EMA"
+    trendFast           := ta.ema(emaFastSrc, maFastLen)
+    trendSlow           := ta.ema(emaSlowSrc, maSlowLen)
+else if maType          == "SMA"
+    trendFast           := ta.sma(emaFastSrc, maFastLen)
+    trendSlow           := ta.sma(emaSlowSrc, maSlowLen)
+else if maType          == "Zero-lag EMA"
+    trendFast           := zeroLagEMA(emaFastSrc, maFastLen)
+    trendSlow           := zeroLagEMA(emaSlowSrc, maSlowLen)
+
+//-----------------------------------------------------------------------------}
+//Trend Calculation
+//-----------------------------------------------------------------------------{ 
+bullishTrend            = close > trendSlow
+bearishTrend            = close < trendSlow
+
+//-----------------------------------------------------------------------------}
+//Lot Management
+//-----------------------------------------------------------------------------{
+firstQty                = math.round((strategy.equity * 0.1) / close)
+secondQty               = math.round((strategy.equity * 0.2) / close)
+thirdQty                = math.round((strategy.equity * 0.3) / close)
+forthQty                = math.round((strategy.equity * 0.4) / close)
+
+//-----------------------------------------------------------------------------}
+//Buy Entry Signal
+//-----------------------------------------------------------------------------{
+var fistBuyOpenTrade    = false
+var secondBuyOpenTrade  = false
+var thirdBuyOpenTrade   = false
+var forthBuyOpenTrade   = false
+var float entryBuyPrice = 0
+
+firstBuy                = bullishTrend and rsiFirstBuy and enableBuy and fistBuyOpenTrade == false
+
+if firstBuy
+    fistBuyOpenTrade    := true
+    entryBuyPrice       := close
+
+secondBuy               = entryBuyPrice > close and fistBuyOpenTrade == true and secondBuyOpenTrade == false
+
+if secondBuy
+    secondBuyOpenTrade  := true
+    entryBuyPrice       := close
+
+thirdBuy                = entryBuyPrice > close and fistBuyOpenTrade == true and secondBuyOpenTrade == true and thirdBuyOpenTrade == false
+
+if thirdBuy
+    thirdBuyOpenTrade   := true
+    entryBuyPrice       := close
+
+forthBuy                = entryBuyPrice > close and fistBuyOpenTrade == true and secondBuyOpenTrade == true and thirdBuyOpenTrade == true and forthBuyOpenTrade == false
+
+if forthBuy
+    forthBuyOpenTrade   := true
+    entryBuyPrice       := close
+
+//-----------------------------------------------------------------------------}
+//Sell Entry Signal
+//-----------------------------------------------------------------------------{
+var fistSellOpenTrade    = false
+var secondSellOpenTrade  = false
+var thirdSellOpenTrade   = false
+var forthSellOpenTrade   = false
+var float entrySellPrice = 0
+
+firstSell                = bearishTrend and rsiFirstSell and enableSell and fistSellOpenTrade == false
+
+if firstSell
+    fistSellOpenTrade    := true
+    entrySellPrice       := close
+
+secondSell               = entrySellPrice < close and fistSellOpenTrade == true and secondSellOpenTrade == false
+
+if secondSell
+    secondSellOpenTrade  := true
+    entrySellPrice       := close
+
+thirdSell                = entrySellPrice < close and fistSellOpenTrade == true and secondSellOpenTrade == true and thirdSellOpenTrade == false
+
+if thirdSell
+    thirdSellOpenTrade   := true
+    entrySellPrice       := close
+
+forthSell                = entrySellPrice < close and fistSellOpenTrade == true and secondSellOpenTrade == true and thirdSellOpenTrade == true and forthSellOpenTrade == false
+
+if forthSell
+    forthSellOpenTrade   := true
+    entrySellPrice       := close
+
+//-----------------------------------------------------------------------------}
+//Buy Exit Signal
+//-----------------------------------------------------------------------------{
+exitBuy                = ta.crossover(osc, 70) and fistBuyOpenTrade == true
+
+if exitBuy
+    fistBuyOpenTrade    := false
+    secondBuyOpenTrade  := false
+    thirdBuyOpenTrade   := false
+    forthBuyOpenTrade   := false
+    entryBuyPrice       := 0
+
+//-----------------------------------------------------------------------------}
+//Sell Exit Signal
+//-----------------------------------------------------------------------------{
+exitSell                = ta.crossunder(osc, 30) and fistSellOpenTrade == true
+
+if exitSell
+    fistSellOpenTrade    := false
+    secondSellOpenTrade  := false
+    thirdSellOpenTrade   := false
+    forthSellOpenTrade   := false
+    entrySellPrice       := 0
+
+//-----------------------------------------------------------------------------}
+//Buy Plot
+//-----------------------------------------------------------------------------{
+plotshape(firstBuy, title='1st Buy', text="1▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 10), size=size.tiny)
+plotshape(secondBuy, title='2nd Buy', text="2▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 10), size=size.tiny)
+plotshape(thirdBuy, title='3rd Buy', text="3▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 10), size=size.tiny)
+plotshape(forthBuy, title='4th Buy', text="4▲", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 10), size=size.tiny)
+
+plotshape(exitBuy, title='Exit Buy', text="⊗", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 70), size=size.tiny)
+
+//-----------------------------------------------------------------------------}
+//Sell Plot
+//-----------------------------------------------------------------------------{
+plotshape(firstSell, title='1st Sell', text="1▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 10), size=size.tiny)
+plotshape(secondSell, title='2nd Sell', text="2▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 10), size=size.tiny)
+plotshape(thirdSell, title='3rd Sell', text="3▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 10), size=size.tiny)
+plotshape(forthSell, title='4th Sell', text="4▼", textcolor = color.white, style=shape.labeldown, location=location.abovebar, color=color.rgb(242, 54, 70, 10), size=size.tiny)
+
+plotshape(exitSell, title='Exit Sell', text="⊗", textcolor = color.white, style=shape.labelup, location=location.belowbar, color=color.rgb(8, 153, 129, 70), size=size.tiny)
+
+//-----------------------------------------------------------------------------}
+//Strategy
+//-----------------------------------------------------------------------------{ 
+if firstBuy
+    strategy.entry("Buy", strategy.long, qty = firstQty)
+else if secondBuy
+    strategy.entry("Buy", strategy.long, qty = secondQty)
+else if thirdBuy
+    strategy.entry("Buy", strategy.long, qty = thirdQty)
+else if forthBuy
+    strategy.entry("Buy", strategy.long, qty = forthQty)
+else if exitBuy
+    strategy.close("Buy", qty_percent = 100)
+
+if firstSell
+    strategy.entry("Sell", strategy.long, qty = firstQty)
+else if secondSell
+    strategy.entry("Sell", strategy.long, qty = secondQty)
+else if thirdSell
+    strategy.entry("Sell", strategy.long, qty = thirdQty)
+else if forthSell
+    strategy.entry("Sell", strategy.long, qty = forthQty)
+else if exitSell
+    strategy.close("Sell", qty_percent = 100)
+
+//-----------------------------------------------------------------------------}
+//Summary Table
+//-----------------------------------------------------------------------------{ 
+// Calculate net profit and percentage profitable
+strNetProfit            = strategy.netprofit_percent
+strPercentProfitable    = math.round(strategy.wintrades / (strategy.wintrades + strategy.losstrades), 2)
+strProfitFactor         = strategy.grossprofit / strategy.grossloss
+
+bgDarkColour            = color.rgb(0, 0, 0, 30)
+bgLightColour           = color.rgb(0, 0, 0, 20)
+    
+if strNetProfit > 0
+    bgDarkColour        := color.rgb(8, 153, 129)
+    bgLightColour       := color.rgb(8, 153, 129, 20)
+else
+    bgDarkColour        := color.rgb(242, 54, 69)
+    bgLightColour       := color.rgb(242, 54, 69, 20)
+
+// Table
+table_data          = table.new(position = position.bottom_right, columns = 1, rows = 5, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)   
+table.cell(table_data, 0, 0, 'TPS782', bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))
+table.cell(table_data, 0, 1, str.tostring(str.tostring(math.round(strNetProfit,2)) + "%"), text_size = size.normal, bgcolor = bgDarkColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Percent Profit")
+table.cell(table_data, 0, 2, str.tostring(str.tostring(math.round(strPercentProfitable * 100,0)) + "%"), text_size = size.normal, bgcolor = bgLightColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Percent Profitable")
+table.cell(table_data, 0, 3, str.tostring((math.round(strProfitFactor,2))), text_size = size.normal, bgcolor = bgDarkColour, text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Profit Factor")
+table.cell(table_data, 0, 4, str.tostring("$" + str.tostring(math.round(strategy.max_drawdown, 0))), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign  = text.align_center, tooltip = "Max Drawdown")
+
+//-----------------------------------------------------------------------------}
+//Alert
+//-----------------------------------------------------------------------------{
+if firstBuy or firstSell
+    alert("First " + (firstBuy ? "Buy" : "Sell"), alert.freq_once_per_bar_close)
+
+if secondBuy or secondSell
+    alert("Second " + (secondBuy ? "Buy" : "Sell"), alert.freq_once_per_bar_close)
+
+if thirdBuy or thirdSell
+    alert("Third " + (thirdBuy ? "Buy" : "Sell"), alert.freq_once_per_bar_close)
+
+if forthBuy or forthSell
+    alert("Forth " + (forthBuy ? "Buy" : "Sell"), alert.freq_once_per_bar_close)
+
+if exitBuy or exitSell
+    alert("Exit " + (exitBuy ? "Buy" : "Sell"), alert.freq_once_per_bar_close)
