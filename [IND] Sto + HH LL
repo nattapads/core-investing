@@ -1,11 +1,8 @@
 //@version=5
 indicator("[IND] Sto + HH LL", shorttitle="[IND] Sto + HH LL", overlay=true)
 
-tf1 = input.timeframe("1H", title="Base Timeframe (M1, M5, H1 only)")
 vline_hh = input.bool(true, title="Vline Highest")
 vline_ll = input.bool(true, title="Vline Lowest")
-push_notification_hh = input.bool(false, title="Notify Highest Turning Point")
-push_notification_ll = input.bool(false, title="Notify Lowest Turning Point")
 
 var float[] high_tracking = na
 var float[] low_tracking = na
