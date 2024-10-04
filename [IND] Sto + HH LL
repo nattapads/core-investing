@@ -1,0 +1,122 @@
+//@version=5
+indicator("[IND] Sto + HH LL", shorttitle="[IND] Sto + HH LL", overlay=true)
+
+tf1 = input.timeframe("1H", title="Base Timeframe (M1, M5, H1 only)")
+vline_hh = input.bool(true, title="Vline Highest")
+vline_ll = input.bool(true, title="Vline Lowest")
+push_notification_hh = input.bool(false, title="Notify Highest Turning Point")
+push_notification_ll = input.bool(false, title="Notify Lowest Turning Point")
+
+var float[] high_tracking = na
+var float[] low_tracking = na
+
+// Store previous turning points to avoid repeated notifications
+var float prev_hh = na
+var float prev_ll = na
+
+// Function to track highest and lowest points
+track_high_low(_src) =>
+    hh_index = ta.highestbars(_src, 14)
+    ll_index = ta.lowestbars(_src, 14)
+    [hh_index, ll_index]
+
+// Get the highest and lowest points based on the selected timeframe
+[hh_index, ll_index] = track_high_low(close)
+
+//-----------------------------------------------------------------------------}
+//Stochastic Settings
+//-----------------------------------------------------------------------------{
+periodK1        = input.int(9,     title="%K 1 Length", minval=1)
+smoothK1        = input.int(1,      title="%K 1 Smoothing", minval=1)
+periodD1        = input.int(3,      title="%D 1 Smoothing", minval=1)
+
+periodK2        = input.int(14,     title="%K 2 Length", minval=1)
+smoothK2        = input.int(1,      title="%K 2 Smoothing", minval=1)
+periodD2        = input.int(3,      title="%D 2 Smoothing", minval=1)
+
+periodK3        = input.int(40,     title="%K 3 Length", minval=1)
+smoothK3        = input.int(1,      title="%K 3 Smoothing", minval=1)
+periodD3        = input.int(4,      title="%D 3 Smoothing", minval=1)
+
+periodK4        = input.int(60,     title="%K 4 Length", minval=1)
+smoothK4        = input.int(1,      title="%K 4 Smoothing", minval=1)
+periodD4        = input.int(10,     title="%D 4 Smoothing", minval=1)
+
+buyThreshold    = input.int(20,     title="Buy Threshold", minval=1)
+sellThreshold   = input.int(80,     title="Buy Threshold", minval=1)
+
+//-----------------------------------------------------------------------------}
+//Stochastic Calculation
+//-----------------------------------------------------------------------------{
+k1              = ta.sma(ta.stoch(close, high, low, periodK1), smoothK1)
+d1              = ta.sma(k1, periodD1)
+
+k2              = ta.sma(ta.stoch(close, high, low, periodK2), smoothK2)
+d2              = ta.sma(k2, periodD2)
+
+k3              = ta.sma(ta.stoch(close, high, low, periodK3), smoothK3)
+d3              = ta.sma(k3, periodD3)
+
+k4              = ta.sma(ta.stoch(close, high, low, periodK4), smoothK4)
+d4              = ta.sma(k4, periodD4)
+
+//-----------------------------------------------------------------------------}
+//Line Colour
+//-----------------------------------------------------------------------------{
+var strBullColour       = color.rgb(8, 153, 129)
+var bullColour          = color.rgb(8, 153, 129, 40)
+var strbearColour       = color.rgb(242, 54, 69)
+var bearColour          = color.rgb(242, 54, 69, 40)
+
+//-----------------------------------------------------------------------------}
+//SetUp Calculation
+//-----------------------------------------------------------------------------{
+strBullish      = d4 <= buyThreshold and d3 <= buyThreshold and d2 <= buyThreshold and d1 <= buyThreshold
+bullish         = d4 <= buyThreshold and d3 <= buyThreshold and d2 <= buyThreshold
+
+strBearish      = d4 >= sellThreshold and d3 >= sellThreshold and d2 >= sellThreshold and d1 >= sellThreshold
+bearish         = d4 >= sellThreshold and d3 >= sellThreshold and d2 >= sellThreshold
+
+//-----------------------------------------------------------------------------}
+//HH & LL Calculation
+//-----------------------------------------------------------------------------{
+newHigh         = vline_hh and hh_index >= 0
+newLow          = vline_ll and ll_index >= 0 
+
+//-----------------------------------------------------------------------------
+// Track combined conditions for Short plot
+//-----------------------------------------------------------------------------
+var bool bothBearishHappened = false
+var bool plotShort = false
+
+// Check if both strBearish and newHigh happen at the same time
+if (strBearish and newHigh)
+    bothBearishHappened := true
+
+// Condition to plot the circle when newLow occurs after bothBearishHappened is true
+plotShort := bothBearishHappened and newLow
+
+if (plotShort)
+    bothBearishHappened := false
+
+//-----------------------------------------------------------------------------
+// Track combined conditions for Long plot
+//-----------------------------------------------------------------------------
+var bool bothBullishHappened = false
+var bool plotLong = false
+
+// Check if both strBullish and newLow happen at the same time
+if (strBullish and newLow)
+    bothBullishHappened := true
+
+// Condition to plot the square when newHigh occurs after bothBullishHappened is true
+plotLong := bothBullishHappened and newHigh
+
+if (plotLong)
+    bothBullishHappened := false
+
+//-----------------------------------------------------------------------------
+// Plot Circle and Square
+//-----------------------------------------------------------------------------
+plotshape(plotShort,    style=shape.triangledown,   location=location.abovebar, color=strbearColour, size=size.tiny)
+plotshape(plotLong,     style=shape.triangleup,     location=location.belowbar, color=strBullColour, size=size.tiny)
