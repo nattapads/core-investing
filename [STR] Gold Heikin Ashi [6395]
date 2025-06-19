@@ -144,8 +144,8 @@ else if hakCondSellExit
 plotshape(hakBuy, title = 'Buy', text = 'S▲', textcolor = color.white, style = shape.labelup, location = location.belowbar, color = color.rgb(8, 153, 129, 70), size = size.tiny)
 plotshape(hakSell, title = 'Sell', text = 'S▼', textcolor = color.white, style = shape.labeldown, location = location.abovebar, color = color.rgb(242, 54, 70, 70), size = size.tiny)
 
-plotshape(buyExit, title = 'Buy Exit', text = '✖', textcolor = color.white, style = shape.labeldown, location = location.abovebar, color = color.rgb(8, 153, 129, 90), size = size.tiny)
-plotshape(sellExit, title = 'Sell Exit', text = '✖', textcolor = color.white, style = shape.labelup, location = location.belowbar, color = color.rgb(242, 54, 70, 90), size = size.tiny)
+plotshape(buyExit, title = 'Buy Exit', style = shape.xcross, location = location.abovebar, color = color.rgb(8, 153, 129, 0), size = size.tiny)
+plotshape(sellExit, title = 'Sell Exit', style = shape.xcross, location = location.belowbar, color = color.rgb(242, 54, 70, 0), size = size.tiny)
 
 
 //-----------------------------------------------------------------------------}
