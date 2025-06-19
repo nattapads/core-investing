@@ -1,0 +1,195 @@
+//NSal
+//@version=6
+strategy('[STR] Gold Heikin Ashi [6395]', overlay = true, margin_long = 100, margin_short = 100, pyramiding = 3, risk_free_rate = 0)
+
+//------------------------------------------------------------------------------
+//Strategy Settings
+//-----------------------------------------------------------------------------{
+startTime = input.time(timestamp('Jan 01 2000 00:00:00'), title = 'Start Time')
+inTimeWindow = time >= startTime
+
+//-----------------------------------------------------------------------------}
+//Alligato Settings
+//-----------------------------------------------------------------------------{
+jawPeriod = input.int(13, minval = 1, title = 'Jaw Period', group = 'Alligato Settings')
+teethPeriod = input.int(8, minval = 1, title = 'Teeth Period', group = 'Alligato Settings')
+lipsPeriod = input.int(5, minval = 1, title = 'Lips Period', group = 'Alligato Settings')
+jawOffset = input.int(8, minval = 1, title = 'Jaw Offset', group = 'Alligato Settings')
+teethOffset = input.int(5, minval = 1, title = 'Teeth Offset', group = 'Alligato Settings')
+lipsOffset = input.int(3, minval = 1, title = 'Lips Offset', group = 'Alligato Settings')
+sigLength = input(title = 'EMA Length', defval = 5, group = 'Fast EMA Settings')
+
+//-----------------------------------------------------------------------------}
+//Risk Settings
+//-----------------------------------------------------------------------------{
+expoStdLength = input.int(3, title = 'Exponential SD Length', group = 'Risk Settings')
+fastLength = input.int(20, title = 'Fast SD Length', group = 'Risk Settings')
+slowLength = input.int(50, title = 'Slow SD Length', group = 'Risk Settings')
+enableVol = input(false, title = 'Volatility Filter', group = 'Risk Settings')
+
+//-----------------------------------------------------------------------------{
+//Instrument Risk Calculation
+//-----------------------------------------------------------------------------{
+// Percentage returns
+ret = (close - close[1]) / close[1]
+var float dailyPercentVolRecent = na
+
+ew_var = ta.ema(math.pow(ret, 2), expoStdLength)
+dailyPercentVolRecent := math.sqrt(ew_var)
+
+// Long-term vol  (8-year ≈ 2 000 bars)
+longWindow = 2000           // author uses 10y; we use 8y per requirement
+dailyPercentVol8Yr = ta.sma(dailyPercentVolRecent, longWindow)
+
+// Weighted blend 70 / 30
+dailyPercentVol = 0.7 * dailyPercentVolRecent + 0.3 * dailyPercentVol8Yr
+
+// Instrument risk & price-vol units (same as original)
+instRisk      = math.round(dailyPercentVol * 16, 6)
+dailyPriceVol = dailyPercentVol * close
+
+fastVol   = ta.ema(ta.ema(dailyPriceVol, fastLength), fastLength)
+slowVol   = ta.ema(ta.ema(dailyPriceVol, slowLength), slowLength)
+diffVol = fastVol - slowVol
+
+//-----------------------------------------------------------------------------}
+//Heikin Ashi Calculation
+//-----------------------------------------------------------------------------{
+ha_open = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, open)
+ha_close = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, close)
+ha_high = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, high)
+ha_low = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, low)
+
+
+//-----------------------------------------------------------------------------}
+//Trend Calculation
+//-----------------------------------------------------------------------------{
+smma(src, length) =>
+    smma = 0.0
+    sma_1 = ta.sma(src, length)
+    smma := na(smma[1]) ? sma_1 : (smma[1] * (length - 1) + src) / length
+    smma
+
+highLow2 = (ha_high + ha_low)/2
+
+jaw = smma(highLow2, jawPeriod)
+teeth = smma(highLow2, teethPeriod)
+lips = smma(highLow2, lipsPeriod)
+zlsma1 = ta.ema(ha_low, sigLength)
+
+//-----------------------------------------------------------------------------}
+//Trend and Trading Session
+//-----------------------------------------------------------------------------{
+Bullish = enableVol ? zlsma1 > lips[lipsOffset] and zlsma1 > teeth[teethOffset] and zlsma1 > jaw[jawOffset] and diffVol >= 0 : zlsma1 > lips[lipsOffset] and zlsma1 > teeth[teethOffset] and zlsma1 > jaw[jawOffset]
+Bearish = enableVol ? zlsma1 < lips[lipsOffset] and zlsma1 < teeth[teethOffset] and zlsma1 < jaw[jawOffset] and diffVol >= 0 : zlsma1 < lips[lipsOffset] and zlsma1 < teeth[teethOffset] and zlsma1 < jaw[jawOffset]
+
+//-----------------------------------------------------------------------------}
+//Bar Colour
+//-----------------------------------------------------------------------------{
+var color trendColour = na
+var bullColour = #089981
+var bearColour = #f23645
+
+if Bullish
+    trendColour := bullColour
+    trendColour
+else if Bearish
+    trendColour := bearColour
+    trendColour
+else
+    trendColour := color.rgb(120, 123, 134, 65)
+    trendColour
+
+barcolor(trendColour)
+
+//-----------------------------------------------------------------------------}
+//Entry Exit Signal
+//-----------------------------------------------------------------------------{
+var hakOpenBuy = false
+var hakOpenSell = false
+
+hakBuy =  ha_close > ha_open and Bullish and hakOpenBuy == false
+hakSell = ha_close < ha_open and Bearish and hakOpenSell == false
+
+buyExit = ta.crossunder(ha_close, ha_open) and hakOpenBuy == true
+sellExit = ta.crossover(ha_close, ha_open) and hakOpenSell == true
+
+//-----------------------------------------------------------------------------}
+//Lot Settings
+//-----------------------------------------------------------------------------{ 
+initialLot = input.float(1, 'Initial Lot', minval = 0.1, step = 0.1, group = 'Account & Trade')
+
+hakInitCondBuy = hakOpenBuy == false
+hakInitCondSell = hakOpenSell == false
+
+hakCondBuy = hakBuy and hakInitCondBuy
+hakCondSell = hakSell and hakInitCondBuy
+
+if hakCondBuy
+    hakOpenBuy := true
+else if hakCondSell
+    hakOpenSell := true
+
+hakCondBuyExit = buyExit and hakOpenBuy
+hakCondSellExit = sellExit and hakOpenSell
+
+if hakCondBuyExit
+    hakOpenBuy := false
+else if hakCondSellExit
+    hakOpenSell := false
+
+//-----------------------------------------------------------------------------}
+//Plot
+//-----------------------------------------------------------------------------{
+plotshape(hakBuy, title = 'Buy', text = 'S▲', textcolor = color.white, style = shape.labelup, location = location.belowbar, color = color.rgb(8, 153, 129, 70), size = size.tiny)
+plotshape(hakSell, title = 'Sell', text = 'S▼', textcolor = color.white, style = shape.labeldown, location = location.abovebar, color = color.rgb(242, 54, 70, 70), size = size.tiny)
+
+plotshape(buyExit, title = 'Buy Exit', text = '✖', textcolor = color.white, style = shape.labeldown, location = location.abovebar, color = color.rgb(8, 153, 129, 90), size = size.tiny)
+plotshape(sellExit, title = 'Sell Exit', text = '✖', textcolor = color.white, style = shape.labelup, location = location.belowbar, color = color.rgb(242, 54, 70, 90), size = size.tiny)
+
+
+//-----------------------------------------------------------------------------}
+//Strategy
+//-----------------------------------------------------------------------------{ 
+if inTimeWindow
+    if hakBuy or hakSell
+        strategy.entry('hak', hakBuy ? strategy.long : strategy.short, qty = initialLot)
+    if buyExit or sellExit
+        strategy.close('hak', qty_percent = 100)
+
+// Calculate net profit and percentage profitable
+strNetProfit = strategy.netprofit
+strPercentProfitable = math.round(strategy.wintrades / (strategy.wintrades + strategy.losstrades), 2)
+strProfitFactor = strategy.grossprofit / strategy.grossloss
+
+bgDarkColour = color.rgb(0, 0, 0, 30)
+bgLightColour = color.rgb(0, 0, 0, 20)
+
+if strNetProfit > 0
+    bgDarkColour := color.rgb(8, 153, 129)
+    bgLightColour := color.rgb(8, 153, 129, 20)
+    bgLightColour
+else
+    bgDarkColour := color.rgb(242, 54, 69)
+    bgLightColour := color.rgb(242, 54, 69, 20)
+    bgLightColour
+
+
+//-----------------------------------------------------------------------------}
+//Summary Table
+//-----------------------------------------------------------------------------{ 
+table_data = table.new(position = position.bottom_right, columns = 1, rows = 5, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
+table.cell(table_data, 0, 0, 'CP782', bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))
+table.cell(table_data, 0, 1, str.tostring('$' + str.tostring(math.round(strNetProfit, 0))), text_size = size.normal, bgcolor = bgDarkColour, text_color = color.rgb(255, 255, 255), text_halign = text.align_center, tooltip = 'Net Profit')
+table.cell(table_data, 0, 2, str.tostring(str.tostring(math.round(strPercentProfitable * 100, 0)) + '%'), text_size = size.normal, bgcolor = bgLightColour, text_color = color.rgb(255, 255, 255), text_halign = text.align_center, tooltip = 'Percent Profitable')
+table.cell(table_data, 0, 3, str.tostring(math.round(strProfitFactor, 2)), text_size = size.normal, bgcolor = bgDarkColour, text_color = color.rgb(255, 255, 255), text_halign = text.align_center, tooltip = 'Profit Factor')
+table.cell(table_data, 0, 4, str.tostring('$' + str.tostring(math.round(strategy.max_drawdown, 0))), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign = text.align_center, tooltip = 'Max Drawdown')
+
+//-----------------------------------------------------------------------------}
+//Alert
+//-----------------------------------------------------------------------------{
+if hakBuy or hakSell
+    alert('GLOD ' + (hakBuy ? 'Buy' : 'Sell') + ' lot ' + str.tostring(math.round(initialLot, 1)), alert.freq_once_per_bar_close)
+
+if buyExit or sellExit
+    alert('GLOD ' + (buyExit ? 'Exit Buy' : 'Exit Sell') + ' lot ' + str.tostring(math.round(initialLot, 1)), alert.freq_once_per_bar_close)
