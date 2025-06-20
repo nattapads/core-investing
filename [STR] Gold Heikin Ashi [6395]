@@ -142,7 +142,6 @@ plotshape(hakSell, title = 'Sell', text = 'S▼', textcolor = color.white, style
 plotshape(buyExit, title = 'Buy Exit', style = shape.xcross, location = location.abovebar, color = color.rgb(8, 153, 129, 0), size = size.tiny)
 plotshape(sellExit, title = 'Sell Exit', style = shape.xcross, location = location.belowbar, color = color.rgb(242, 54, 70, 0), size = size.tiny)
 
-
 //-----------------------------------------------------------------------------}
 //Strategy
 //-----------------------------------------------------------------------------{ 
@@ -169,7 +168,6 @@ else
     bgLightColour := color.rgb(242, 54, 69, 20)
     bgLightColour
 
-
 //-----------------------------------------------------------------------------}
 //Summary Table
 //-----------------------------------------------------------------------------{ 
@@ -184,7 +182,7 @@ table.cell(table_data, 0, 4, str.tostring('$' + str.tostring(math.round(strategy
 //Alert
 //-----------------------------------------------------------------------------{
 if hakBuy or hakSell
-    alert('GLOD ' + (hakBuy ? 'Buy' : 'Sell') + ' lot ' + str.tostring(math.round(initialLot, 1)), alert.freq_once_per_bar_close)
+    alert('GOLD ' + (hakBuy ? 'Buy' : 'Sell') + ' lot ' + str.tostring(math.round(initialLot, 1)), alert.freq_once_per_bar_close)
 
 if buyExit or sellExit
-    alert('GLOD ' + (buyExit ? 'Exit Buy' : 'Exit Sell') + ' lot ' + str.tostring(math.round(initialLot, 1)), alert.freq_once_per_bar_close)
+    alert('GOLD ' + (buyExit ? 'Exit Buy' : 'Exit Sell') + ' lot ' + str.tostring(math.round(initialLot, 1)), alert.freq_once_per_bar_close)
