@@ -48,27 +48,22 @@ dailyPercentVol = 0.7 * dailyPercentVolRecent + 0.3 * dailyPercentVol8Yr
 instRisk      = math.round(dailyPercentVol * 16, 6)
 dailyPriceVol = dailyPercentVol * close
 
-fastVol   = ta.ema(ta.ema(dailyPriceVol, fastLength), fastLength)
-slowVol   = ta.ema(ta.ema(dailyPriceVol, slowLength), slowLength)
+fastVol = ta.ema(ta.ema(dailyPriceVol, fastLength), fastLength)
+slowVol = ta.ema(ta.ema(dailyPriceVol, slowLength), slowLength)
 diffVol = fastVol - slowVol
 
 //-----------------------------------------------------------------------------}
 //Heikin Ashi Calculation
 //-----------------------------------------------------------------------------{
-ha_open = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, open)
-ha_close = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, close)
-ha_high = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, high)
-ha_low = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, low)
-
+[ha_open, ha_high, ha_low, ha_close] = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, [open, high, low, close])
 
 //-----------------------------------------------------------------------------}
 //Trend Calculation
 //-----------------------------------------------------------------------------{
-smma(src, length) =>
-    smma = 0.0
-    sma_1 = ta.sma(src, length)
-    smma := na(smma[1]) ? sma_1 : (smma[1] * (length - 1) + src) / length
-    smma
+smma(src, len) =>
+    var float s = na
+    s := na(s[1]) ? ta.sma(src, len) : (s[1] * (len - 1) + src) / len
+    s
 
 highLow2 = (ha_high + ha_low)/2
 
