@@ -17,7 +17,8 @@ lipsPeriod = input.int(5, minval = 1, title = 'Lips Period', group = 'Alligato S
 jawOffset = input.int(8, minval = 1, title = 'Jaw Offset', group = 'Alligato Settings')
 teethOffset = input.int(5, minval = 1, title = 'Teeth Offset', group = 'Alligato Settings')
 lipsOffset = input.int(3, minval = 1, title = 'Lips Offset', group = 'Alligato Settings')
-sigLength = input(title = 'EMA Length', defval = 1, group = 'Fast EMA Settings')
+sigLength = input(title = 'EMA Length', defval = 1, group = 'Alligato Settings')
+dojiPrecision = input.float(0.15, minval = 0.0001, title = 'Doji Max Body size', group = 'Alligato Settings')
 
 //-----------------------------------------------------------------------------}
 //Risk Settings
@@ -56,6 +57,7 @@ diffVol = fastVol - slowVol
 //Heikin Ashi Calculation
 //-----------------------------------------------------------------------------{
 [ha_open, ha_high, ha_low, ha_close] = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, [open, high, low, close])
+haDoji = math.abs(ha_open - ha_close) <= (ha_high - ha_low) * dojiPrecision ? 1 : 0
 
 //-----------------------------------------------------------------------------}
 //Trend Calculation
@@ -70,13 +72,13 @@ highLow2 = (ha_high + ha_low)/2
 jaw = smma(highLow2, jawPeriod)
 teeth = smma(highLow2, teethPeriod)
 lips = smma(highLow2, lipsPeriod)
-zlsma1 = ta.ema(ha_low, sigLength)
+sigEMA = ta.ema(ha_low, sigLength)
 
 //-----------------------------------------------------------------------------}
 //Trend and Trading Session
 //-----------------------------------------------------------------------------{
-Bullish = enableVol ? zlsma1 > lips[lipsOffset] and zlsma1 > teeth[teethOffset] and zlsma1 > jaw[jawOffset] and diffVol >= 0 : zlsma1 > lips[lipsOffset] and zlsma1 > teeth[teethOffset] and zlsma1 > jaw[jawOffset]
-Bearish = enableVol ? zlsma1 < lips[lipsOffset] and zlsma1 < teeth[teethOffset] and zlsma1 < jaw[jawOffset] and diffVol >= 0 : zlsma1 < lips[lipsOffset] and zlsma1 < teeth[teethOffset] and zlsma1 < jaw[jawOffset]
+Bullish = enableVol ? sigEMA > lips[lipsOffset] and sigEMA > teeth[teethOffset] and sigEMA > jaw[jawOffset] and diffVol >= 0 : sigEMA > lips[lipsOffset] and sigEMA > teeth[teethOffset] and sigEMA > jaw[jawOffset]
+Bearish = enableVol ? sigEMA < lips[lipsOffset] and sigEMA < teeth[teethOffset] and sigEMA < jaw[jawOffset] and diffVol >= 0 : sigEMA < lips[lipsOffset] and sigEMA < teeth[teethOffset] and sigEMA < jaw[jawOffset]
 
 //-----------------------------------------------------------------------------}
 //Bar Colour
@@ -103,8 +105,8 @@ barcolor(trendColour)
 var hakOpenBuy = false
 var hakOpenSell = false
 
-hakBuy =  ha_close > ha_open and Bullish and hakOpenBuy == false
-hakSell = ha_close < ha_open and Bearish and hakOpenSell == false
+hakBuy =  ha_close > ha_open and Bullish and haDoji == 0 and hakOpenBuy == false
+hakSell = ha_close < ha_open and Bearish and haDoji == 0 and hakOpenSell == false
 
 buyExit = ta.crossunder(ha_close, ha_open) and hakOpenBuy == true
 sellExit = ta.crossover(ha_close, ha_open) and hakOpenSell == true
