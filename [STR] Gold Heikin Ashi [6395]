@@ -18,7 +18,7 @@ jawOffset = input.int(8, minval = 1, title = 'Jaw Offset', group = 'Alligato Set
 teethOffset = input.int(5, minval = 1, title = 'Teeth Offset', group = 'Alligato Settings')
 lipsOffset = input.int(3, minval = 1, title = 'Lips Offset', group = 'Alligato Settings')
 sigLength = input(title = 'EMA Length', defval = 1, group = 'Alligato Settings')
-dojiPrecision = input.float(0.15, minval = 0.0001, title = 'Doji Max Body size', group = 'Alligato Settings')
+dojiPrecision = input.float(0.2, minval = 0.0001, title = 'Doji Max Body size', group = 'Alligato Settings')
 
 //-----------------------------------------------------------------------------}
 //Risk Settings
@@ -108,8 +108,8 @@ var hakOpenSell = false
 hakBuy =  ha_close > ha_open and Bullish and haDoji == 0 and hakOpenBuy == false
 hakSell = ha_close < ha_open and Bearish and haDoji == 0 and hakOpenSell == false
 
-buyExit = ta.crossunder(ha_close, ha_open) and hakOpenBuy == true
-sellExit = ta.crossover(ha_close, ha_open) and hakOpenSell == true
+buyExit = ta.crossunder(ha_close, ha_open) and haDoji == 0 and hakOpenBuy == true
+sellExit = ta.crossover(ha_close, ha_open) and haDoji == 0 and hakOpenSell == true
 
 //-----------------------------------------------------------------------------}
 //Lot Settings
