@@ -17,7 +17,7 @@ lipsPeriod = input.int(5, minval = 1, title = 'Lips Period', group = 'Alligato S
 jawOffset = input.int(8, minval = 1, title = 'Jaw Offset', group = 'Alligato Settings')
 teethOffset = input.int(5, minval = 1, title = 'Teeth Offset', group = 'Alligato Settings')
 lipsOffset = input.int(3, minval = 1, title = 'Lips Offset', group = 'Alligato Settings')
-sigLength = input(title = 'EMA Length', defval = 5, group = 'Fast EMA Settings')
+sigLength = input(title = 'EMA Length', defval = 1, group = 'Fast EMA Settings')
 
 //-----------------------------------------------------------------------------}
 //Risk Settings
