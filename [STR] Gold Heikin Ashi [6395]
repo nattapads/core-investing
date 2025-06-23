@@ -94,6 +94,25 @@ lips = smma(highLow2, lipsPeriod)
 tradePossible = enableVol ? ((ha_close < lips[lipsOffset] and ha_close < teeth[teethOffset] and ha_close < jaw[jawOffset] and diffVol >= 0) or (ha_close > lips[lipsOffset] and ha_close > teeth[teethOffset] and ha_close > jaw[jawOffset] and diffVol >= 0)) : ((ha_close < lips[lipsOffset] and ha_close < teeth[teethOffset] and ha_close < jaw[jawOffset]) or (ha_close > lips[lipsOffset] and ha_close > teeth[teethOffset] and ha_close > jaw[jawOffset]))
 
 //-----------------------------------------------------------------------------}
+//Bar Colour
+//-----------------------------------------------------------------------------{
+var color trendColour = na
+var bullColour = #089981
+var bearColour = #f23645
+
+if tradePossible and ha_close > ha_open
+    trendColour := bullColour
+    trendColour
+else if tradePossible and ha_close < ha_open
+    trendColour := bearColour
+    trendColour
+else
+    trendColour := color.rgb(120, 123, 134, 65)
+    trendColour
+
+barcolor(trendColour)
+
+//-----------------------------------------------------------------------------}
 //Entry Exit Signal
 //-----------------------------------------------------------------------------{
 var hakOpenPosition = false
