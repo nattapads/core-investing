@@ -91,7 +91,7 @@ lips = smma(highLow2, lipsPeriod)
 //-----------------------------------------------------------------------------}
 //Trend and Trading Session
 //-----------------------------------------------------------------------------{
-tradePossible = enableVol ? ((ha_close < lips[lipsOffset] and ha_close < teeth[teethOffset] and ha_close < jaw[jawOffset]) or (ha_close > lips[lipsOffset] and ha_close > teeth[teethOffset] and ha_close > jaw[jawOffset])) : ((ha_close < lips[lipsOffset] and ha_close < teeth[teethOffset] and ha_close < jaw[jawOffset] and diffVol >= 0) or (ha_close > lips[lipsOffset] and ha_close > teeth[teethOffset] and ha_close > jaw[jawOffset] and diffVol >= 0))
+tradePossible = enableVol ? ((ha_close < lips[lipsOffset] and ha_close < teeth[teethOffset] and ha_close < jaw[jawOffset] and diffVol >= 0) or (ha_close > lips[lipsOffset] and ha_close > teeth[teethOffset] and ha_close > jaw[jawOffset] and diffVol >= 0)) : ((ha_close < lips[lipsOffset] and ha_close < teeth[teethOffset] and ha_close < jaw[jawOffset]) or (ha_close > lips[lipsOffset] and ha_close > teeth[teethOffset] and ha_close > jaw[jawOffset]))
 
 //-----------------------------------------------------------------------------}
 //Entry Exit Signal
