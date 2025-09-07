@@ -212,7 +212,7 @@ ma1 = ma(ma1_source, ma1_length, ma1_type)
 ma1mo = smoothMa ? ma(ma1, ma1_length, ma1_type) : ma1
 plot(show_ma1 ? ma1mo : na, color = ma1_color, title = 'MA №1')
 
-show_ma2 = input(true, 'MA №2', inline = 'MA #2', display = display.data_window)
+show_ma2 = input(false, 'MA №2', inline = 'MA #2', display = display.data_window)
 ma2_type = input.string('SMA', '', inline = 'MA #2', options = ['SMA', 'EMA', 'SMMA (RMA)', 'WMA', 'VWMA'])
 ma2_source = input(close, '', inline = 'MA #2', display = display.data_window)
 ma2_length = input.int(20, '', inline = 'MA #2', minval = 1)
@@ -231,7 +231,23 @@ ma3mo = smoothMa ? ma(ma3, ma3_length, ma3_type) : ma3
 plot(show_ma3 ? ma3mo : na, color = ma3_color, title = 'MA №3')
 
 plotshape(crossUp ? ma3mo : na, title='New Highest', style=shape.circle, location=location.absolute, color=#089981, size=size.tiny)
-plotshape(crossDn ? ma3mo : na, title='New Highest', style=shape.circle, location=location.absolute, color=#F23645, size=size.tiny)
+plotshape(crossDn ? ma3mo : na, title='New Highest', style=shape.circle, location=location.absolute, color=color.rgb(117, 117, 117), size=size.tiny)
+
+//-----------------------------------------------------------------------------}
+//ATR Settings
+//-----------------------------------------------------------------------------{
+atrLength               = input(10,             'ATR Length',           group="ATR Settings")
+atrMultiplier           = input(1.50,           'Multiplier',           group="ATR Settings")
+atrOutput               = ta.atr(atrLength)*atrMultiplier
+
+//-----------------------------------------------------------------------------}
+//Range Plot
+//-----------------------------------------------------------------------------{ 
+volRangeUpper = crossUp ? close + (atrOutput) : na
+volRangeLower = crossUp ? close - (atrOutput) : na
+
+plot(volRangeUpper, color=strongbullColor, title='Upper Band', linewidth=2, style=plot.style_cross)
+plot(volRangeLower, color=strongBearishColor, title='Upper Band', linewidth=2, style=plot.style_cross)
 
 //-----------------------------------------------------------------------------
 // Main MA
