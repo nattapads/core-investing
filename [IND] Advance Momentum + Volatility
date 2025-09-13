@@ -1,0 +1,324 @@
+//NSal
+//@version=6
+indicator('[IND] Advance Momentum + Volatility',  overlay = true)
+
+//-----------------------------------------------------------------------------
+// Color Styles
+//-----------------------------------------------------------------------------
+strongbullColor = color.rgb(8, 153, 129)
+strongBearishColor = color.rgb(242, 54, 69)
+neutralColor = color.rgb(255, 255, 255, 80)
+
+//-----------------------------------------------------------------------------}
+//Risk Settings
+//-----------------------------------------------------------------------------{
+expoStdLength = input.int(32, title = 'Exponential SD Length', group = 'Risk Settings')
+fastLength = input.int(5, title = 'Fast SD Length', group = 'Risk Settings')
+slowLength = input.int(20, title = 'Slow SD Length', group = 'Risk Settings')
+
+//-----------------------------------------------------------------------------{
+//Instrument Risk Calculation
+//-----------------------------------------------------------------------------{
+// Percentage returns
+ret = (close - close[1]) / close[1]
+var float dailyPercentVolRecent = na
+
+ew_var = ta.ema(math.pow(ret, 2), expoStdLength)
+dailyPercentVolRecent := math.sqrt(ew_var)
+
+// Long-term vol  (8-year ≈ 2 000 bars)
+longWindow = 2000           // author uses 10y; we use 8y per requirement
+dailyPercentVol8Yr = ta.sma(dailyPercentVolRecent, longWindow)
+
+// Weighted blend 70 / 30
+dailyPercentVol = 0.7 * dailyPercentVolRecent + 0.3 * dailyPercentVol8Yr
+
+// Instrument risk & price-vol units (same as original)
+instRisk      = math.round(dailyPercentVol * 16, 6)
+dailyPriceVol = dailyPercentVol * close
+
+fastVol   = ta.ema(ta.ema(dailyPriceVol, fastLength), fastLength)
+slowVol   = ta.ema(ta.ema(dailyPriceVol, slowLength), slowLength)
+diffVol = fastVol - slowVol
+
+length = input.int(20, minval=1)
+maType = input.string("SMA", "Basis MA Type", options = ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"])
+src = input(close, title="Source")
+mult = input.float(2.0, minval=0.001, maxval=50, title="StdDev")
+
+maa(source, length, _type) =>
+    switch _type
+        "SMA" => ta.sma(source, length)
+        "EMA" => ta.ema(source, length)
+        "SMMA (RMA)" => ta.rma(source, length)
+        "WMA" => ta.wma(source, length)
+        "VWMA" => ta.vwma(source, length)
+
+basis = maa(diffVol, length, maType)
+dev = mult * ta.stdev(diffVol, length)
+upper = basis + dev
+lower = basis - dev
+
+crossUp = ta.crossover(diffVol, upper)
+crossDn = ta.crossunder(diffVol, lower)
+
+var color flatColour = color.rgb(120, 123, 134, 60)
+
+// persistent trend colour (starts neutral, flips only on signals)
+var color trendColour = flatColour
+if crossUp
+    trendColour := strongbullColor
+else if crossDn
+    trendColour := strongBearishColor
+
+offset = input.int(0, "Offset", minval = -500, maxval = 500, display = display.data_window)
+
+//-----------------------------------------------------------------------------}
+//Moving Average
+//-----------------------------------------------------------------------------{
+smoothMa = input(true, title = 'Smooth MA')
+
+ma(source, length, type) =>
+    type == 'SMA' ? ta.sma(source, length) : type == 'EMA' ? ta.ema(source, length) : type == 'SMMA (RMA)' ? ta.rma(source, length) : type == 'WMA' ? ta.wma(source, length) : type == 'VWMA' ? ta.vwma(source, length) : na
+
+show_ma3 = input(false, 'MA №3', inline = 'MA #3', display = display.data_window)
+ma3_type = input.string('SMA', '', inline = 'MA #3', options = ['SMA', 'EMA', 'SMMA (RMA)', 'WMA', 'VWMA'])
+ma3_source = input(close, '', inline = 'MA #3', display = display.data_window)
+ma3_length = input.int(40, '', inline = 'MA #3', minval = 1)
+ma3_color = input(color.rgb(8, 153, 129), '', inline = 'MA #3', display = display.data_window)
+ma3 = ma(ma3_source, ma3_length, ma3_type)
+ma3mo = smoothMa ? ma(ma3, ma3_length, ma3_type) : ma3
+
+plot(show_ma3 ? ma3mo : na, color = ma3_color, title = 'MA №3')
+
+//-----------------------------------------------------------------------------
+// Main MA
+//-----------------------------------------------------------------------------
+asset = input.symbol(title = 'Primary Source', defval = 'S5TH', group = 'Sources', inline = 'source')
+CLOSE = request.security(asset, 'W', close)
+buyThe = input(30)
+sellThe = input(70)
+
+assetBuy = ta.crossover(CLOSE, 20)
+assetSell = ta.crossunder(CLOSE, 80)
+
+// Color
+colorMa = CLOSE < buyThe ? strongbullColor : CLOSE > sellThe ? strongBearishColor : neutralColor
+
+show_ma4 = input(true, 'MA №4', inline = 'MA #4', display = display.data_window)
+ma4_type = input.string('SMA', '', inline = 'MA #4', options = ['SMA', 'EMA', 'SMMA (RMA)', 'WMA', 'VWMA'])
+ma4_source = input(close, '', inline = 'MA #4', display = display.data_window)
+ma4_length = input.int(200, '', inline = 'MA #4', minval = 1)
+ma4_color = input(color.rgb(242, 54, 69), '', inline = 'MA #4', display = display.data_window)
+ma4 = ma(ma4_source, ma4_length, ma4_type)
+ma4mo = smoothMa ? ma(ma4, ma4_length, ma4_type) : ma4
+plot(show_ma4 ? ma4mo : na, color = CLOSE < buyThe ? strongbullColor : CLOSE > sellThe ? strongBearishColor : neutralColor, title = 'MA №4', linewidth = 2)
+
+plotshape(assetBuy ? ma4mo : na, title = 'Buy', style = shape.circle, location = location.absolute, color = strongbullColor, size = size.tiny)
+plotshape(assetSell ? ma4mo : na, title = 'Sell', style = shape.circle, location = location.absolute, color = strongBearishColor, size = size.tiny)
+
+//-----------------------------------------------------------------------------
+// MACD
+//-----------------------------------------------------------------------------
+[macdLine, signalLine, _] = ta.macd(close, 12, 26, 9)
+
+// MACD cross conditions
+macdCrossOver = ta.crossover(macdLine, signalLine)
+macdCrossUnder = ta.crossunder(macdLine, signalLine)
+
+// Highlight bar Green: MACD > 0 and Signal < 0
+greenBar = macdLine > 0 and signalLine < 0
+redBar = macdLine < 0 and signalLine > 0
+barcolor(greenBar ? strongbullColor : redBar ? strongBearishColor : na, title = 'Bar Highlight Green')
+
+//-----------------------------------------------------------------------------}
+//Advanced Momentum Settings
+//-----------------------------------------------------------------------------{
+// Input Groups
+var string ema_settings         = "EMA Settings"
+var string momentum_settings    = "Momentum Settings"
+var string sensitivity_settings = "Sensitivity Settings"
+var string visual_settings      = "Visual Settings"
+
+// EMA Settings
+ultra_fast = input.int(8, title = 'Ultra-Fast EMA', 
+     minval = 1, 
+     group = ema_settings)
+     
+fast = input.int(16, title = 'Fast EMA', 
+     minval = 1, 
+     group = ema_settings)
+     
+mid = input.int(32, title = 'Mid EMA', 
+     minval = 1, 
+     group = ema_settings)
+     
+slow = input.int(64, title = 'Slow EMA', 
+     minval = 1, 
+     group = ema_settings)
+     
+series float price = input.source(close, 'Price Source', 
+     group = ema_settings)
+
+// Momentum Settings
+roc_period = input.int(5, title = 'RoC Period', 
+     minval = 1, 
+     group = momentum_settings)
+     
+mom_threshold = input.float(0.5, title = 'Momentum Threshold (%)', 
+     step = 0.1, 
+     group = momentum_settings)
+
+// Sensitivity Settings
+mode = input.string('Balanced', 'Sensitivity Mode', 
+     options = ['Conservative', 'Balanced', 'Aggressive'], 
+     group = sensitivity_settings)
+
+// Visual Settings
+up_color = strongbullColor
+down_color = strongBearishColor
+neutral_color = neutralColor
+
+//-----------------------------------------------------------------------------
+// Momentum Calculation
+//-----------------------------------------------------------------------------
+// Constant settings
+const int   atr_len = 14
+const float vol_thresh = 1.5
+const int   rsi_len = 10
+const int   rsi_high = 70
+const int   rsi_low = 30
+const bool  use_volume = true
+const int   vol_len = 20
+const int   bar_transp = 40
+const int   max_intensity = 20
+
+// EMAs
+ema_ultra = ta.ema(price, ultra_fast)
+ema_fast = ta.ema(price, fast)
+ema_mid = ta.ema(price, mid)
+ema_slow = ta.ema(price, slow)
+
+// EMA slopes for trend momentum
+slope_ultra = (ema_ultra - ema_ultra[1]) / ema_ultra[1] * 100
+slope_fast = (ema_fast - ema_fast[1]) / ema_fast[1] * 100
+slope_mid = (ema_mid - ema_mid[1]) / ema_mid[1] * 100
+
+// Rate of Change for early trend detection
+roc = (close - close[roc_period]) / close[roc_period] * 100
+roc_smooth = ta.sma(roc, 3) // Smoothed RoC
+
+// Dynamic volatility threshold based on sensitivity mode
+var float dyn_thresh = vol_thresh
+if mode == 'Conservative'
+    dyn_thresh := vol_thresh * 1.2
+else if mode == 'Aggressive'
+    dyn_thresh := vol_thresh * 0.8
+else
+    dyn_thresh := vol_thresh
+
+// Early Trend Direction (more sensitive)
+early_up = ema_ultra > ema_fast and slope_fast > 0 and roc_smooth > mom_threshold
+early_down = ema_ultra < ema_fast and slope_fast < 0 and roc_smooth < -mom_threshold
+
+// Confirmed Trend Direction (more reliable)
+confirm_up = ema_fast > ema_mid and ema_mid > ema_slow and close > ema_fast
+confirm_down = ema_fast < ema_mid and ema_mid < ema_slow and close < ema_fast
+
+// Final Trend Direction (based on sensitivity mode)
+bool trend_up = false
+bool trend_down = false
+bool trend_neutral = false
+
+if mode == 'Conservative'
+    trend_up := confirm_up
+    trend_down := confirm_down
+    trend_neutral := not confirm_up and not confirm_down
+else if mode == 'Aggressive'
+    trend_up := early_up or ema_ultra > ema_fast and confirm_up
+    trend_down := early_down or ema_ultra < ema_fast and confirm_down
+    trend_neutral := not trend_up and not trend_down
+else // Balanced
+    trend_up := early_up and ema_fast > ema_mid or confirm_up
+    trend_down := early_down and ema_fast < ema_mid or confirm_down
+    trend_neutral := not trend_up and not trend_down
+
+//-----------------------------------------------------------------------------
+// Momentum Visualisation
+//-----------------------------------------------------------------------------
+// Gradient background intensity tracking
+var float bg_intensity = 0.0
+var int prev_trend = 0
+
+// Detect trend state changes
+bool trend_changed = trend_up and prev_trend != 1 or trend_down and prev_trend != -1 or trend_neutral and prev_trend != 0
+
+// Reset intensity on trend change
+if trend_changed
+    bg_intensity := 0.0
+    prev_trend := trend_up ? 1 : trend_down ? -1 : 0
+
+// Increment intensity based on trend
+bg_intensity := math.min(bg_intensity + 1, max_intensity)
+
+// Calculate bands that cover the price bars automatically
+calcBands() =>
+    lookback = 10 // Number of bars to look back for determining range
+    high_price = ta.highest(high, lookback)
+    low_price = ta.lowest(low, lookback)
+
+    // Calculate the total range
+    total_range = high_price - low_price
+
+    // Create bands that divide this range
+    upper3 = high_price
+    upper2 = high_price - total_range * 0.2
+    upper1 = high_price - total_range * 0.4
+
+    // Calculate middle point for centered line
+    middle = (high_price + low_price) / 2
+
+    lower1 = low_price + total_range * 0.4
+    lower2 = low_price + total_range * 0.2
+    lower3 = low_price
+
+    [upper3, upper2, upper1, middle, lower1, lower2, lower3]
+
+[upper3, upper2, upper1, middle_band, lower1, lower2, lower3] = calcBands()
+
+// Plot the main trend line with simple up/down/neutral color
+plot(middle_band, 'Trend', color = trend_up ? up_color : trend_down ? down_color : neutral_color, linewidth = 2)
+plotshape(crossUp, title='New Highest exSD', style=shape.circle, location=location.belowbar, color=color.rgb(255, 255, 255), size = size.tiny)
+plotshape(crossDn, title='New Lowest exSD', style=shape.xcross, location=location.abovebar, color=color.rgb(117, 117, 117), size = size.tiny)
+
+// Trend text and colors
+trend_text = trend_up ? 'UPTREND' : trend_down ? 'DOWNTREND' : 'NEUTRAL'
+color current_color = trend_up ? up_color : trend_down ? down_color : #555555
+
+// Function to determine if a color is dark or light for contrast
+isDarkColor(c) =>
+    // Extract RGB components
+    r = color.r(c)
+    g = color.g(c)
+    b = color.b(c)
+
+    // Formula to determine brightness (weighted RGB)
+    luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+
+    // Return true if dark, false if light
+    luminance < 0.5
+
+//-----------------------------------------------------------------------------
+// Alert
+//-----------------------------------------------------------------------------
+alertcondition(trend_neutral and not trend_neutral[1], 
+     title="Detect Neutral State", 
+     message="Neutral State {{exchange}}:{{ticker}}")
+
+alertcondition(early_up and not confirm_up, 
+     title="Detect Early Uptrend", 
+     message="Early Uptrend Signal {{exchange}}:{{ticker}}")
+
+alertcondition(early_down and not confirm_down, 
+     title="Detect Early Downtrend", 
+     message="Early Downtrend Signal {{exchange}}:{{ticker}}")
