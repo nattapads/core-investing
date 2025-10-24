@@ -140,7 +140,7 @@ redBar = macdLine < 0 and signalLine > 0
 threeBull = close[1] > close[2] and close[2] > close[3] and close[0] > close[1] and close[0] > open[0] and close[1] > open[1] and close[2] > open[2]
 threeBear = close[1] < close[2] and close[2] < close[3] and close[0] < close[1] and close[0] < open[0] and close[1] < open[1] and close[2] < open[2]
 
-barcolor(threeBull ? strongbullColor : threeBear ? strongBearishColor : neutralColor, title = 'Three Conservative Bar Highlight')
+//barcolor(threeBull ? strongbullColor : threeBear ? strongBearishColor : neutralColor, title = 'Bar Highlight')
 
 //-----------------------------------------------------------------------------}
 //Advanced Momentum Settings
@@ -263,7 +263,6 @@ calcBands() =>
 
 [middle_band] = calcBands()
 
-
 // Plot the main trend line with simple up/down/neutral color
 //plot(middle_band, 'Trend', color = trend_up ? up_color : trend_down ? down_color : neutral_color, linewidth = 2)
 dotColour = trend_up ? up_color : trend_down ? down_color : color.rgb(255, 255, 255)
@@ -271,6 +270,7 @@ dotColour = trend_up ? up_color : trend_down ? down_color : color.rgb(255, 255, 
 plot(show_ma3 ? ma3mo : na, color = trend_up ? up_color : trend_down ? down_color : neutral_color, title = 'MA №3')
 plotshape(crossUp ? ma3mo : na, title='New Highest exSD', style=shape.circle, location=location.absolute, color=dotColour, size = size.tiny)
 plotshape(crossDn ? ma3mo : na, title='New Lowest exSD', style=shape.xcross, location=location.absolute, color=color.rgb(117, 117, 117), size = size.tiny)
+barcolor(trend_up ? strongbullColor : trend_down ? strongBearishColor : neutralColor, title = 'Bar Highlight')
 
 // Trend text and colors
 trend_text = trend_up ? 'UPTREND' : trend_down ? 'DOWNTREND' : 'NEUTRAL'
