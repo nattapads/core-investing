@@ -146,19 +146,19 @@ barcolor(threeBull ? strongbullColor : threeBear ? strongBearishColor : neutralC
 //Advanced Momentum Settings
 //-----------------------------------------------------------------------------{
 //EMA Settings
-ultra_fast = input.int(8, title = 'Ultra-Fast EMA', 
+ultra_fast = input.int(34, title = 'Ultra-Fast EMA', 
      minval = 1, 
      group = momentum_settings)
      
-fast = input.int(16, title = 'Fast EMA', 
+fast = input.int(55, title = 'Fast EMA', 
      minval = 1, 
      group = momentum_settings)
      
-mid = input.int(32, title = 'Mid EMA', 
+mid = input.int(89, title = 'Mid EMA', 
      minval = 1, 
      group = momentum_settings)
      
-slow = input.int(64, title = 'Slow EMA', 
+slow = input.int(144, title = 'Slow EMA', 
      minval = 1, 
      group = momentum_settings)
      
