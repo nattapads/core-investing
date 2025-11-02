@@ -2,6 +2,127 @@
 //@version=6
 indicator('[IND] Advance Momentum + Volatility',  overlay = true)
 
+//-----------------------------------------------------------------------------}
+//Stochastic Settings
+//-----------------------------------------------------------------------------{
+vline_hh = input.bool(true, title = 'Vline Highest')
+vline_ll = input.bool(true, title = 'Vline Lowest')
+
+periodK1 = input.int(9, title = '%K 1 Length', minval = 1)
+smoothK1 = input.int(1, title = '%K 1 Smoothing', minval = 1)
+periodD1 = input.int(3, title = '%D 1 Smoothing', minval = 1)
+
+periodK2 = input.int(14, title = '%K 2 Length', minval = 1)
+smoothK2 = input.int(1, title = '%K 2 Smoothing', minval = 1)
+periodD2 = input.int(3, title = '%D 2 Smoothing', minval = 1)
+
+periodK3 = input.int(40, title = '%K 3 Length', minval = 1)
+smoothK3 = input.int(1, title = '%K 3 Smoothing', minval = 1)
+periodD3 = input.int(4, title = '%D 3 Smoothing', minval = 1)
+
+periodK4 = input.int(60, title = '%K 4 Length', minval = 1)
+smoothK4 = input.int(1, title = '%K 4 Smoothing', minval = 1)
+periodD4 = input.int(10, title = '%D 4 Smoothing', minval = 1)
+
+buyThreshold = input.int(20, title = 'Buy Threshold', minval = 1)
+sellThreshold = input.int(80, title = 'Buy Threshold', minval = 1)
+
+var array<float> high_tracking = na
+var array<float> low_tracking = na
+
+// Store previous turning points to avoid repeated notifications
+var float prev_hh = na
+var float prev_ll = na
+
+// Function to track highest and lowest points
+track_high_low(_src) =>
+    hh_index = ta.highestbars(_src, 14)
+    ll_index = ta.lowestbars(_src, 14)
+    [hh_index, ll_index]
+
+// Get the highest and lowest points based on the selected timeframe
+[hh_index, ll_index] = track_high_low(close)
+
+//-----------------------------------------------------------------------------}
+//Stochastic Calculation
+//-----------------------------------------------------------------------------{
+k1 = ta.sma(ta.stoch(close, high, low, periodK1), smoothK1)
+d1 = ta.sma(k1, periodD1)
+
+k2 = ta.sma(ta.stoch(close, high, low, periodK2), smoothK2)
+d2 = ta.sma(k2, periodD2)
+
+k3 = ta.sma(ta.stoch(close, high, low, periodK3), smoothK3)
+d3 = ta.sma(k3, periodD3)
+
+k4 = ta.sma(ta.stoch(close, high, low, periodK4), smoothK4)
+d4 = ta.sma(k4, periodD4)
+
+//-----------------------------------------------------------------------------}
+//Line Colour
+//-----------------------------------------------------------------------------{
+var strBullColour = color.rgb(8, 153, 129)
+var bullColour = color.rgb(8, 153, 129, 40)
+var strbearColour = color.rgb(242, 54, 69)
+var bearColour = color.rgb(242, 54, 69, 40)
+
+//-----------------------------------------------------------------------------}
+//SetUp Calculation
+//-----------------------------------------------------------------------------{
+strBullish = d4 <= buyThreshold and d3 <= buyThreshold and d2 <= buyThreshold and d1 <= buyThreshold
+bullish = d4 <= buyThreshold and d3 <= buyThreshold and d2 <= buyThreshold
+
+strBearish = d4 >= sellThreshold and d3 >= sellThreshold and d2 >= sellThreshold and d1 >= sellThreshold
+bearish = d4 >= sellThreshold and d3 >= sellThreshold and d2 >= sellThreshold
+
+//-----------------------------------------------------------------------------}
+//HH & LL Calculation
+//-----------------------------------------------------------------------------{
+newHigh = vline_hh and hh_index >= 0
+newLow = vline_ll and ll_index >= 0
+
+//-----------------------------------------------------------------------------
+// Track combined conditions for Short plot
+//-----------------------------------------------------------------------------
+var bool bothBearishHappened = false
+var bool plotShort = false
+
+// Check if both strBearish and newHigh happen at the same time
+if strBearish and newHigh
+    bothBearishHappened := true
+    bothBearishHappened
+
+// Condition to plot the circle when newLow occurs after bothBearishHappened is true
+plotShort := bothBearishHappened and newLow
+
+if plotShort
+    bothBearishHappened := false
+    bothBearishHappened
+
+//-----------------------------------------------------------------------------
+// Track combined conditions for Long plot
+//-----------------------------------------------------------------------------
+var bool bothBullishHappened = false
+var bool plotLong = false
+
+// Check if both strBullish and newLow happen at the same time
+if strBullish and newLow
+    bothBullishHappened := true
+    bothBullishHappened
+
+// Condition to plot the square when newHigh occurs after bothBullishHappened is true
+plotLong := bothBullishHappened and newHigh
+
+if plotLong
+    bothBullishHappened := false
+    bothBullishHappened
+
+//-----------------------------------------------------------------------------
+// Plot Circle and Square
+//-----------------------------------------------------------------------------
+plotshape(plotShort, style = shape.triangledown, location = location.abovebar, color = strbearColour, size = size.tiny)
+plotshape(plotLong, style = shape.triangleup, location = location.belowbar, color = strBullColour, size = size.tiny)
+
 //-----------------------------------------------------------------------------
 //Color Styles
 //-----------------------------------------------------------------------------
@@ -92,6 +213,71 @@ assetSell = ta.crossunder(sp500, 80)
 // Color
 colorMa = sp500 < buyThe ? strongbullColor : sp500 > sellThe ? strongBearishColor : neutralColor
 
+
+//-----------------------------------------------------------------------------
+// Hindenburg Omen
+//-----------------------------------------------------------------------------
+
+new_low_high_threshold = input(2.2, title = 'New Lows/Highs Threshold (Cond 1) %')
+pos_trend_lookback = input(50, title = 'Positive Trend Lookback (Cond 2)')
+
+//////////////
+// GET DATA //
+
+nyse_adv = request.security('USI:ADV', 'D', close) // Count of Advancing Issues (NYSE)
+nyse_unc = request.security('USI:UNCH.NY', 'D', close) // Count of Unchanged Issues (NYSE)
+nyse_dec = request.security('USI:DECL', 'D', close) // Count of Declining Issues (NYSE)
+
+nyse_newh = request.security('INDEX:MAHN', 'D', close) // Count of Issues Hitting 52Week Highs (NYSE)
+nyse_newl = request.security('INDEX:MALN', 'D', close) // Count of Issues Hitting 52Week Lows  (NYSE)
+nyse_comp_indx = request.security('NYA', 'D', close) // NYSE Composite Index Value
+
+
+//////////////////
+// CALCULATIONS //
+
+// Condition 1: 
+// % of Issues of hitting New 52W highs and 52W lows is greater than or equal to a threshold (ex 2.8%)
+
+//Total Number of Issues
+total = nyse_adv + nyse_dec + nyse_unc
+
+cond1 = nyse_newh / total * 100 >= new_low_high_threshold and nyse_newl / total * 100 >= new_low_high_threshold
+
+newh_perc_str = str.tostring(math.round(nyse_newh / total * 1000) / 10)
+newl_perc_str = str.tostring(math.round(nyse_newl / total * 1000) / 10)
+
+
+// Condition 2: 
+// Index is higher or equal in value than when it was 50 days ago.
+
+cond2 = nyse_comp_indx >= nyse_comp_indx[pos_trend_lookback]
+
+// Condition 3: 
+// McClelland Oscillator must be negative.
+
+//McClelland Oscillator
+rana = 1000 * ((nyse_adv - nyse_dec) / (nyse_adv + nyse_dec))
+mcc_ma1 = ta.ema(rana, 19)
+mcc_ma2 = ta.ema(rana, 39)
+mcc = mcc_ma1 - mcc_ma2
+
+cond3 = mcc < 0
+
+// Condition 4: 
+// The ratio of New 52W Highs to New 52W Lows cannot exceed 2
+cond4 = nyse_newh / nyse_newl < 2
+
+//Hindenburg Condition
+//All four conditions are met
+ho_cond = cond1 and cond2 and cond3 and cond4
+
+cond_num = (cond1 ? 1 : 0) + (cond2 ? 1 : 0) + (cond3 ? 1 : 0) + (cond4 ? 1 : 0)
+
+//Hindenburg Omen Signal Period of 30 days
+//bgcolor(ta.barssince(ho_cond) <= 30 ? color.rgb(242, 54, 69, 80) : na)
+badOmen = ta.barssince(ho_cond) <= 30
+
 //-----------------------------------------------------------------------------}
 //Moving Average
 //-----------------------------------------------------------------------------{
@@ -111,11 +297,11 @@ ma3mo = smoothMa ? ma(ma3, ma3_length, ma3_type) : ma3
 show_ma4 = input(true, 'MA №4', inline = 'MA #4', display = display.data_window, group = 'EMA Settings')
 ma4_type = input.string('SMA', '', inline = 'MA #4', options = ['SMA', 'EMA', 'SMMA (RMA)', 'WMA', 'VWMA'], group = 'EMA Settings')
 ma4_source = input(close, '', inline = 'MA #4', display = display.data_window, group = 'EMA Settings')
-ma4_length = input.int(200, '', inline = 'MA #4', minval = 1, group = 'EMA Settings')
+ma4_length = input.int(89, '', inline = 'MA #4', minval = 1, group = 'EMA Settings')
 ma4_color = input(color.rgb(242, 54, 69), '', inline = 'MA #4', display = display.data_window, group = 'EMA Settings')
 ma4 = ma(ma4_source, ma4_length, ma4_type)
 ma4mo = smoothMa ? ma(ma4, ma4_length, ma4_type) : ma4
-plot(show_ma4 ? ma4mo : na, color = sp500 < buyThe ? strongbullColor : sp500 > sellThe ? strongBearishColor : neutralColor, title = 'MA №4', linewidth = 2)
+plot(show_ma4 ? ma4mo : na, color = sp500 < buyThe ? strongbullColor : badOmen ? strongBearishColor : neutralColor, title = 'MA №4', linewidth = 2)
 
 plotshape(assetBuy ? ma4mo : na, title = 'Buy', style = shape.circle, location = location.absolute, color = strongbullColor, size = size.tiny)
 plotshape(assetSell ? ma4mo : na, title = 'Sell', style = shape.circle, location = location.absolute, color = strongBearishColor, size = size.tiny)
@@ -289,17 +475,8 @@ isDarkColor(c) =>
     // Return true if dark, false if light
     luminance < 0.5
 
-//-----------------------------------------------------------------------------
-// Alert
-//-----------------------------------------------------------------------------
-alertcondition(trend_neutral and not trend_neutral[1], 
-     title="Detect Neutral State", 
-     message="Neutral State {{exchange}}:{{ticker}}")
-
-alertcondition(early_up and not confirm_up, 
-     title="Detect Early Uptrend", 
-     message="Early Uptrend Signal {{exchange}}:{{ticker}}")
-
-alertcondition(early_down and not confirm_down, 
-     title="Detect Early Downtrend", 
-     message="Early Downtrend Signal {{exchange}}:{{ticker}}")
+//-----------------------------------------------------------------------------}
+//Alert
+//-----------------------------------------------------------------------------{
+if crossUp
+    alert("High Volatility", alert.freq_once_per_bar_close)
