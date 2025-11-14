@@ -294,7 +294,7 @@ adjCombForc = useMarginAcc ? cappedCombForc / 10 : cappedCombForc / capAdjust
 //-----------------------------------------------------------------------------{
 mmModel   = input.string("Percent Volatility", title = "Money Management Model",
      options = ["Percent Volatility", "Percent of Equity"])
-mmRiskPct = input.float(2.0, "Risk % per Trade", step = 0.1)
+mmRiskPct = input.float(3.0, "Risk % per Trade", step = 0.1)
 atrLen    = input.int(20, "ATR Length (Volatility)", minval = 1)
 
 myATR = ta.atr(atrLen)
