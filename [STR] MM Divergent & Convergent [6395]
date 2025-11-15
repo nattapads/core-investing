@@ -94,6 +94,7 @@ upperForeCap = input.int(10, title = 'Upper Forecast Cap', group = 'Risk Setting
 lowerForeCap = input.int(-10, title = 'Lower Forecast Cap', group = 'Risk Settings')
 riskFree = input.float(0.01, step = 0.01, title = 'Risk-free Rate (%)', group = 'Risk Settings')
 useMarginAcc = input(false, title = 'Margin Account', group = 'Risk Settings')
+mmRiskPct = input.float(4.8, "Risk % per Trade", step = 0.1, group = 'Risk Settings')
 
 //-----------------------------------------------------------------------------{
 //Instrument Risk Calculation
@@ -290,24 +291,15 @@ else if scalCombForc >= upperForeCap
 adjCombForc = useMarginAcc ? cappedCombForc / 10 : cappedCombForc / capAdjust
 
 //-----------------------------------------------------------------------------}
-// Money Management Inputs
+//Base Position
 //-----------------------------------------------------------------------------{
-mmRiskPct = input.float(5.0, "Risk % per Trade", step = 0.1)
-
-//---------------- Money Management ด้วย instRisk แทน ATR ----------------
 dailyPctVol_fromInst = instRisk / 16.0
 volPerShare = dailyPctVol_fromInst * close
 
-//-----------------------------------------------------------------------------}
-// Base Position ตาม Chapter 10
-//-----------------------------------------------------------------------------{
 capitalRisk = strategy.equity * mmRiskPct / 100.0
 
-posEquity = capitalRisk / close
 basePos = volPerShare > 0 ? capitalRisk / volPerShare : 0.0
-
-normForecast = adjCombForc / 1.0
-rawOptimalPosition = basePos * normForecast
+rawOptimalPosition = basePos * adjCombForc
 
 optimalPosition = rawOptimalPosition > 0 ? math.round(rawOptimalPosition) : rawOptimalPosition < 0 ? math.round(rawOptimalPosition) : 0
 
