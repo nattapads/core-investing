@@ -293,12 +293,9 @@ adjCombForc = useMarginAcc ? cappedCombForc / 10 : cappedCombForc / capAdjust
 //-----------------------------------------------------------------------------}
 //Base Position
 //-----------------------------------------------------------------------------{
-dailyPctVol_fromInst = instRisk / 16.0
-volPerShare = dailyPctVol_fromInst * close
-
 capitalRisk = strategy.equity * mmRiskPct / 100.0
 
-basePos = volPerShare > 0 ? capitalRisk / volPerShare : 0.0
+basePos = dailyPriceVol > 0 ? capitalRisk / dailyPriceVol : 0.0
 rawOptimalPosition = basePos * adjCombForc
 
 optimalPosition = rawOptimalPosition > 0 ? math.round(rawOptimalPosition) : rawOptimalPosition < 0 ? math.round(rawOptimalPosition) : 0
