@@ -64,7 +64,7 @@ d4 = ta.sma(k4, periodD4)
 var strBullColour = color.rgb(8, 153, 129)
 var bullColour = color.rgb(8, 153, 129, 40)
 var strbearColour = color.rgb(242, 54, 69)
-var bearColour = color.rgb(242, 54, 69, 60)
+var bearColour = color.rgb(242, 54, 70, 50)
 
 //-----------------------------------------------------------------------------}
 //SetUp Calculation
