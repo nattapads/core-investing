@@ -235,10 +235,6 @@ nyse_comp_indx = request.security('NYA', 'D', close) // NYSE Composite Index Val
 
 //////////////////
 // CALCULATIONS //
-
-// Condition 1: 
-// % of Issues of hitting New 52W highs and 52W lows is greater than or equal to a threshold (ex 2.8%)
-
 //Total Number of Issues
 total = nyse_adv + nyse_dec + nyse_unc
 
@@ -485,7 +481,7 @@ calcBands() =>
 
 // Plot the main trend line with simple up/down/neutral color
 //plot(middle_band, 'Trend', color = trend_up ? up_color : trend_down ? down_color : neutral_color, linewidth = 2)
-dotColour = trend_up ? up_color : trend_down ? down_color : color.rgb(255, 255, 255)
+dotColour = color.rgb(255, 255, 255)
 
 fastEMA = plot(show_ma3 ? ma3mo : na, color = breathColor, title = 'MA №3')
 slowEMA = plot(show_ma4 ? ma4mo : na, color = breathColor, title = 'MA №4', linewidth = 2)
