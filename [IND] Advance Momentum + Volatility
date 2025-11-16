@@ -128,7 +128,7 @@ plotshape(plotLong, style = shape.triangleup, location = location.belowbar, colo
 //-----------------------------------------------------------------------------
 strongbullColor = color.rgb(8, 153, 129)
 strongBearishColor = color.rgb(242, 54, 69)
-neutralColor = color.rgb(255, 255, 255, 80)
+neutralColor = color.rgb(140, 140, 140, 80)
 
 //-----------------------------------------------------------------------------
 //Input Group
@@ -313,6 +313,9 @@ badElher = avgElher < l1
 leadCon = badOmen and badElher
 leadEither = badOmen or badElher
 
+breathColor = leadCon and sp500 >= buyThe ? color.rgb(242, 54, 70, 10) : leadEither and sp500 >= buyThe ? color.rgb(242, 54, 69, 60) : sp500 < buyThe ? color.rgb(8, 153, 129, 30) : sp500 < buyThe and leadCon ? color.rgb(8, 153, 129, 50) : sp500 < buyThe and leadEither ? color.rgb(8, 153, 129, 50) : color.rgb(140, 140, 140, 80)
+breathBrColor = leadCon and sp500 >= buyThe ? color.rgb(242, 54, 70) : leadEither and sp500 >= buyThe ? color.rgb(242, 54, 69, 30) : sp500 < buyThe ? color.rgb(8, 153, 129, 10) : sp500 < buyThe and leadCon ? color.rgb(8, 153, 129, 20) : sp500 < buyThe and leadEither ? color.rgb(8, 153, 129, 20) : color.rgb(140, 140, 140, 50)
+
 //-----------------------------------------------------------------------------}
 //Moving Average
 //-----------------------------------------------------------------------------{
@@ -336,10 +339,6 @@ ma4_length = input.int(89, '', inline = 'MA #4', minval = 1, group = 'EMA Settin
 ma4_color = input(color.rgb(242, 54, 69), '', inline = 'MA #4', display = display.data_window, group = 'EMA Settings')
 ma4 = ma(ma4_source, ma4_length, ma4_type)
 ma4mo = smoothMa ? ma(ma4, ma4_length, ma4_type) : ma4
-plot(show_ma4 ? ma4mo : na, color = leadCon ? strbearColour : leadEither ? bearColour : sp500 < buyThe ? strBullColour : sp500 < buyThe and leadCon ? bullColour : sp500 < buyThe and leadEither ? bullColour : neutralColor, title = 'MA №4', linewidth = 2)
-
-plotshape(assetBuy ? ma4mo : na, title = 'Buy', style = shape.circle, location = location.absolute, color = strongbullColor, size = size.tiny)
-plotshape(assetSell ? ma4mo : na, title = 'Sell', style = shape.circle, location = location.absolute, color = strongBearishColor, size = size.tiny)
 
 //-----------------------------------------------------------------------------
 //MACD
@@ -488,7 +487,14 @@ calcBands() =>
 //plot(middle_band, 'Trend', color = trend_up ? up_color : trend_down ? down_color : neutral_color, linewidth = 2)
 dotColour = trend_up ? up_color : trend_down ? down_color : color.rgb(255, 255, 255)
 
-plot(show_ma3 ? ma3mo : na, color = trend_up ? up_color : trend_down ? down_color : neutral_color, title = 'MA №3')
+fastEMA = plot(show_ma3 ? ma3mo : na, color = breathColor, title = 'MA №3')
+slowEMA = plot(show_ma4 ? ma4mo : na, color = breathColor, title = 'MA №4', linewidth = 2)
+
+plotshape(assetBuy ? ma4mo : na, title = 'Buy', style = shape.circle, location = location.absolute, color = strongbullColor, size = size.tiny)
+plotshape(assetSell ? ma4mo : na, title = 'Sell', style = shape.circle, location = location.absolute, color = strongBearishColor, size = size.tiny)
+
+fill(fastEMA, slowEMA, color = breathColor)
+
 plotshape(crossUp ? ma3mo : na, title='New Highest exSD', style=shape.circle, location=location.absolute, color=dotColour, size = size.tiny)
 plotshape(crossDn ? ma3mo : na, title='New Lowest exSD', style=shape.xcross, location=location.absolute, color=color.rgb(117, 117, 117), size = size.tiny)
 barcolor(trend_up ? strongbullColor : trend_down ? strongBearishColor : neutralColor, title = 'Bar Highlight')
