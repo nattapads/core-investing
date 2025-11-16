@@ -64,7 +64,7 @@ d4 = ta.sma(k4, periodD4)
 var strBullColour = color.rgb(8, 153, 129)
 var bullColour = color.rgb(8, 153, 129, 40)
 var strbearColour = color.rgb(242, 54, 69)
-var bearColour = color.rgb(242, 54, 69, 40)
+var bearColour = color.rgb(242, 54, 69, 60)
 
 //-----------------------------------------------------------------------------}
 //SetUp Calculation
@@ -279,15 +279,50 @@ cond_num = (cond1 ? 1 : 0) + (cond2 ? 1 : 0) + (cond3 ? 1 : 0) + (cond4 ? 1 : 0)
 badOmen = ta.barssince(ho_cond) <= 30
 
 //-----------------------------------------------------------------------------}
+//Elher
+//-----------------------------------------------------------------------------{
+elhSrc = input(hl2, title = 'Source')
+lvls = input(0.8, title = 'OB/OS Level')
+
+f_ehlers_v2(_src, _len) =>
+    float nm = 0.0
+    float dm = 0.0
+    for i = 0 to _len - 1 by 1
+        nm += (1 + i) * _src[i]
+        dm += _src[i]
+
+    cg   = dm != 0 ? -nm / dm + (_len + 1) / 2.0 : 0.0
+    maxc = ta.highest(cg, _len)
+    minc = ta.lowest(cg, _len)
+    v1   = maxc != minc ? (cg - minc) / (maxc - minc) : 0.0
+
+    v2_  = (4 * v1 + 3 * v1[1] + 2 * v1[2] + v1[3]) / 10.0
+    v2   = 2 * (v2_ - 0.5)
+    v2
+
+mediumEhl = f_ehlers_v2(elhSrc, 128)
+slowEhl = f_ehlers_v2(elhSrc, 256)
+
+allElher = array.from(mediumEhl, slowEhl)
+avgElher = array.avg(allElher)
+
+l1 = -math.abs(lvls)
+
+badElher = avgElher < l1
+
+leadCon = badOmen and badElher
+leadEither = badOmen or badElher
+
+//-----------------------------------------------------------------------------}
 //Moving Average
 //-----------------------------------------------------------------------------{
-smoothMa = input(true, title = 'Smooth MA', group = 'EMA Settings')
+smoothMa = input(false, title = 'Smooth MA', group = 'EMA Settings')
 
 ma(source, length, type) =>
     type == 'SMA' ? ta.sma(source, length) : type == 'EMA' ? ta.ema(source, length) : type == 'SMMA (RMA)' ? ta.rma(source, length) : type == 'WMA' ? ta.wma(source, length) : type == 'VWMA' ? ta.vwma(source, length) : na
 
 show_ma3 = input(true, 'MA №3', inline = 'MA #3', display = display.data_window, group = 'EMA Settings')
-ma3_type = input.string('SMA', '', inline = 'MA #3', options = ['SMA', 'EMA', 'SMMA (RMA)', 'WMA', 'VWMA'], group = 'EMA Settings')
+ma3_type = input.string('EMA', '', inline = 'MA #3', options = ['SMA', 'EMA', 'SMMA (RMA)', 'WMA', 'VWMA'], group = 'EMA Settings')
 ma3_source = input(close, '', inline = 'MA #3', display = display.data_window, group = 'EMA Settings')
 ma3_length = input.int(40, '', inline = 'MA #3', minval = 1, group = 'EMA Settings')
 ma3_color = input(color.rgb(8, 153, 129), '', inline = 'MA #3', display = display.data_window, group = 'EMA Settings')
@@ -295,13 +330,13 @@ ma3 = ma(ma3_source, ma3_length, ma3_type)
 ma3mo = smoothMa ? ma(ma3, ma3_length, ma3_type) : ma3
 
 show_ma4 = input(true, 'MA №4', inline = 'MA #4', display = display.data_window, group = 'EMA Settings')
-ma4_type = input.string('SMA', '', inline = 'MA #4', options = ['SMA', 'EMA', 'SMMA (RMA)', 'WMA', 'VWMA'], group = 'EMA Settings')
+ma4_type = input.string('EMA', '', inline = 'MA #4', options = ['SMA', 'EMA', 'SMMA (RMA)', 'WMA', 'VWMA'], group = 'EMA Settings')
 ma4_source = input(close, '', inline = 'MA #4', display = display.data_window, group = 'EMA Settings')
 ma4_length = input.int(89, '', inline = 'MA #4', minval = 1, group = 'EMA Settings')
 ma4_color = input(color.rgb(242, 54, 69), '', inline = 'MA #4', display = display.data_window, group = 'EMA Settings')
 ma4 = ma(ma4_source, ma4_length, ma4_type)
 ma4mo = smoothMa ? ma(ma4, ma4_length, ma4_type) : ma4
-plot(show_ma4 ? ma4mo : na, color = sp500 < buyThe ? strongbullColor : badOmen ? strongBearishColor : neutralColor, title = 'MA №4', linewidth = 2)
+plot(show_ma4 ? ma4mo : na, color = leadCon ? strbearColour : leadEither ? bearColour : sp500 < buyThe ? strBullColour : neutralColor, title = 'MA №4', linewidth = 2)
 
 plotshape(assetBuy ? ma4mo : na, title = 'Buy', style = shape.circle, location = location.absolute, color = strongbullColor, size = size.tiny)
 plotshape(assetSell ? ma4mo : na, title = 'Sell', style = shape.circle, location = location.absolute, color = strongBearishColor, size = size.tiny)
