@@ -86,7 +86,7 @@ expectedDiv = enableManDiv ? manDiv : dividend * dividendFrequency / close
 //Risk Settings
 //-----------------------------------------------------------------------------{
 expoStdLength = input.int(32, title = 'Exponential SD Length', group = 'Risk Settings')
-mmRiskPct = input.float(4.7, "Risk % per Trade", step = 0.1, group = 'Risk Settings')
+mmRiskPct = input.float(0.04, 'Risk per Trade (%)', step = 0.01, group = 'Risk Settings', tooltip = 'Conservative: 1-2%, Balance: 3-4%, Aggressive: 5%+')
 deviationChange = input.float(0.1, maxval = 1, step = 0.1, title = 'Change Sensitivity (%)', group = 'Risk Settings', tooltip = 'Higher sensitivity causes less frequent trades, and lower trading costs')
 forcastDiverMuliplier = input.float(1.39, step = 0.01, title = 'Forecast Diversification Multiplier', group = 'Risk Settings')
 capAdjust = input.int(10, title = 'Capped-Forecast Adjustment', group = 'Risk Settings')
@@ -292,7 +292,7 @@ adjCombForc = useMarginAcc ? cappedCombForc / 10 : cappedCombForc / capAdjust
 //-----------------------------------------------------------------------------}
 //Base Position
 //-----------------------------------------------------------------------------{
-capitalRisk = strategy.equity * mmRiskPct / 100.0
+capitalRisk = strategy.equity * mmRiskPct
 
 basePos = dailyPriceVol > 0 ? capitalRisk / dailyPriceVol : 0.0
 rawOptimalPosition = basePos * adjCombForc
