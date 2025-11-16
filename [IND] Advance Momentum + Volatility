@@ -62,7 +62,7 @@ d4 = ta.sma(k4, periodD4)
 //Line Colour
 //-----------------------------------------------------------------------------{
 var strBullColour = color.rgb(8, 153, 129)
-var bullColour = color.rgb(8, 153, 129, 40)
+var bullColour = color.rgb(8, 153, 129, 50)
 var strbearColour = color.rgb(242, 54, 69)
 var bearColour = color.rgb(242, 54, 70, 50)
 
@@ -336,7 +336,7 @@ ma4_length = input.int(89, '', inline = 'MA #4', minval = 1, group = 'EMA Settin
 ma4_color = input(color.rgb(242, 54, 69), '', inline = 'MA #4', display = display.data_window, group = 'EMA Settings')
 ma4 = ma(ma4_source, ma4_length, ma4_type)
 ma4mo = smoothMa ? ma(ma4, ma4_length, ma4_type) : ma4
-plot(show_ma4 ? ma4mo : na, color = leadCon ? strbearColour : leadEither ? bearColour : sp500 < buyThe ? strBullColour : neutralColor, title = 'MA №4', linewidth = 2)
+plot(show_ma4 ? ma4mo : na, color = leadCon ? strbearColour : leadEither ? bearColour : sp500 < buyThe ? strBullColour : sp500 < buyThe and leadCon ? bullColour : sp500 < buyThe and leadEither ? bullColour : neutralColor, title = 'MA №4', linewidth = 2)
 
 plotshape(assetBuy ? ma4mo : na, title = 'Buy', style = shape.circle, location = location.absolute, color = strongbullColor, size = size.tiny)
 plotshape(assetSell ? ma4mo : na, title = 'Sell', style = shape.circle, location = location.absolute, color = strongBearishColor, size = size.tiny)
