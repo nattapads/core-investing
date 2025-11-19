@@ -86,6 +86,7 @@ expectedDiv = enableManDiv ? manDiv : dividend * dividendFrequency / close
 //Risk Settings
 //-----------------------------------------------------------------------------{
 expoStdLength = input.int(32, title = 'Exponential SD Length', group = 'Risk Settings')
+avgStdLength = input.int(2560, title = 'Average SD Length', group = 'Risk Settings', tooltip = '10 years average = 2560 bars in D Timeframe')
 mmRiskPct = input.float(0.045, 'Risk per Trade (%)', step = 0.005, group = 'Risk Settings', tooltip = 'Conservative: 1-2%, Balance: 3-4%, Aggressive: 5%+')
 deviationChange = input.float(0.1, maxval = 1, step = 0.1, title = 'Change Sensitivity (%)', group = 'Risk Settings', tooltip = 'Higher sensitivity causes less frequent trades, and lower trading costs')
 forcastDiverMuliplier = input.float(1.39, step = 0.01, title = 'Forecast Diversification Multiplier', group = 'Risk Settings')
@@ -105,9 +106,8 @@ var float dailyPercentVolRecent = na
 ew_var = ta.ema(math.pow(ret, 2), expoStdLength)
 dailyPercentVolRecent := math.sqrt(ew_var)
 
-// Long-term vol  (8-year ≈ 2 000 bars)
-longWindow = 2000           // author uses 10y; we use 8y per requirement
-dailyPercentVol8Yr = ta.sma(dailyPercentVolRecent, longWindow)
+// Long-term vol  (10-year ≈ 2000 bars)
+dailyPercentVol8Yr = ta.sma(dailyPercentVolRecent, avgStdLength)
 
 // Weighted blend 70 / 30
 dailyPercentVol = 0.7 * dailyPercentVolRecent + 0.3 * dailyPercentVol8Yr
@@ -331,26 +331,47 @@ if Buy and inTimeWindow
 else if adjustBuy and inTimeWindow
     strategy.close('B', qty = adjBuyQty)
 
+//-----------------------------------------------------------------------------}
 // Calculate Strategy Performance
-//-----------------------------------------------------------------------------{ 
-avgDrawdown() =>
-    winArr = array.new_float()
-    lossArr = array.new_float()
+//-----------------------------------------------------------------------------{
 
-    for i = 0 to strategy.closedtrades - 1 by 1
+// Average Drawdown per Trade
+//-----------------------------------------------------------------------------
+avgTradeDrawdown() =>
+    trades = strategy.closedtrades
+    float sumAll  = 0.0
+    float sumWin  = 0.0
+    float sumLoss = 0.0
+    int   nWin    = 0
+    int   nLoss   = 0
 
-        drawDown = strategy.closedtrades.max_drawdown(i)
-        costBasis = strategy.closedtrades.entry_price(i)
-        drawDownPerc = drawDown / (costBasis * strategy.closedtrades.size(i))
+    if trades == 0
+        [na, na, na]
+    else
+        for i = 0 to trades - 1
+            ddCurr   = strategy.closedtrades.max_drawdown(i)
+            posValue = math.abs(strategy.closedtrades.entry_price(i) * strategy.closedtrades.size(i))
 
-        isWin = strategy.closedtrades.profit(i) >= 0
+            ddPerc = posValue != 0 ? math.abs(ddCurr) / posValue : na
 
-        if isWin
-            array.push(winArr, drawDownPerc)
-        else
-            array.push(lossArr, drawDownPerc)
+            if not na(ddPerc)
+                sumAll += ddPerc
 
-    [array.avg(winArr), array.avg(lossArr)]
+                isWin = strategy.closedtrades.profit(i) >= 0
+                if isWin
+                    sumWin += ddPerc
+                    nWin   += 1
+                else
+                    sumLoss += ddPerc
+                    nLoss   += 1
+
+        float avgAll  = trades > 0 ? sumAll  / trades : na
+        float avgWin  = nWin   > 0 ? sumWin  / nWin   : na
+        float avgLoss = nLoss  > 0 ? sumLoss / nLoss  : na
+
+        [avgAll, avgWin, avgLoss]
+
+[avgTradeDD, avgTradeWinDD, avgTradeLossDD] = avgTradeDrawdown()
 
 // Annual Return Calcaulation
 // -----------------------------------------------------------------------------
@@ -366,10 +387,7 @@ totReturn   = strategy.netprofit / strategy.initial_capital
 avgAnnualReturn   = enoughTime ? (totReturn / yearsActive) * 100 : na
 rawAvgAnnualReturn = avgAnnualReturn / 100
 
-[win, loss] = avgDrawdown()
-avgWinDD = win
-avgLossDD = loss
-avgDD = (avgWinDD + avgLossDD) / 2
+avgDD = avgTradeDD
 sharpeRatio = (rawAvgAnnualReturn - riskFree) / avgDD
 
 //Table Styling
@@ -394,7 +412,7 @@ table_data = table.new(position = position.bottom_right, columns = 1, rows = 8, 
 table.cell(table_data, 0, 0, 'ADC782', bgcolor = color.rgb(255, 255, 255, 70), text_size = size.normal, text_color = color.rgb(255, 255, 255))
 table.cell(table_data, 0, 1, str.tostring(avgAnnualReturn, format.percent), text_size = size.normal, bgcolor = bgMColour, text_color = color.rgb(255, 255, 255), text_halign = text.align_center, tooltip = 'Average Annual Return')
 table.cell(table_data, 0, 2, str.tostring(math.round(sharpeRatio, 3)), text_size = size.normal, bgcolor = bgSColour, text_color = color.rgb(255, 255, 255), text_halign = text.align_center, tooltip = 'Sharpe Ratio')
-table.cell(table_data, 0, 3, str.tostring(avgDD * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign = text.align_center, tooltip = 'Average Drawdown')
+table.cell(table_data, 0, 3, str.tostring(avgDD * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30), text_color = color.rgb(255, 255, 255), text_halign = text.align_center, tooltip = 'Average Drawdown per Trade')
 table.cell(table_data, 0, 4, str.tostring(expectedDiv * 100, format.percent), bgcolor = color.rgb(255, 255, 255, 80), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = 'Dividend Yield')
 table.cell(table_data, 0, 5, str.tostring(math.round(adjCombForc, 2)), bgcolor = color.rgb(255, 255, 255, 90), text_size = size.normal, text_color = color.rgb(255, 255, 255), tooltip = 'Forecast')
 table.cell(table_data, 0, 6, str.tostring(instRisk * 100, format.percent), text_size = size.normal, bgcolor = color.rgb(242, 54, 70, 70), text_color = color.rgb(255, 255, 255), text_halign = text.align_center, tooltip = 'Standard Deviation')
