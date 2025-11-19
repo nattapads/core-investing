@@ -334,7 +334,6 @@ else if adjustBuy and inTimeWindow
 //-----------------------------------------------------------------------------}
 // Calculate Strategy Performance
 //-----------------------------------------------------------------------------{
-
 // Average Drawdown per Trade
 //-----------------------------------------------------------------------------
 avgTradeDrawdown() =>
@@ -388,7 +387,45 @@ avgAnnualReturn   = enoughTime ? (totReturn / yearsActive) * 100 : na
 rawAvgAnnualReturn = avgAnnualReturn / 100
 
 avgDD = avgTradeDD
-sharpeRatio = (rawAvgAnnualReturn - riskFree) / avgDD
+
+//Sharpe Ratio
+//-----------------------------------------------------------------------------
+float barsPerYear = na
+
+if timeframe.isdaily
+    barsPerYear := 256
+else if timeframe.isweekly
+    barsPerYear := 52
+else if timeframe.ismonthly
+    barsPerYear := 12
+else
+    tfNum = str.tonumber(timeframe.period)
+    barsPerDay = not na(tfNum) and tfNum > 0 ? 390.0 / tfNum : 0.0
+    barsPerYear := 256.0 * barsPerDay
+
+var float sumRet   = 0.0
+var float sumSqRet = 0.0
+var int   nRet     = 0
+
+canRecordSharpe = not na(firstTradeTime) and time > firstTradeTime
+
+if canRecordSharpe and not na(strategy.equity) and not na(strategy.equity[1]) and barsPerYear > 0
+    r = strategy.equity / strategy.equity[1] - 1.0
+
+    sumRet   += r
+    sumSqRet += r * r
+    nRet     += 1
+
+meanBar = nRet > 0 ? sumRet / nRet : na
+varBar  = nRet > 0 ? (sumSqRet / nRet) - (meanBar * meanBar) : na
+stdBar  = not na(varBar) and varBar > 0 ? math.sqrt(varBar) : na
+
+rf_bar = riskFree / barsPerYear
+excess_bar = not na(meanBar) ? meanBar - rf_bar : na
+
+sharpeRatio = not na(stdBar) and stdBar > 0 and not na(excess_bar) ?
+     excess_bar / stdBar * math.sqrt(barsPerYear) :
+     na
 
 //Table Styling
 //-----------------------------------------------------------------------------{ 
