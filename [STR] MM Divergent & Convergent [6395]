@@ -107,7 +107,7 @@ var float dailyPercentVolRecent = na
 ew_var = ta.ema(math.pow(ret, 2), expoStdLength)
 dailyPercentVolRecent := math.sqrt(ew_var)
 
-// Long-term vol  (10-year ≈ 2000 bars)
+// Long-term vol  (10-year ≈ 2560 bars)
 dailyPercentVol8Yr = ta.sma(dailyPercentVolRecent, avgStdLength)
 
 // Weighted blend 70 / 30
@@ -117,178 +117,114 @@ dailyPercentVol = 0.7 * dailyPercentVolRecent + 0.3 * dailyPercentVol8Yr
 instRisk      = math.round(dailyPercentVol * 16, 6)
 dailyPriceVol = dailyPercentVol * close
 
-//-----------------------------------------------------------------------------}
-//Momentum Calculation
-//-----------------------------------------------------------------------------{
-momentumForcCal(length, multiplier) =>
-    EmaLength = length * multiplier
+//-----------------------------------------------------------------------------
+// Common cap helper
+//-----------------------------------------------------------------------------
+cap(_x) =>
+    math.max(lowerForeCap, math.min(upperForeCap, _x))
 
-    if zeroLag == true
-        Ema = ta.ema(close, EmaLength)
-        smoEma = ta.ema(Ema, EmaLength)
-        eq = Ema - smoEma
-        zlEma = Ema + eq
-        zlEma
-    else
-        zlEma = ta.ema(close, EmaLength)
-        zlEma
+//-----------------------------------------------------------------------------
+// Momentum Calculation
+//-----------------------------------------------------------------------------
+momentumForcCal(len, multiplier) =>
+    int emaLen = math.max(1, int(len * multiplier))
 
-rapidMoLength = 8
-fastMoLength = 16
+    ema_ = ta.ema(close, emaLen)
+
+    zeroLag ? ema_ + (ema_ - ta.ema(ema_, emaLen)) : ema_
+
+rapidMoLength  = 8
+fastMoLength   = 16
 mediumMoLength = 32
-slowMoLength = 64
+slowMoLength   = 64
 
-rapidEma = momentumForcCal(rapidMoLength, 1)
-rapidSEma = momentumForcCal(rapidMoLength, 4)
-fastEma = momentumForcCal(fastMoLength, 1)
-fastSEma = momentumForcCal(fastMoLength, 4)
-mediumEma = momentumForcCal(mediumMoLength, 1)
+rapidEma   = momentumForcCal(rapidMoLength, 1)
+rapidSEma  = momentumForcCal(rapidMoLength, 4)
+fastEma    = momentumForcCal(fastMoLength, 1)
+fastSEma   = momentumForcCal(fastMoLength, 4)
+mediumEma  = momentumForcCal(mediumMoLength, 1)
 mediumSEma = momentumForcCal(mediumMoLength, 4)
-slowEma = momentumForcCal(slowMoLength, 1)
-slowSEma = momentumForcCal(slowMoLength, 4)
+slowEma    = momentumForcCal(slowMoLength, 1)
+slowSEma   = momentumForcCal(slowMoLength, 4)
 
-//-----------------------------------------------------------------------------}
-//Momentum Forcast Calculation
-//-----------------------------------------------------------------------------{
-//Scale Momentum Forecast
-//-----------------------------------------------------------------------------{
-scalForecastMo(fastEma, slowEma, volatility, scalar) =>
-    riskAdjusted = (fastEma - slowEma) / volatility
-    scaledForecast = riskAdjusted * scalar
+//-----------------------------------------------------------------------------
+// Momentum Forecast
+//-----------------------------------------------------------------------------
+scalForecastMo(_fastEma, _slowEma, _volatility, _scalar) =>
+    riskAdjusted   = (_fastEma - _slowEma) / _volatility
+    scaledForecast = riskAdjusted * _scalar
     scaledForecast
 
-scaledForcR = scalForecastMo(rapidEma, rapidSEma, dailyPriceVol, rapidMoScalar)
-scaledForcF = scalForecastMo(fastEma, fastSEma, dailyPriceVol, fastMoScalar)
+scaledForcR = scalForecastMo(rapidEma,  rapidSEma,  dailyPriceVol, rapidMoScalar)
+scaledForcF = scalForecastMo(fastEma,   fastSEma,   dailyPriceVol, fastMoScalar)
 scaledForcM = scalForecastMo(mediumEma, mediumSEma, dailyPriceVol, mediumMoScalar)
-scaledForcS = scalForecastMo(slowEma, slowSEma, dailyPriceVol, slowMoScalar)
+scaledForcS = scalForecastMo(slowEma,   slowSEma,   dailyPriceVol, slowMoScalar)
 
-//Capped Momentum Forecast
-//-----------------------------------------------------------------------------{
-capForecastMo(scaledForc) =>
-    var float cappedForcMo = na
+// Capped Momentum
+cappedForcR = cap(scaledForcR)
+cappedForcF = cap(scaledForcF)
+cappedForcM = cap(scaledForcM)
+cappedForcS = cap(scaledForcS)
 
-    if scaledForc <= lowerForeCap
-        cappedForcMo := lowerForeCap
-        cappedForcMo
-    else if scaledForc > lowerForeCap and scaledForc < upperForeCap
-        cappedForcMo := scaledForc
-        cappedForcMo
-    else if scaledForc >= upperForeCap
-        cappedForcMo := upperForeCap
-        cappedForcMo
-
-cappedForcR = capForecastMo(scaledForcR)
-cappedForcF = capForecastMo(scaledForcF)
-cappedForcM = capForecastMo(scaledForcM)
-cappedForcS = capForecastMo(scaledForcS)
-
-cappedForcMoAr = array.from(cappedForcR, cappedForcF, cappedForcM, cappedForcS)
-
-//-----------------------------------------------------------------------------}
-//Acceleration Forcast Calculation
-//-----------------------------------------------------------------------------{
-capForecastAc(fastEma, scaledForc, forecastAcScalar) =>
-    var float cappedForcAc = na
-
-    forcAc = scaledForc - scaledForc[fastEma]
+//-----------------------------------------------------------------------------
+// Acceleration Forecast
+//-----------------------------------------------------------------------------
+capForecastAc(offsetLen, _scaledForc, forecastAcScalar) =>
+    forcAc       = _scaledForc - _scaledForc[offsetLen]
     scaledForcAc = forcAc * forecastAcScalar
+    cap(scaledForcAc)
 
-    if scaledForcAc <= lowerForeCap
-        cappedForcAc := lowerForeCap
-        cappedForcAc
-    else if scaledForcAc > lowerForeCap and scaledForcAc < upperForeCap
-        cappedForcAc := scaledForcAc
-        cappedForcAc
-    else if scaledForcAc >= upperForeCap
-        cappedForcAc := upperForeCap
-        cappedForcAc
-
-cappedForcFAc = capForecastAc(fastMoLength, scaledForcF, acFastScalar)
+cappedForcFAc = capForecastAc(fastMoLength,   scaledForcF, acFastScalar)
 cappedForcMAc = capForecastAc(mediumMoLength, scaledForcM, acMediumScalar)
-cappedForcSAc = capForecastAc(slowMoLength, scaledForcS, acSlowScalar)
+cappedForcSAc = capForecastAc(slowMoLength,   scaledForcS, acSlowScalar)
 
-cappedForcAcAr = array.from(cappedForcFAc, cappedForcMAc, cappedForcSAc)
+//-----------------------------------------------------------------------------
+// Breakout Forecast
+//-----------------------------------------------------------------------------
+capForecastBo(breakLen, forecastScalar) =>
+    hi    = ta.highest(high, breakLen)
+    lo    = ta.lowest(low, breakLen)
+    rangeBo = hi - lo
 
-//-----------------------------------------------------------------------------}
-//Breakout Forcast Calculation
-//-----------------------------------------------------------------------------{
-capForecastBo(BreakLength, ForecastScalar) =>
-    var float cappedForcBo = na
+    boRaw = rangeBo != 0.0 ? 40.0 * (close - (hi + lo) / 2.0) / rangeBo : 0.0
 
-    max = ta.highest(high, BreakLength)
-    min = ta.lowest(low, BreakLength)
-    mean = (max + min) / 2
-    BoForc = 40 * (close - mean) / (max - min)
-    smoothLength = BreakLength / 4
-    smoothForcBo = ta.ema(BoForc, smoothLength)
-    scaledForcBo = smoothForcBo * ForecastScalar
-
-    if scaledForcBo <= lowerForeCap
-        cappedForcBo := lowerForeCap
-        cappedForcBo
-    else if scaledForcBo > lowerForeCap and scaledForcBo < upperForeCap
-        cappedForcBo := scaledForcBo
-        cappedForcBo
-    else if scaledForcBo >= upperForeCap
-        cappedForcBo := upperForeCap
-        cappedForcBo
+    int smoothLen   = math.max(1, int(breakLen / 4))
+    smoothForcBo    = ta.ema(boRaw, smoothLen)
+    scaledForcBo    = smoothForcBo * forecastScalar
+    cap(scaledForcBo)
 
 cappedForcBo20 = capForecastBo(20, bo20Scalar)
 cappedForcBo40 = capForecastBo(40, bo40Scalar)
 cappedForcBo80 = capForecastBo(80, bo80Scalar)
 
-cappedForcBoAr = array.from(cappedForcBo20, cappedForcBo40, cappedForcBo80)
+//-----------------------------------------------------------------------------
+// Carry Forecast
+//-----------------------------------------------------------------------------
+capForecastCr(smoothLen, baseCrForc) =>
+    scaledForcCr = ta.ema(baseCrForc, smoothLen)
+    cap(scaledForcCr)
 
-//-----------------------------------------------------------------------------}
-//Carry Forcast Calculation
-//-----------------------------------------------------------------------------{
-capForecastCr(expectedDiv, smoothLength, instRisk, ForecastScalar) =>
-    var float cappedForcCr = na
+baseCrForc = expectedDiv * crScalar / instRisk
 
-    CrForc = expectedDiv * ForecastScalar / instRisk
-    scaledForcCr = ta.ema(CrForc, smoothLength)
+cappedForcCr20  = capForecastCr(20,  baseCrForc)
+cappedForcCr60  = capForecastCr(60,  baseCrForc)
+cappedForcCr120 = capForecastCr(120, baseCrForc)
 
-    if scaledForcCr <= lowerForeCap
-        cappedForcCr := lowerForeCap
-        cappedForcCr
-    else if scaledForcCr > lowerForeCap and scaledForcCr < upperForeCap
-        cappedForcCr := scaledForcCr
-        cappedForcCr
-    else if scaledForcCr >= upperForeCap
-        cappedForcCr := upperForeCap
-        cappedForcCr
+//-----------------------------------------------------------------------------
+// All Forecast Combination
+//-----------------------------------------------------------------------------
+cappedForcMo = (cappedForcR + cappedForcF + cappedForcM + cappedForcS) / 4.0
+cappedForcAc = (cappedForcFAc + cappedForcMAc + cappedForcSAc) / 3.0
+cappedForcBo = (cappedForcBo20 + cappedForcBo40 + cappedForcBo80) / 3.0
+cappedForcCr = (cappedForcCr20 + cappedForcCr60 + cappedForcCr120) / 3.0
 
-cappedForcCr20 = capForecastCr(expectedDiv, 20, instRisk, crScalar)
-cappedForcCr60 = capForecastCr(expectedDiv, 60, instRisk, crScalar)
-cappedForcCr120 = capForecastCr(expectedDiv, 120, instRisk, crScalar)
-
-cappedForcCrAr = array.from(cappedForcCr20, cappedForcCr60, cappedForcCr120)
-
-//All Forecast Combination
-//-----------------------------------------------------------------------------{
-cappedForcMo = array.avg(cappedForcMoAr)
-cappedForcAc = array.avg(cappedForcAcAr)
-cappedForcBo = array.avg(cappedForcBoAr)
-cappedForcCr = array.avg(cappedForcCrAr)
-
-//All Forecast Combination
-//-----------------------------------------------------------------------------{
-var float cappedCombForc = na
-
+//-----------------------------------------------------------------------------
+// Combined Forecast + Capping
+//-----------------------------------------------------------------------------
 combForc = cappedForcMo * moProp + cappedForcAc * acProp + cappedForcBo * boProp + cappedForcCr * crProp
 scalCombForc = combForc * forcastDiverMuliplier
-
-if scalCombForc <= lowerForeCap
-    cappedCombForc := lowerForeCap
-    cappedCombForc
-else if scalCombForc > lowerForeCap and scalCombForc < upperForeCap
-    cappedCombForc := scalCombForc
-    cappedCombForc
-else if scalCombForc >= upperForeCap
-    cappedCombForc := upperForeCap
-    cappedCombForc
-
-adjCombForc = useMarginAcc ? cappedCombForc / 10 : cappedCombForc / capAdjust
+cappedCombForc = cap(scalCombForc)
+adjCombForc = useMarginAcc ? cappedCombForc / 10.0 : cappedCombForc / capAdjust
 
 //-----------------------------------------------------------------------------}
 //Base Position
