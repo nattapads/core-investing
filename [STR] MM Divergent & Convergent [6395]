@@ -80,7 +80,8 @@ else
 
 //Experted Dividend Calcaulation
 //-----------------------------------------------------------------------------{
-expectedDiv = enableManDiv ? manDiv : dividend * dividendFrequency / close
+rawDiv = enableManDiv ? manDiv : dividend * dividendFrequency / close
+expectedDiv = na(rawDiv) ? manDiv : rawDiv
 
 //-----------------------------------------------------------------------------}
 //Risk Settings
