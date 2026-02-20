@@ -35,6 +35,9 @@ GRP_BR       = 'Breadth Settings'
 brScalar     = input.float(40.0, 'Breadth Scalar', step = 0.1, group = GRP_BR)
 mkt          = input.string(defval = "Combined", title = "Market", options = ["Combined", "NYSE", "NASDAQ", "AMEX"], group = GRP_BR, tooltip = "0=>Combined, 1=>NYSE, 2=>NASDAQ, 3=>AMEX, 4=>CUSTOM")
 
+// Inverse Breadth for Gold
+brScalar := syminfo.ticker == "IAU" or syminfo.ticker == "GLD" or syminfo.ticker == "IAUI" ? -math.abs(brScalar) : brScalar
+
 // Skew
 GRP_SK      = 'Skew Settings'
 sk60Scalar  = input.float(22.806826233519,  step = 0.1, title = 'Skew 60 Scalar',  group = GRP_SK)
