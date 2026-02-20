@@ -1,6 +1,6 @@
 //NSal
 //@version=6
-strategy('[STR] Reballo Breadth D&C 2Regime Filter [6395]', overlay = false, margin_long = 50, margin_short = 50, pyramiding = 100, initial_capital = 1000000, risk_free_rate = 1, commission_value = 0.165, slippage = 1)
+strategy('[STR] Reballo Breadth D&C 2Regime Filter [6395]', overlay = false, pyramiding = 100, initial_capital = 1000000, risk_free_rate = 1, commission_value = 0.165, slippage = 1)
 
 //=============================================================================
 // INPUTS
@@ -57,9 +57,7 @@ deviationChange       = input.float(0.1, maxval = 1, step = 0.1, title = 'Change
 forcastDiverMuliplier = input.float(1.44, step = 0.01, title = 'Forecast Diversification Multiplier', group = GRP_RK)
 upperForeCap          = input.int(20, title = 'Upper Forecast Cap', group = GRP_RK)
 lowerForeCap          = input.int(-20, title = 'Lower Forecast Cap', group = GRP_RK)
-riskFree              = input.float(0.01, step = 0.01, title = 'Risk-free Rate (%)', group = GRP_RK)
 minHold               = input.float(0.0, step = 0.05, title = 'Minimum Holding', group = GRP_RK)
-useMarginAcc          = input(false, title = 'Margin Account', group = GRP_RK)
 
 //=============================================================================
 // HELPER FUNCTIONS
@@ -192,8 +190,8 @@ regimeReverse  = conv_mult / regimeTotal
 advc = "(HIGN+HIGQ+HIGA)/3.0"
 loc  = "(LOWN+LOWQ+LOWA)/3.0"
 
-adv = request.security(mkt == "Combined" ? advc : mkt == "NYSE" ? "MAHN" : mkt == "NASDAQ" ? "MAHQ" : mkt == "NASDAQ" ? "MAHA" : advc, "D", close)
-lo  = request.security(mkt == "Combined" ? loc  : mkt == "NYSE" ? "MALN" : mkt == "NASDAQ" ? "MALQ" : mkt == "NASDAQ" ? "MALA" : loc, "D", close)
+adv = request.security(mkt == "Combined" ? advc : mkt == "NYSE" ? "MAHN" : mkt == "NASDAQ" ? "MAHQ" : mkt == "AMEX" ? "MAHA" : advc, "D", close)
+lo  = request.security(mkt == "Combined" ? loc  : mkt == "NYSE" ? "MALN" : mkt == "NASDAQ" ? "MALQ" : mkt == "AMEX" ? "MALA" : loc, "D", close)
 
 den     = adv + lo
 hli_raw = den != 0 ? (adv / den) * 100.0 : na
@@ -313,7 +311,7 @@ needExit   = currentSize > 0 and optimalPosition <= 0
 // Quantities
 deltaQty   = needMore ? math.abs(math.round(lowerBuffer - currentSize, 0)) : needLess ? math.abs(math.round(currentSize - upperBuffer, 0)) : 0
 incrCost   = deltaQty * close
-canAfford  = useMarginAcc ? availCash >= close : incrCost <= availCash
+canAfford  = incrCost <= availCash
 
 enterLong  = needMore and currentSize == 0 and deltaQty >= 1 and canAfford
 addLong    = needMore and currentSize > 0  and deltaQty >= 1 and canAfford
@@ -386,7 +384,7 @@ if not na(firstTradeTime) and time > firstTradeTime and not na(strategy.equity) 
 meanBar     = nRet > 0 ? sumRet / nRet : na
 varBar      = nRet > 0 ? (sumSqRet / nRet) - meanBar * meanBar : na
 stdBar      = not na(varBar) and varBar > 0 ? math.sqrt(varBar) : na
-excess_bar  = not na(meanBar) ? meanBar - riskFree / barsPerYear : na
+excess_bar  = not na(meanBar) ? meanBar - 0.01 / barsPerYear : na
 sharpeRatio = not na(stdBar) and stdBar > 0 and not na(excess_bar) ? excess_bar / stdBar * math.sqrt(barsPerYear) : na
 
 //=============================================================================
