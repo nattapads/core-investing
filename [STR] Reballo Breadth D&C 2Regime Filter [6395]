@@ -12,23 +12,22 @@ inTimeWindow = time >= startTime
 
 // Momentum
 GRP_MO         = 'Momentum Settings'
-rapidMoScalar  = input.float(7.2502372009348,  step = 0.01, title = 'EMA 8 Scalar',  group = GRP_MO)
-fastMoScalar   = input.float(5.01369722822995, step = 0.01, title = 'EMA 16 Scalar', group = GRP_MO)
-mediumMoScalar = input.float(3.41644340317112, step = 0.01, title = 'EMA 32 Scalar', group = GRP_MO)
-slowMoScalar   = input.float(2.40536608665342, step = 0.01, title = 'EMA 64 Scalar', group = GRP_MO)
-zeroLag        = input(false, title = 'Acceleration-Adjusted Momentum', group = GRP_MO)
+rapidMoScalar  = input.float(7.54001034850941, step = 0.01, title = 'EMA 8 Scalar',  group = GRP_MO)
+fastMoScalar   = input.float(5.20390597685097, step = 0.01, title = 'EMA 16 Scalar', group = GRP_MO)
+mediumMoScalar = input.float(3.5366512640215, step = 0.01, title = 'EMA 32 Scalar', group = GRP_MO)
+slowMoScalar   = input.float(2.43740709499241, step = 0.01, title = 'EMA 64 Scalar', group = GRP_MO)
 
 // Acceleration
 GRP_AC         = 'Acceleration Settings'
-acFastScalar   = input.float(1.52255761452102, step = 0.01, title = 'EMA 16 Acceleration Scalar', group = GRP_AC)
-acMediumScalar = input.float(1.56980589980315, step = 0.01, title = 'EMA 32 Acceleration Scalar', group = GRP_AC)
-acSlowScalar   = input.float(1.52314235905643, step = 0.01, title = 'EMA 64 Acceleration Scalar', group = GRP_AC)
+acFastScalar   = input.float(1.54054339703763, step = 0.01, title = 'EMA 16 Acceleration Scalar', group = GRP_AC)
+acMediumScalar = input.float(1.58183429403401, step = 0.01, title = 'EMA 32 Acceleration Scalar', group = GRP_AC)
+acSlowScalar   = input.float(1.52080269036627, step = 0.01, title = 'EMA 64 Acceleration Scalar', group = GRP_AC)
 
 // Breakout
 GRP_BO     = 'Breakout Settings'
-bo20Scalar = input.float(0.878030452162685, step = 0.01, title = 'Breakout 20 Scalar', group = GRP_BO)
-bo40Scalar = input.float(0.914177712441046, step = 0.01, title = 'Breakout 40 Scalar', group = GRP_BO)
-bo80Scalar = input.float(0.936594283970102, step = 0.01, title = 'Breakout 80 Scalar', group = GRP_BO)
+bo20Scalar = input.float(0.876876349504234, step = 0.01, title = 'Breakout 20 Scalar', group = GRP_BO)
+bo40Scalar = input.float(0.905313235788902, step = 0.01, title = 'Breakout 40 Scalar', group = GRP_BO)
+bo80Scalar = input.float(0.904776229871206, step = 0.01, title = 'Breakout 80 Scalar', group = GRP_BO)
 
 // Breadth Level
 GRP_BR       = 'Breadth Settings'
@@ -40,9 +39,9 @@ brScalar := syminfo.ticker == "IAU" or syminfo.ticker == "GLD" or syminfo.ticker
 
 // Skew
 GRP_SK      = 'Skew Settings'
-sk60Scalar  = input.float(22.806826233519,  step = 0.1, title = 'Skew 60 Scalar',  group = GRP_SK)
-sk120Scalar = input.float(23.5257277704104, step = 0.1, title = 'Skew 120 Scalar', group = GRP_SK)
-sk240Scalar = input.float(24.0640761078748, step = 0.1, title = 'Skew 240 Scalar', group = GRP_SK)
+sk60Scalar  = input.float(21.5455286802638,  step = 0.1, title = 'Skew 60 Scalar',  group = GRP_SK)
+sk120Scalar = input.float(22.8063794468406, step = 0.1, title = 'Skew 120 Scalar', group = GRP_SK)
+sk240Scalar = input.float(22.9508040770949, step = 0.1, title = 'Skew 240 Scalar', group = GRP_SK)
 
 // Carry
 GRP_CR           = 'Carry Settings'
@@ -121,9 +120,9 @@ efficiencyRatio(int len) =>
     float volatility = math.sum(math.abs(close - close[1]), len)
     volatility > 0 ? direction / volatility : 0.5
 
-erFast   = efficiencyRatio(8)
-erMedium = efficiencyRatio(16)
-erSlow   = efficiencyRatio(32)
+erFast   = efficiencyRatio(16)
+erMedium = efficiencyRatio(32)
+erSlow   = efficiencyRatio(64)
 erRaw    = (erFast + erMedium + erSlow) / 3.0
 
 //-----------------------------------------------------------------------------
@@ -142,9 +141,9 @@ relVol_and_corr(fastCorLength) =>
 
     trend_score = (not na(rv_term) and not na(ac_term)) ? (rv_term * 0.5 + ac_term * 0.5) : na
 
-corFast   = relVol_and_corr(8)
-corMedium = relVol_and_corr(16)
-corSlow   = relVol_and_corr(32)
+corFast   = relVol_and_corr(16)
+corMedium = relVol_and_corr(32)
+corSlow   = relVol_and_corr(64)
 rvacRaw   = (corFast + corMedium + corSlow) / 3.0
 
 //-----------------------------------------------------------------------------
@@ -208,7 +207,6 @@ cappedForcBt = cap(((com_hli - 50.0) / 50.0) * brScalar)
 momentumForcCal(int len, int multiplier) =>
     int emaLen = math.max(1, len * multiplier)
     ema_ = ta.ema(close, emaLen)
-    zeroLag ? ema_ + (ema_ - ta.ema(ema_, emaLen)) : ema_
 
 rapidEma   = momentumForcCal(8,  1)
 rapidSEma  = momentumForcCal(8,  4)
@@ -308,8 +306,9 @@ needLess   = currentSize > 0 and currentSize > upperBuffer
 needExit   = currentSize > 0 and optimalPosition <= 0
 
 // Quantities — for buys, clamp to what cash can cover so partial fills still execute
+commRate      = 0.00165
 idealQty      = needMore ? math.abs(math.round(lowerBuffer - currentSize, 0)) : needLess ? math.abs(math.round(currentSize - upperBuffer, 0)) : 0
-affordableQty = availCash > 0 ? math.floor(availCash / close) : 0
+affordableQty = availCash > 0 ? math.floor(availCash / (close * (1.0 + commRate))) : 0
 deltaQty      = needMore ? math.min(idealQty, affordableQty) : idealQty
 
 enterLong  = needMore and currentSize == 0 and deltaQty >= 1
