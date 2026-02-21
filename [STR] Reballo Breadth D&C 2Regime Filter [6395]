@@ -253,9 +253,6 @@ cappedForcBo = (capForecastBo(20, bo20Scalar) + capForecastBo(40, bo40Scalar) + 
 
 //=============================================================================
 // SKEW FORECAST
-// Replaced O(len) manual loops with ta.sma on precomputed ret/ret2/ret3 series.
-// ta.sma(ret, n) == sumR/n exactly (arithmetic mean is shift-equivalent).
-// Saves 420 explicit loop iterations per bar across the three calls.
 //=============================================================================
 
 capforecastSk(int len, float scalar) =>
@@ -396,14 +393,15 @@ sharpeRatio = not na(stdBar) and stdBar > 0 and not na(excess_bar) ? excess_bar 
 bgMColour = strategy.netprofit > 0 ? color.rgb(8, 153, 129) : color.rgb(242, 54, 69)
 bgSColour = strategy.netprofit > 0 ? color.rgb(8, 153, 129, 20) : color.rgb(242, 54, 69, 20)
 
-table_data = table.new(position = position.middle_right, columns = 1, rows = 5, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
+table_data = table.new(position = position.middle_right, columns = 1, rows = 6, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
 
 table.cell(table_data, 0, 0, str.tostring(avgAnnualReturn, format.percent),           text_size = size.normal, bgcolor = bgMColour,                    text_color = color.white, text_halign = text.align_center, tooltip = 'Average Annual Return')
 table.cell(table_data, 0, 1, str.tostring(math.round(sharpeRatio, 3)),                text_size = size.normal, bgcolor = bgSColour,                    text_color = color.white, text_halign = text.align_center, tooltip = 'Sharpe Ratio')
 table.cell(table_data, 0, 2, str.tostring(avgDD * 100, format.percent),               text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30),   text_color = color.white, text_halign = text.align_center, tooltip = 'Average Drawdown per Trade')
-string forecastText = str.tostring(math.round(adjCombForc, 2)) + (regimeTrending <= regimeReverse ? " ❆" : "")
+string forecastText = str.tostring(math.round(adjCombForc, 2)) + (regimeTrending <= regimeReverse ? " ❄️" : "🔥")
 table.cell(table_data, 0, 3, forecastText, text_size = size.normal, bgcolor = color.rgb(255, 255, 255, 90), text_color = color.white, tooltip = 'Forecast' + (regimeTrending <= regimeReverse ? ' (Range-bound)' : ' (Trending)'))
-table.cell(table_data, 0, 4, str.tostring(currentProportion * 100, format.percent),   text_size = size.normal, bgcolor = color.rgb(255, 255, 255, 90),  text_color = color.white, tooltip = 'Percent Risk')
+table.cell(table_data, 0, 4, str.tostring(instRisk * 100, format.percent),            text_size = size.normal, bgcolor = color.rgb(242, 54, 70, 70),    text_color = color.white, text_halign = text.align_center, tooltip = 'Instrument Risk')
+table.cell(table_data, 0, 5, str.tostring(currentProportion * 100, format.percent),   text_size = size.normal, bgcolor = color.rgb(255, 255, 255, 90),  text_color = color.white, tooltip = 'Percent Risk')
 
 // Forecast Plots
 lineColor = cappedCombForc >= 0 ? color.from_gradient(cappedCombForc, 0.0, 5.0, #ffffff, #089981) : color.from_gradient(cappedCombForc, -5.0, 0.0, color.rgb(242, 54, 69), #ffffff)
