@@ -367,7 +367,7 @@ if strategy.opentrades + strategy.closedtrades > 0 and na(firstTradeTime)
 
 yearsActive     = (time - firstTradeTime) / (365.25 * 24 * 60 * 60 * 1000)
 totReturn       = strategy.netprofit / strategy.initial_capital
-avgAnnualReturn = yearsActive > 0 ? (totReturn / yearsActive) * 100 : na
+avgAnnualReturn = yearsActive > 0 ? (math.pow(1.0 + totReturn, 1.0 / yearsActive) - 1.0) * 100 : na
 avgDD           = avgTradeDD
 
 // Sharpe Ratio
