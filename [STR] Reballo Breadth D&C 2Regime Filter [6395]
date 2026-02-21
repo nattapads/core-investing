@@ -108,7 +108,7 @@ ret3 = ret2 * ret
 
 GRP_RE      = 'Regime Settings'
 float i_mult_strength = input.float(0.5, "Multiplier Strength (±)", minval=0.05, maxval=0.5, step=0.05, group=GRP_RE)
-int   i_ema_smooth    = input.int(32, "EMA Smoothing", minval=1, maxval=100, group=GRP_RE)
+int   i_ema_smooth    = input.int(16, "EMA Smoothing", minval=1, maxval=100, group=GRP_RE)
 int   i_norm_len      = input.int(252, "Percentile Rank Lookback", minval=50, maxval=2520, group=GRP_RE)
 float i_w_er          = input.float(0.4, "Weight: ER", minval=0.0, maxval=1.0, step=0.05, group=GRP_RE)
 float i_w_rvac        = input.float(0.6, "Weight: RelVol+AC", minval=0.0, maxval=1.0, step=0.05, group=GRP_RE)
@@ -121,9 +121,9 @@ efficiencyRatio(int len) =>
     float volatility = math.sum(math.abs(close - close[1]), len)
     volatility > 0 ? direction / volatility : 0.5
 
-erFast   = efficiencyRatio(16)
-erMedium = efficiencyRatio(32)
-erSlow   = efficiencyRatio(64)
+erFast   = efficiencyRatio(8)
+erMedium = efficiencyRatio(16)
+erSlow   = efficiencyRatio(32)
 erRaw    = (erFast + erMedium + erSlow) / 3.0
 
 //-----------------------------------------------------------------------------
@@ -142,14 +142,13 @@ relVol_and_corr(fastCorLength) =>
 
     trend_score = (not na(rv_term) and not na(ac_term)) ? (rv_term * 0.5 + ac_term * 0.5) : na
 
-corFast   = relVol_and_corr(16)
-corMedium = relVol_and_corr(32)
-corSlow   = relVol_and_corr(64)
+corFast   = relVol_and_corr(8)
+corMedium = relVol_and_corr(16)
+corSlow   = relVol_and_corr(32)
 rvacRaw   = (corFast + corMedium + corSlow) / 3.0
 
 //-----------------------------------------------------------------------------
 // Normalize via percentile rank → [0, 1]
-// Single fused loop halves iterations vs two separate calls (504 → 252/bar)
 //-----------------------------------------------------------------------------
 float cntER   = 0.0
 float cntRVAC = 0.0
@@ -311,13 +310,13 @@ needMore   = optimalPosition > 0 and currentSize < lowerBuffer
 needLess   = currentSize > 0 and currentSize > upperBuffer
 needExit   = currentSize > 0 and optimalPosition <= 0
 
-// Quantities
-deltaQty   = needMore ? math.abs(math.round(lowerBuffer - currentSize, 0)) : needLess ? math.abs(math.round(currentSize - upperBuffer, 0)) : 0
-incrCost   = deltaQty * close
-canAfford  = incrCost <= availCash
+// Quantities — for buys, clamp to what cash can cover so partial fills still execute
+idealQty      = needMore ? math.abs(math.round(lowerBuffer - currentSize, 0)) : needLess ? math.abs(math.round(currentSize - upperBuffer, 0)) : 0
+affordableQty = availCash > 0 ? math.floor(availCash / close) : 0
+deltaQty      = needMore ? math.min(idealQty, affordableQty) : idealQty
 
-enterLong  = needMore and currentSize == 0 and deltaQty >= 1 and canAfford
-addLong    = needMore and currentSize > 0  and deltaQty >= 1 and canAfford
+enterLong  = needMore and currentSize == 0 and deltaQty >= 1
+addLong    = needMore and currentSize > 0  and deltaQty >= 1
 trimLong   = needLess and deltaQty >= 1
 exitLong   = needExit
 
@@ -408,6 +407,7 @@ table.cell(table_data, 0, 4, str.tostring(currentProportion * 100, format.percen
 
 // Forecast Plots
 lineColor = cappedCombForc >= 0 ? color.from_gradient(cappedCombForc, 0.0, 5.0, #ffffff, #089981) : color.from_gradient(cappedCombForc, -5.0, 0.0, color.rgb(242, 54, 69), #ffffff)
+regimeColor = regimeTrending <= regimeReverse ? color.rgb(255, 255, 255) : color.rgb(117, 117, 117)
 
 plot(cappedForcMo, title = 'Momentum Forecast',     linestyle = plot.linestyle_dotted, color = color.rgb(8, 153, 129, 0),  linewidth = 2)
 plot(cappedForcAc, title = 'Acceleration Forecast',  linestyle = plot.linestyle_dotted, color = color.rgb(8, 153, 129, 30), linewidth = 2)
@@ -416,15 +416,13 @@ plot(cappedForcBt, title = 'Breadth Forecast',       linestyle = plot.linestyle_
 plot(cappedForcSk, title = 'Skew Forecast',          linestyle = plot.linestyle_dotted, color = color.rgb(242, 54, 69),     linewidth = 2)
 plot(cappedForcCr, title = 'Carry Forecast',         linestyle = plot.linestyle_dotted, color = color.rgb(242, 54, 69, 30), linewidth = 2)
 plot(cappedCombForc, title = 'Combined Forecast',    linestyle = plot.linestyle_solid,  color = lineColor,                  linewidth = 2)
-plot(0, title = 'Zero Line', linestyle = plot.linestyle_dashed, color = color.rgb(117, 117, 117), linewidth = 1)
+plot(0, title = 'Zero Line', linestyle = plot.linestyle_dashed, color = regimeColor, linewidth = 1)
 
 // Bar Colours
 strongBullish = adjCombForc > 0 and adjCombForc > adjCombForc[1]
 strongBearish = adjCombForc < 0 and adjCombForc < adjCombForc[1]
 bullish       = adjCombForc > 0 and adjCombForc < adjCombForc[1]
 bearish       = adjCombForc < 0 and adjCombForc > adjCombForc[1]
-
-barcolor(strongBullish ? color.rgb(8, 153, 129) : strongBearish ? color.rgb(242, 54, 69) : bullish ? color.rgb(8, 153, 129, 50) : bearish ? color.rgb(242, 54, 69, 50) : #56328f)
 
 // Alert
 if enterLong or addLong
