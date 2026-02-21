@@ -1,6 +1,6 @@
 //NSal
 //@version=6
-strategy('[STR] Reballo Breadth D&C 2Regime Filter [6395]', overlay = false, pyramiding = 100, initial_capital = 1000000, risk_free_rate = 1, commission_value = 0.165, slippage = 1)
+strategy('[STR] Reballo Breadth D&C 2Regime Filter [6395]', overlay = true, pyramiding = 100, initial_capital = 1000000, risk_free_rate = 1, commission_value = 0.165, slippage = 1)
 
 //=============================================================================
 // INPUTS
@@ -393,7 +393,7 @@ sharpeRatio = not na(stdBar) and stdBar > 0 and not na(excess_bar) ? excess_bar 
 bgMColour = strategy.netprofit > 0 ? color.rgb(8, 153, 129) : color.rgb(242, 54, 69)
 bgSColour = strategy.netprofit > 0 ? color.rgb(8, 153, 129, 20) : color.rgb(242, 54, 69, 20)
 
-table_data = table.new(position = position.middle_right, columns = 1, rows = 6, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
+table_data = table.new(position = position.bottom_right, columns = 1, rows = 6, bgcolor = color.rgb(0, 0, 0, 100), frame_width = 1, border_width = 1)
 
 table.cell(table_data, 0, 0, str.tostring(avgAnnualReturn, format.percent),           text_size = size.normal, bgcolor = bgMColour,                    text_color = color.white, text_halign = text.align_center, tooltip = 'Average Annual Return')
 table.cell(table_data, 0, 1, str.tostring(math.round(sharpeRatio, 3)),                text_size = size.normal, bgcolor = bgSColour,                    text_color = color.white, text_halign = text.align_center, tooltip = 'Sharpe Ratio')
@@ -403,24 +403,9 @@ table.cell(table_data, 0, 3, forecastText, text_size = size.normal, bgcolor = co
 table.cell(table_data, 0, 4, str.tostring(instRisk * 100, format.percent),            text_size = size.normal, bgcolor = color.rgb(242, 54, 70, 70),    text_color = color.white, text_halign = text.align_center, tooltip = 'Instrument Risk')
 table.cell(table_data, 0, 5, str.tostring(currentProportion * 100, format.percent),   text_size = size.normal, bgcolor = color.rgb(255, 255, 255, 90),  text_color = color.white, tooltip = 'Percent Risk')
 
-// Forecast Plots
-lineColor = cappedCombForc >= 0 ? color.from_gradient(cappedCombForc, 0.0, 5.0, #ffffff, #089981) : color.from_gradient(cappedCombForc, -5.0, 0.0, color.rgb(242, 54, 69), #ffffff)
-regimeColor = regimeTrending <= regimeReverse ? color.rgb(255, 255, 255) : color.rgb(117, 117, 117)
-
-plot(cappedForcMo, title = 'Momentum Forecast',     linestyle = plot.linestyle_dotted, color = color.rgb(8, 153, 129, 0),  linewidth = 2)
-plot(cappedForcAc, title = 'Acceleration Forecast',  linestyle = plot.linestyle_dotted, color = color.rgb(8, 153, 129, 30), linewidth = 2)
-plot(cappedForcBo, title = 'Break-out Forecast',     linestyle = plot.linestyle_dotted, color = color.rgb(8, 153, 129, 60), linewidth = 2)
-plot(cappedForcBt, title = 'Breadth Forecast',       linestyle = plot.linestyle_dotted, color = color.rgb(86, 50, 143),     linewidth = 2)
-plot(cappedForcSk, title = 'Skew Forecast',          linestyle = plot.linestyle_dotted, color = color.rgb(242, 54, 69),     linewidth = 2)
-plot(cappedForcCr, title = 'Carry Forecast',         linestyle = plot.linestyle_dotted, color = color.rgb(242, 54, 69, 30), linewidth = 2)
-plot(cappedCombForc, title = 'Combined Forecast',    linestyle = plot.linestyle_solid,  color = lineColor,                  linewidth = 2)
-plot(0, title = 'Zero Line', linestyle = plot.linestyle_dashed, color = regimeColor, linewidth = 1)
-
-// Bar Colours
-strongBullish = adjCombForc > 0 and adjCombForc > adjCombForc[1]
-strongBearish = adjCombForc < 0 and adjCombForc < adjCombForc[1]
-bullish       = adjCombForc > 0 and adjCombForc < adjCombForc[1]
-bearish       = adjCombForc < 0 and adjCombForc > adjCombForc[1]
+// Entry & Exit Signals
+plotshape(enterLong or addLong, title = 'Buy / Add',   text = '▲', textcolor = color.white, style = shape.labelup,   location = location.belowbar, color = color.rgb(8, 153, 129, 70), size = size.tiny)
+plotshape(trimLong or exitLong, title = 'Trim / Exit', text = '✘', textcolor = color.white, style = shape.labeldown, location = location.abovebar, color = color.rgb(242, 54, 69, 70), size = size.tiny)
 
 // Alert
 if enterLong or addLong
