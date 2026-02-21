@@ -311,13 +311,13 @@ idealQty      = needMore ? math.abs(math.round(lowerBuffer - currentSize, 0)) : 
 affordableQty = availCash > 0 ? math.floor(availCash / (close * (1.0 + commRate))) : 0
 deltaQty      = needMore ? math.min(idealQty, affordableQty) : idealQty
 
-enterLong  = needMore and currentSize == 0 and deltaQty >= 1
-addLong    = needMore and currentSize > 0  and deltaQty >= 1
-trimLong   = needLess and deltaQty >= 1
-exitLong   = needExit
+buySignal = needMore and deltaQty >= 1
+trimLong  = needLess and deltaQty >= 1
+exitLong  = needExit
 
 // Current proportion
-currentProportion = math.round(strategy.position_size * close / strategy.equity, 2)
+targetSize        = exitLong ? 0.0 : buySignal ? currentSize + deltaQty : trimLong ? currentSize - deltaQty : currentSize
+currentProportion = math.round(targetSize * close / strategy.equity, 2)
 
 //=============================================================================
 // STRATEGY EXECUTION
@@ -325,8 +325,8 @@ currentProportion = math.round(strategy.position_size * close / strategy.equity,
 
 if exitLong and inTimeWindow
     strategy.close_all(comment = 'Exit')
-else if (enterLong or addLong) and inTimeWindow
-    strategy.order('B', strategy.long, qty = deltaQty)
+else if buySignal and inTimeWindow
+    strategy.entry('B', strategy.long, qty = deltaQty)
 else if trimLong and inTimeWindow
     strategy.close('B', qty = deltaQty, comment = 'Trim')
 
@@ -403,11 +403,11 @@ table.cell(table_data, 0, 4, str.tostring(instRisk * 100, format.percent),      
 table.cell(table_data, 0, 5, str.tostring(currentProportion * 100, format.percent),   text_size = size.normal, bgcolor = color.rgb(255, 255, 255, 90),  text_color = color.white, tooltip = 'Percent Risk')
 
 // Entry & Exit Signals
-plotshape(enterLong or addLong, title = 'Buy / Add',   text = '▲', textcolor = color.white, style = shape.labelup,   location = location.belowbar, color = color.rgb(8, 153, 129, 70), size = size.tiny)
-plotshape(trimLong or exitLong, title = 'Trim / Exit', text = '✘', textcolor = color.white, style = shape.labeldown, location = location.abovebar, color = color.rgb(242, 54, 69, 70), size = size.tiny)
+plotshape(buySignal and inTimeWindow, title = 'Buy / Add', text = '▲', textcolor = color.white, style = shape.labelup,   location = location.belowbar, color = color.rgb(8, 153, 129, 70), size = size.tiny)
+plotshape((trimLong or exitLong) and inTimeWindow, title = 'Trim / Exit', text = '✘', textcolor = color.white, style = shape.labeldown, location = location.abovebar, color = color.rgb(242, 54, 69, 70), size = size.tiny)
 
 // Alert
-if enterLong or addLong
+if buySignal and inTimeWindow
     alert('Buy', alert.freq_once_per_bar_close)
-else if trimLong or exitLong
+else if (trimLong or exitLong) and inTimeWindow
     alert('Trim/Exit', alert.freq_once_per_bar_close)
