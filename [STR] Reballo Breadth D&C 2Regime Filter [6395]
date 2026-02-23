@@ -327,27 +327,28 @@ else if trimLong and inTimeWindow
 // PERFORMANCE METRICS
 //=============================================================================
 
-avgTradeDrawdown() =>
-    int trades = strategy.closedtrades
-    if trades == 0
-        [na, na, na]
-    else
-        float sumAll = 0.0, float sumWin = 0.0, float sumLoss = 0.0
-        int nWin = 0, int nLoss = 0
-        for i = 0 to trades - 1
-            posValue = math.abs(strategy.closedtrades.entry_price(i) * strategy.closedtrades.size(i))
-            ddPerc   = posValue != 0 ? math.abs(strategy.closedtrades.max_drawdown(i)) / posValue : na
-            if not na(ddPerc)
-                sumAll += ddPerc
-                if strategy.closedtrades.profit(i) >= 0
-                    sumWin += ddPerc
-                    nWin   += 1
-                else
-                    sumLoss += ddPerc
-                    nLoss   += 1
-        [trades > 0 ? sumAll / trades : na, nWin > 0 ? sumWin / nWin : na, nLoss > 0 ? sumLoss / nLoss : na]
+var float sumAllDD  = 0.0
+var float sumWinDD  = 0.0
+var float sumLossDD = 0.0
+var int   nWinDD    = 0
+var int   nLossDD   = 0
+var int   lastClosedTrades = 0
 
-[avgTradeDD, avgTradeWinDD, avgTradeLossDD] = avgTradeDrawdown()
+if strategy.closedtrades > lastClosedTrades
+    for i = lastClosedTrades to strategy.closedtrades - 1
+        posValue = math.abs(strategy.closedtrades.entry_price(i) * strategy.closedtrades.size(i))
+        ddPerc   = posValue != 0 ? math.abs(strategy.closedtrades.max_drawdown(i)) / posValue : na
+        if not na(ddPerc)
+            sumAllDD += ddPerc
+            if strategy.closedtrades.profit(i) >= 0
+                sumWinDD += ddPerc
+                nWinDD   += 1
+            else
+                sumLossDD += ddPerc
+                nLossDD   += 1
+    lastClosedTrades := strategy.closedtrades
+
+avgTradeDD     = strategy.closedtrades > 0 ? sumAllDD / strategy.closedtrades : na
 
 // Annual Return
 var int firstTradeTime = na
@@ -357,7 +358,6 @@ if strategy.opentrades + strategy.closedtrades > 0 and na(firstTradeTime)
 yearsActive     = (time - firstTradeTime) / (365.25 * 24 * 60 * 60 * 1000)
 totReturn       = strategy.netprofit / strategy.initial_capital
 avgAnnualReturn = yearsActive > 0 ? (math.pow(1.0 + totReturn, 1.0 / yearsActive) - 1.0) * 100 : na
-avgDD           = avgTradeDD
 
 // Sharpe Ratio
 float barsPerYear = timeframe.isdaily ? 256.0 : timeframe.isweekly ? 52.0 : timeframe.ismonthly ? 12.0 : nz(256.0 * 390.0 / str.tonumber(timeframe.period), 0)
@@ -389,7 +389,7 @@ table_data = table.new(position = position.middle_right, columns = 1, rows = 6, 
 
 table.cell(table_data, 0, 0, str.tostring(avgAnnualReturn, format.percent),           text_size = size.normal, bgcolor = bgMColour,                    text_color = color.white, text_halign = text.align_center, tooltip = 'Average Annual Return')
 table.cell(table_data, 0, 1, str.tostring(math.round(sharpeRatio, 3)),                text_size = size.normal, bgcolor = bgSColour,                    text_color = color.white, text_halign = text.align_center, tooltip = 'Sharpe Ratio')
-table.cell(table_data, 0, 2, str.tostring(avgDD * 100, format.percent),               text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30),   text_color = color.white, text_halign = text.align_center, tooltip = 'Average Drawdown per Trade')
+table.cell(table_data, 0, 2, str.tostring(avgTradeDD * 100, format.percent),               text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30),   text_color = color.white, text_halign = text.align_center, tooltip = 'Average Drawdown per Trade')
 string forecastText = str.tostring(math.round(adjCombForc, 2)) + (regimeTrending <= regimeReverse ? " ❄️" : "🔥")
 table.cell(table_data, 0, 3, forecastText, text_size = size.normal, bgcolor = color.rgb(255, 255, 255, 90), text_color = color.white, tooltip = 'Forecast' + (regimeTrending <= regimeReverse ? ' (Range-bound)' : ' (Trending)'))
 table.cell(table_data, 0, 4, str.tostring(instRisk * 100, format.percent),            text_size = size.normal, bgcolor = color.rgb(242, 54, 70, 70),    text_color = color.white, text_halign = text.align_center, tooltip = 'Instrument Risk')
