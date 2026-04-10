@@ -1,0 +1,521 @@
+// NSal
+//@version=6
+indicator('[IND] Advance Momentum + Volatility + Swing', overlay = true, max_lines_count = 500, max_bars_back = 5000)
+
+// ============================================================================
+// GROUPS
+// ============================================================================
+var string G_RISK  = "Risk Settings"
+var string G_SP500 = "S&P500 Buy & Sell Zone"
+var string G_ELHER = "Elher Settings"
+var string G_TF    = "Timeframe"
+var string G_KEY   = "Key Input"
+var string G_MPES  = "MPES / Sentiment"
+var string G_ZONES = "Zones"
+var string G_SWING = "Swing (iSwingHL)"
+
+// ============================================================================
+// COLORS
+// ============================================================================
+var color COL_BULL_SOFT = color.rgb(8, 153, 129, 50)
+var color COL_BEAR_SOFT = color.rgb(242, 54, 70, 50)
+
+// ============================================================================
+// GENERAL INPUTS
+// ============================================================================
+showLine = input.bool(false, title = 'Line Chart')
+
+// ============================================================================
+// RISK SETTINGS INPUTS
+// ============================================================================
+expoStdLength = input.int(32,    title = 'Exponential SD Length', group = G_RISK)
+fastLength    = input.int(5,     title = 'Fast SD Length',        group = G_RISK)
+slowLength    = input.int(20,    title = 'Slow SD Length',        group = G_RISK)
+diffLength    = input.int(20,    title = 'Difference Length',     minval = 1, group = G_RISK)
+maType        = input.string("SMA", "Basis MA Type", options = ["SMA", "EMA", "SMMA (RMA)", "WMA", "VWMA"], group = G_RISK)
+src           = input(close,     title = "Source",                group = G_RISK)
+mult          = input.float(2.0, minval = 0.001, maxval = 50, title = "StdDev", group = G_RISK)
+
+// ============================================================================
+// S&P500 INPUTS
+// ============================================================================
+asset  = input.symbol(title = 'Primary Source', defval = 'S5TH', inline = 'source', group = G_SP500)
+buyThe = input(30, title = 'S&P500 Buy Threshold', group = G_SP500)
+
+// ============================================================================
+// HINDENBURG INPUTS
+// ============================================================================
+newLowHighThreshold = input(2.2, title = 'New Lows/Highs Threshold (Cond 1) %')
+posTrendLookback    = input(50,  title = 'Positive Trend Lookback (Cond 2)')
+
+// ============================================================================
+// ELHER INPUTS
+// ============================================================================
+fastEhLength = input.int(128, title = 'Elher Fast Length', group = G_ELHER)
+slowEhLength = input.int(256, title = 'Elher Slow Length', group = G_ELHER)
+elhSrc       = input(hl2,     title = 'Source')
+lvls         = input(0.8,     title = 'OB/OS Level')
+
+// ============================================================================
+// VOLATILITY / QQE / TMA INPUTS
+// ============================================================================
+Med_res         = input.timeframe(title = 'Deviation Resolution', group = G_TF, defval = '300')
+Mfi_res         = input.timeframe(title = 'MFI Resolution',       group = G_TF, defval = '300')
+ATRMultiplier   = input.float(2.5, step = 0.1, group = G_KEY, title = 'Deviation')
+VolatilityLimit = input.int(75,    step = 1,   group = G_KEY, title = 'Volatility Limit')
+
+// Fixed constants (from original — preserved exactly)
+const int RSIPeriod     = 8
+const int SF            = 1
+const int WP            = 3
+const int QQEBull       = 50
+const int QQEBear       = 50
+const int TMAPeriodBack = 35
+const int ATRPeriodBack = 75
+const int FastPeriod    = 5
+const int SlowPeriod    = 30
+const int mfiLen        = 14
+
+// ============================================================================
+// MPES / SENTIMENT INPUTS
+// ============================================================================
+lookback = input.int(512,   "Percentile Lookback (bars)", minval = 50, group = G_MPES, tooltip = "Trading days for percentile rank normalization")
+wVIX     = input.float(0.5, "VIX Weight", minval = 0.0, maxval = 1.0, step = 0.05, group = G_MPES)
+wCPC     = input.float(0.5, "CPC Weight", minval = 0.0, maxval = 1.0, step = 0.05, group = G_MPES)
+
+fearLine  = input.float(80.0, "Extreme Fear Line",  group = G_ZONES)
+greedLine = input.float(20.0, "Extreme Greed Line", group = G_ZONES)
+
+// ============================================================================
+// SWING (iSwingHL) INPUTS
+// ============================================================================
+wprPeriod    = input.int(14,   "WPR Period",           minval = 2, group = G_SWING)
+scanBars     = input.int(4000, "Scan Bars (lookback)", minval = 50, group = G_SWING)
+colSwingHigh = input.color(color.new(#ff5252, 0), "Swing High Leg", group = G_SWING)
+colSwingLow  = input.color(color.new(#26a69a, 0), "Swing Low Leg",  group = G_SWING)
+colTrendUp   = input.color(color.new(#26a69a, 0), "Trend Up Text",   group = G_SWING)
+colTrendDown = input.color(color.new(#ff5252, 0), "Trend Down Text", group = G_SWING)
+colTrendFlat = input.color(color.new(#9e9e9e, 0), "Trend Flat Text", group = G_SWING)
+
+// ============================================================================
+// FUNCTIONS
+// ============================================================================
+
+// Generic MA selector
+ma_select(source, length, _type) =>
+    switch _type
+        "SMA"        => ta.sma(source, length)
+        "EMA"        => ta.ema(source, length)
+        "SMMA (RMA)" => ta.rma(source, length)
+        "WMA"        => ta.wma(source, length)
+        "VWMA"       => ta.vwma(source, length)
+
+// Ehlers Centre of Gravity oscillator (v2)
+f_ehlers_v2(_src, _len) =>
+    float nm = 0.0
+    float dm = 0.0
+    for i = 0 to _len - 1 by 1
+        nm += (1 + i) * _src[i]
+        dm += _src[i]
+    cg   = dm != 0 ? -nm / dm + (_len + 1) / 2.0 : 0.0
+    maxc = ta.highest(cg, _len)
+    minc = ta.lowest(cg, _len)
+    v1   = maxc != minc ? (cg - minc) / (maxc - minc) : 0.0
+    v2_  = (4 * v1 + 3 * v1[1] + 2 * v1[2] + v1[3]) / 10.0
+    v2   = 2 * (v2_ - 0.5)
+    v2
+
+// Percentile rank (0–100) of latest value over lookback window
+pctRank(float _src, int _len) =>
+    int count = 0
+    for i = 1 to _len
+        if not na(_src[i]) and _src >= _src[i]
+            count += 1
+    _len > 0 ? (count / _len) * 100.0 : 50.0
+
+// ============================================================================
+// INSTRUMENT RISK (volatility blend) — feeds crossUp alert
+// ============================================================================
+ret    = (close - close[1]) / close[1]
+ew_var = ta.ema(math.pow(ret, 2), expoStdLength)
+dailyPercentVolRecent = math.sqrt(ew_var)
+
+longWindow         = 2000
+dailyPercentVol8Yr = ta.sma(dailyPercentVolRecent, longWindow)
+dailyPercentVol    = 0.7 * dailyPercentVolRecent + 0.3 * dailyPercentVol8Yr
+dailyPriceVol      = dailyPercentVol * close
+
+fastVol = ta.ema(ta.ema(dailyPriceVol, fastLength), fastLength)
+slowVol = ta.ema(ta.ema(dailyPriceVol, slowLength), slowLength)
+diffVol = fastVol - slowVol
+
+basis = ma_select(diffVol, diffLength, maType)
+dev   = mult * ta.stdev(diffVol, diffLength)
+upper = basis + dev
+
+crossUp = ta.crossover(diffVol, upper)
+
+// ============================================================================
+// S&P500 BREADTH
+// ============================================================================
+sp500 = request.security(asset, 'W', close)
+
+// ============================================================================
+// HINDENBURG OMEN
+// ============================================================================
+nyse_adv       = request.security('USI:ADV',     'D', close)
+nyse_unc       = request.security('USI:UNCH.NY', 'D', close)
+nyse_dec       = request.security('USI:DECL',    'D', close)
+nyse_newh      = request.security('INDEX:MAHN',  'D', close)
+nyse_newl      = request.security('INDEX:MALN',  'D', close)
+nyse_comp_indx = request.security('NYA',         'D', close)
+
+total = nyse_adv + nyse_dec + nyse_unc
+
+cond1 = nyse_newh / total * 100 >= newLowHighThreshold and nyse_newl / total * 100 >= newLowHighThreshold
+cond2 = nyse_comp_indx >= nyse_comp_indx[posTrendLookback]
+rana    = 1000 * ((nyse_adv - nyse_dec) / (nyse_adv + nyse_dec))
+mcc_ma1 = ta.ema(rana, 19)
+mcc_ma2 = ta.ema(rana, 39)
+mcc     = mcc_ma1 - mcc_ma2
+cond3   = mcc < 0
+cond4 = nyse_newh / nyse_newl < 2
+
+ho_cond = cond1 and cond2 and cond3 and cond4
+badOmen = ta.barssince(ho_cond) <= 30
+
+// ============================================================================
+// ELHER
+// ============================================================================
+mediumEhl = f_ehlers_v2(elhSrc, fastEhLength)
+slowEhl   = f_ehlers_v2(elhSrc, slowEhLength)
+allElher  = array.from(mediumEhl, slowEhl)
+avgElher  = array.avg(allElher)
+
+l1       = -math.abs(lvls)
+badElher = avgElher < l1
+
+leadCon    = badOmen and badElher
+leadEither = badOmen
+
+// ============================================================================
+// BREATH COLOR (bar color)
+// ============================================================================
+color breathColor = na
+
+if sp500 < buyThe
+    breathColor := (leadCon or leadEither) ? color.rgb(8, 153, 129, 50) : color.rgb(8, 153, 129, 30)
+else if leadCon
+    breathColor := color.rgb(242, 54, 70, 10)
+else if leadEither
+    breathColor := color.rgb(242, 54, 69, 60)
+else
+    breathColor := color.rgb(74, 74, 74, 10)
+
+barcolor(breathColor)
+
+// ============================================================================
+// MTF CLOSE (no-repaint pattern)
+// ============================================================================
+indexHighTf = barstate.isrealtime ? 1 : 0
+indexCurrTf = barstate.isrealtime ? 0 : 1
+properClose = request.security(syminfo.tickerid, Mfi_res, expression = close[indexHighTf])[indexCurrTf]
+
+// ============================================================================
+// VOLATILITY (Daily)
+// ============================================================================
+FastATR    = request.security(syminfo.tickerid, 'D', ta.atr(FastPeriod))
+SlowATR    = request.security(syminfo.tickerid, 'D', ta.atr(SlowPeriod))
+Volatility = 100 * (FastATR / SlowATR)
+
+// ============================================================================
+// TMA BANDS
+// ============================================================================
+ssi_Med   = request.security(syminfo.tickerid, Med_res, ta.wma(properClose, TMAPeriodBack))
+tma_Med   = ta.swma(ssi_Med)
+range_Med = request.security(syminfo.tickerid, Med_res, ta.atr(ATRPeriodBack) * ATRMultiplier)
+
+tmah_Med = tma_Med + range_Med
+tmal_Med = tma_Med - range_Med
+
+// ============================================================================
+// QQE
+// ============================================================================
+WildersPeriod = RSIPeriod * 2 - 1
+
+rsi   = ta.rsi(close, RSIPeriod)
+RsiMa = ta.ema(rsi, SF)
+
+AtrRsi   = math.abs(RsiMa[1] - RsiMa)
+MaAtrRsi = ta.ema(AtrRsi, WildersPeriod)
+dar      = ta.ema(MaAtrRsi, WildersPeriod) * WP
+
+newShortBand = RsiMa + dar
+rsi0 = 0.0
+rsi0 := RsiMa[1] < rsi0[1] and RsiMa < rsi0[1] ? math.min(rsi0[1], newShortBand) : newShortBand
+
+newLongBand = RsiMa - dar
+rsi1 = 0.0
+rsi1 := RsiMa[1] > rsi1[1] and RsiMa > rsi1[1] ? math.max(rsi1[1], newLongBand) : newLongBand
+
+trend = 0.0
+trend := ta.cross(RsiMa, rsi0[1]) ? 1 : ta.cross(RsiMa, rsi1[1]) ? -1 : nz(trend[1], 1)
+
+secondRSILine = trend == 1 ? rsi1 : rsi0
+
+// MFI (MTF)
+mfi_Med = request.security(syminfo.tickerid, Mfi_res, ta.mfi(src, mfiLen))
+
+// ============================================================================
+// MPES / SENTIMENT (VIX + CPC percentile composite)
+// ============================================================================
+rawVIX = request.security("CBOE:VIX",  "D", close, barmerge.gaps_off, barmerge.lookahead_on)
+rawCPC = request.security("INDEX:CPC", "D", close, barmerge.gaps_off, barmerge.lookahead_on)
+
+normVIX = pctRank(rawVIX, lookback)
+normCPC = pctRank(rawCPC, lookback)
+
+totalWeight = wVIX + wCPC
+scoreRaw    = totalWeight > 0 ? (wVIX * normVIX + wCPC * normCPC) / totalWeight : 50.0
+
+fastMPES   = ta.ema(scoreRaw, 16)
+mediumMPES = ta.ema(scoreRaw, 32)
+slowMPES   = ta.ema(scoreRaw, 64)
+score      = 100.0 - (fastMPES + mediumMPES + slowMPES) / 3
+
+extremeGreed = score < greedLine
+
+// ============================================================================
+// SIGNAL PLOTS
+// ============================================================================
+Bull_cross_strong = ta.crossover(RsiMa, secondRSILine) and RsiMa <= QQEBull and open < tmal_Med and Volatility >= VolatilityLimit and mfi_Med <= 40 and sp500 < buyThe
+plotshape(Bull_cross_strong, style = shape.labelup, title = 'Strong Bull', text = '▲', location = location.belowbar, color = color.new(COL_BULL_SOFT, 0), textcolor = color.new(#ffffff, 0), size = size.auto)
+
+buyPanic = ta.crossover(RsiMa, secondRSILine) and open < tmal_Med and extremeGreed
+plotshape(buyPanic, style = shape.labelup, title = 'Buy Panic', text = '◈', location = location.belowbar, color = color.new(COL_BULL_SOFT, 0), textcolor = color.new(#ffffff, 0), size = size.auto)
+
+Bear_cross_strong = ta.crossunder(RsiMa, secondRSILine) and RsiMa >= QQEBear and open > tmah_Med and Volatility >= VolatilityLimit and mfi_Med >= 60 and leadCon
+plotshape(Bear_cross_strong, style = shape.labeldown, title = 'Strong Bear', text = '✘', location = location.abovebar, color = color.new(COL_BEAR_SOFT, 0), textcolor = color.new(#ffffff, 0), size = size.auto)
+
+plot(showLine ? close : na, color = breathColor, linewidth = 2, title = "Price Line")
+
+// ============================================================================
+// SWING DETECTION (iSwingHL OOP / WPR) — lines + trend table only
+// ============================================================================
+
+// ----- Constants
+SWING_NONE  = 0
+SWING_HIGH  = 1
+SWING_LOW   = -1
+
+TREND_NEUTRAL = 0
+TREND_UP      = 1
+TREND_DOWN    = -1
+
+// ----- WPR & zone
+wpr = ta.wpr(wprPeriod)
+
+classifyZone(float w) =>
+    na(w) ? SWING_NONE : w < -80.0 ? SWING_LOW : w > -20.0 ? SWING_HIGH : SWING_NONE
+
+// ----- Per-bar history arrays (capped at scanBars)
+var array<float> histHigh = array.new<float>()
+var array<float> histLow  = array.new<float>()
+var array<int>   histTime = array.new<int>()
+var array<int>   histZone = array.new<int>()
+
+if barstate.isconfirmed
+    array.push(histHigh, high)
+    array.push(histLow,  low)
+    array.push(histTime, bar_index)
+    array.push(histZone, classifyZone(wpr))
+    while array.size(histHigh) > scanBars
+        array.shift(histHigh)
+        array.shift(histLow)
+        array.shift(histTime)
+        array.shift(histZone)
+
+// ----- Helpers over history arrays
+findHighestIndex(int sIdx, int eIdx) =>
+    int hi = sIdx
+    float hp = array.get(histHigh, sIdx)
+    for i = sIdx + 1 to eIdx
+        v = array.get(histHigh, i)
+        if v > hp
+            hp := v
+            hi := i
+    hi
+
+findLowestIndex(int sIdx, int eIdx) =>
+    int lo = sIdx
+    float lp = array.get(histLow, sIdx)
+    for i = sIdx + 1 to eIdx
+        v = array.get(histLow, i)
+        if v < lp
+            lp := v
+            lo := i
+    lo
+
+// ----- Persisted state
+var line[] swingLines = array.new_line()
+var int currentTrendState = TREND_NEUTRAL
+
+clearSwingLines() =>
+    while array.size(swingLines) > 0
+        line.delete(array.pop(swingLines))
+    0
+
+if barstate.islast and array.size(histHigh) >= 10
+    clearSwingLines()
+    int n = array.size(histHigh)
+
+    // -------- Step 1: Build raw WPR sessions
+    sStartIdx = array.new_int()
+    sEndIdx   = array.new_int()
+    sHigh     = array.new_float()
+    sLow      = array.new_float()
+    sDir      = array.new_int()
+
+    int activeZone   = SWING_NONE
+    int activeStart  = -1
+    float activeHigh = na
+    float activeLow  = na
+
+    for i = 0 to n - 1
+        int z = array.get(histZone, i)
+        if z != activeZone
+            if activeZone != SWING_NONE and activeStart >= 0
+                array.push(sStartIdx, activeStart)
+                array.push(sEndIdx,   i)
+                array.push(sHigh,     activeHigh)
+                array.push(sLow,      activeLow)
+                array.push(sDir,      activeZone)
+            activeZone := z
+            if z == SWING_NONE
+                activeStart := -1
+                activeHigh  := na
+                activeLow   := na
+            else
+                activeStart := math.max(0, i - 1)
+                activeHigh  := array.get(histHigh, activeStart)
+                activeLow   := array.get(histLow,  activeStart)
+                for k = activeStart to i
+                    hv = array.get(histHigh, k)
+                    lv = array.get(histLow,  k)
+                    if hv > activeHigh
+                        activeHigh := hv
+                    if lv < activeLow
+                        activeLow := lv
+        else if activeZone != SWING_NONE
+            hv = array.get(histHigh, i)
+            lv = array.get(histLow,  i)
+            if hv > activeHigh
+                activeHigh := hv
+            if lv < activeLow
+                activeLow := lv
+
+    if activeZone != SWING_NONE and activeStart >= 0
+        array.push(sStartIdx, activeStart)
+        array.push(sEndIdx,   n - 1)
+        array.push(sHigh,     activeHigh)
+        array.push(sLow,      activeLow)
+        array.push(sDir,      activeZone)
+
+    // -------- Step 2: Merge adjacent same-direction sessions
+    mStartIdx = array.new_int()
+    mEndIdx   = array.new_int()
+    mHigh     = array.new_float()
+    mLow      = array.new_float()
+    mDir      = array.new_int()
+
+    if array.size(sDir) > 0
+        array.push(mStartIdx, array.get(sStartIdx, 0))
+        array.push(mEndIdx,   array.get(sEndIdx,   0))
+        array.push(mHigh,     array.get(sHigh,     0))
+        array.push(mLow,      array.get(sLow,      0))
+        array.push(mDir,      array.get(sDir,      0))
+        for i = 1 to array.size(sDir) - 1
+            int last = array.size(mDir) - 1
+            if array.get(mDir, last) == array.get(sDir, i)
+                array.set(mEndIdx, last, array.get(sEndIdx, i))
+                if array.get(sHigh, i) > array.get(mHigh, last)
+                    array.set(mHigh, last, array.get(sHigh, i))
+                if array.get(sLow, i) < array.get(mLow, last)
+                    array.set(mLow, last, array.get(sLow, i))
+            else
+                array.push(mStartIdx, array.get(sStartIdx, i))
+                array.push(mEndIdx,   array.get(sEndIdx,   i))
+                array.push(mHigh,     array.get(sHigh,     i))
+                array.push(mLow,      array.get(sLow,      i))
+                array.push(mDir,      array.get(sDir,      i))
+
+    // -------- Step 3: Build session extremes (confirmed swings)
+    exIdx   = array.new_int()
+    exPrice = array.new_float()
+    exDir   = array.new_int()
+
+    if array.size(mDir) >= 2
+        for i = 0 to array.size(mDir) - 2
+            int startI = array.get(mStartIdx, i)
+            int endI   = array.get(mStartIdx, i + 1)
+            if endI >= startI
+                if array.get(mDir, i) == SWING_LOW and array.get(mDir, i + 1) == SWING_HIGH
+                    int li = findLowestIndex(startI, endI)
+                    array.push(exIdx,   li)
+                    array.push(exPrice, array.get(histLow, li))
+                    array.push(exDir,   SWING_LOW)
+                else if array.get(mDir, i) == SWING_HIGH and array.get(mDir, i + 1) == SWING_LOW
+                    int hi = findHighestIndex(startI, endI)
+                    array.push(exIdx,   hi)
+                    array.push(exPrice, array.get(histHigh, hi))
+                    array.push(exDir,   SWING_HIGH)
+
+    // -------- Step 4: Compute trend state
+    int trendState = TREND_NEUTRAL
+    if array.size(exDir) >= 4
+        float h0 = na, float h1 = na, float l0 = na, float l1 = na
+        int hc = 0, int lc = 0
+        for i = array.size(exDir) - 1 to 0
+            d = array.get(exDir, i)
+            p = array.get(exPrice, i)
+            if d == SWING_HIGH and hc < 2
+                if hc == 0
+                    h0 := p
+                else
+                    h1 := p
+                hc += 1
+            else if d == SWING_LOW and lc < 2
+                if lc == 0
+                    l0 := p
+                else
+                    l1 := p
+                lc += 1
+            if hc >= 2 and lc >= 2
+                break
+        if hc >= 2 and lc >= 2
+            if h0 > h1 and l0 > l1
+                trendState := TREND_UP
+            else if h0 < h1 and l0 < l1
+                trendState := TREND_DOWN
+    currentTrendState := trendState
+
+    // -------- Step 5: Draw swing leg lines only
+    if array.size(exIdx) >= 2
+        for i = 1 to array.size(exIdx) - 1
+            int idxA = array.get(exIdx, i - 1)
+            int idxB = array.get(exIdx, i)
+            float pA = array.get(exPrice, i - 1)
+            float pB = array.get(exPrice, i)
+            int barA = array.get(histTime, idxA)
+            int barB = array.get(histTime, idxB)
+            color legCol = pB > pA ? colSwingHigh : colSwingLow
+            ln = line.new(barA, pA, barB, pB, xloc = xloc.bar_index, color = legCol, style = line.style_dashed, width = 1)
+            array.push(swingLines, ln)
+
+// ----------------------------- Trend Status Table ----------------------------
+var table statusTable = table.new(position.bottom_right, 1, 1, border_width = 0)
+
+if barstate.islast
+    string trendText = currentTrendState == TREND_UP ? "▲" : currentTrendState == TREND_DOWN ? "▼" : "❄"
+    color  trendCol  = currentTrendState == TREND_UP ? colTrendUp : currentTrendState == TREND_DOWN ? colTrendDown : colTrendFlat
+    table.cell(statusTable, 0, 0, trendText, text_color = trendCol, bgcolor = color.new(color.black, 80), text_size = size.large)
