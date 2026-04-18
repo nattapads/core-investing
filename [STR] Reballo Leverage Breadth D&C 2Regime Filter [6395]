@@ -4,7 +4,7 @@ strategy('[STR] Reballo Leverage Breadth D&C 2Regime Filter [6395]', overlay = f
 
 ///=============================================================================
 // INPUTS
-//=============================================================================
+//==============================================================================
 
 // Time
 startTime    = input.time(timestamp('Jan 01 2008 00:00:00'), title = 'Start Time')
@@ -93,16 +93,16 @@ adjExpectedDiv = noDiv ? 0.0 : expectedDiv
 
 signalTicker = syminfo.ticker == "SSO" ? "SPY" : syminfo.ticker == "EFO" ? "EFA" : syminfo.ticker == "EET" ? "EEM" : syminfo.tickerid
 
-spyClose  = request.security(signalTicker, timeframe.period, close,    barmerge.gaps_off, barmerge.lookahead_on)
-spyClose1 = request.security(signalTicker, timeframe.period, close[1], barmerge.gaps_off, barmerge.lookahead_on)
-spyH      = request.security(signalTicker, timeframe.period, high,     barmerge.gaps_off, barmerge.lookahead_on)
-spyL      = request.security(signalTicker, timeframe.period, low,      barmerge.gaps_off, barmerge.lookahead_on)
+spyClose  = request.security(signalTicker, timeframe.period, close,    barmerge.gaps_off, barmerge.lookahead_off)
+spyPClose = request.security(signalTicker, timeframe.period, close[1], barmerge.gaps_off, barmerge.lookahead_off)
+spyHigh   = request.security(signalTicker, timeframe.period, high,     barmerge.gaps_off, barmerge.lookahead_off)
+spyLow    = request.security(signalTicker, timeframe.period, low,      barmerge.gaps_off, barmerge.lookahead_off)
 
 //=============================================================================
 // INSTRUMENT RISK (SPY-based)
 //=============================================================================
 
-ret                   = (spyClose - spyClose1) / spyClose1
+ret                   = (spyClose - spyPClose) / spyPClose
 dailyPercentVolRecent = math.sqrt(ta.ema(math.pow(ret, 2), expoStdLength))
 dailyPercentVol8Yr    = ta.sma(dailyPercentVolRecent, avgStdLength)
 dailyPercentVol       = 0.7 * dailyPercentVolRecent + 0.3 * dailyPercentVol8Yr
@@ -252,8 +252,8 @@ cappedForcAc = (capForecastAc(16, scaledForcF, acFastScalar) + capForecastAc(32,
 //=============================================================================
 
 capForecastBo(int breakLen, float forecastScalar) =>
-    hi      = ta.highest(spyH, breakLen)
-    lo_     = ta.lowest(spyL, breakLen)
+    hi      = ta.highest(spyHigh, breakLen)
+    lo_     = ta.lowest(spyLow, breakLen)
     rangeBo = hi - lo_
     boRaw   = rangeBo != 0.0 ? 40.0 * (spyClose - (hi + lo_) / 2.0) / rangeBo : 0.0
     cap(ta.ema(boRaw, math.max(1, int(breakLen / 4))) * forecastScalar)
