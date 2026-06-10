@@ -4,7 +4,7 @@ strategy('[STR] Reballo Leverage Breadth D&C 2Regime Filter [6395]', overlay = f
 
 ///=============================================================================
 // INPUTS
-//==============================================================================
+//=============================================================================
 
 // Time
 startTime    = input.time(timestamp('Jan 01 2008 00:00:00'), title = 'Start Time')
@@ -104,7 +104,7 @@ spyLow    = request.security(signalTicker, timeframe.period, low,      barmerge.
 
 ret                   = (spyClose - spyPClose) / spyPClose
 dailyPercentVolRecent = math.sqrt(ta.ema(math.pow(ret, 2), expoStdLength))
-dailyPercentVol8Yr    = ta.sma(dailyPercentVolRecent, avgStdLength)
+dailyPercentVol8Yr    = nz(ta.sma(dailyPercentVolRecent, avgStdLength), dailyPercentVolRecent)
 dailyPercentVol       = 0.7 * dailyPercentVolRecent + 0.3 * dailyPercentVol8Yr
 instRisk              = math.round(dailyPercentVol * 16, 6)
 
@@ -425,12 +425,6 @@ plot(cappedForcSk, title = 'Skew Forecast',          linestyle = plot.linestyle_
 plot(cappedForcCr, title = 'Carry Forecast',         linestyle = plot.linestyle_dotted, color = color.rgb(242, 54, 69, 30), linewidth = 2)
 plot(cappedCombForc, title = 'Combined Forecast',    linestyle = plot.linestyle_solid,  color = lineColor,                  linewidth = 2)
 plot(0, title = 'Zero Line', linestyle = plot.linestyle_dashed, color = regimeColor, linewidth = 1)
-
-// Bar Colours
-strongBullish = adjCombForc > 0 and adjCombForc > adjCombForc[1]
-strongBearish = adjCombForc < 0 and adjCombForc < adjCombForc[1]
-bullish       = adjCombForc > 0 and adjCombForc < adjCombForc[1]
-bearish       = adjCombForc < 0 and adjCombForc > adjCombForc[1]
 
 // Alert
 if buySignal and inTimeWindow
