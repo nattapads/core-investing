@@ -1,6 +1,6 @@
 //NSal
 //@version=6
-strategy('[STR] Reballo Leverage Regime & Omen Filter [6395]', overlay = false, pyramiding = 100, initial_capital = 1000000, risk_free_rate = 1, commission_value = 0.165, slippage = 1, max_bars_back = 5000)
+strategy('[STR] Ehler + Breath Reballo Leverage Breadth D&C 2Regime Filter [6395]', overlay = false, pyramiding = 100, initial_capital = 1000000, risk_free_rate = 1, commission_value = 0.165, slippage = 1, max_bars_back = 5000)
 
 ///=============================================================================
 // INPUTS
