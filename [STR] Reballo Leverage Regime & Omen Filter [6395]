@@ -12,22 +12,22 @@ inTimeWindow = time >= startTime
 
 // Momentum
 GRP_MO         = 'Momentum Settings'
-rapidMoScalar  = input.float(7.55707739519798, step = 0.01, title = 'EMA 8 Scalar',  group = GRP_MO)
-fastMoScalar   = input.float(5.2198408249946, step = 0.01, title = 'EMA 16 Scalar', group = GRP_MO)
-mediumMoScalar = input.float(3.53959536350417, step = 0.01, title = 'EMA 32 Scalar', group = GRP_MO)
-slowMoScalar   = input.float(2.43875427055449, step = 0.01, title = 'EMA 64 Scalar', group = GRP_MO)
+rapidMoScalar  = input.float(7.55325194506457, step = 0.01, title = 'EMA 8 Scalar',  group = GRP_MO)
+fastMoScalar   = input.float(5.23687040881767, step = 0.01, title = 'EMA 16 Scalar', group = GRP_MO)
+mediumMoScalar = input.float(3.54822367481586, step = 0.01, title = 'EMA 32 Scalar', group = GRP_MO)
+slowMoScalar   = input.float(2.42627137562644, step = 0.01, title = 'EMA 64 Scalar', group = GRP_MO)
 
 // Acceleration
 GRP_AC         = 'Acceleration Settings'
-acFastScalar   = input.float(1.53775209362754, step = 0.01, title = 'EMA 16 Acceleration Scalar', group = GRP_AC)
-acMediumScalar = input.float(1.59214451050128, step = 0.01, title = 'EMA 32 Acceleration Scalar', group = GRP_AC)
-acSlowScalar   = input.float(1.53214009933118, step = 0.01, title = 'EMA 64 Acceleration Scalar', group = GRP_AC)
+acFastScalar   = input.float(1.52787916530384, step = 0.01, title = 'EMA 16 Acceleration Scalar', group = GRP_AC)
+acMediumScalar = input.float(1.59087436333563, step = 0.01, title = 'EMA 32 Acceleration Scalar', group = GRP_AC)
+acSlowScalar   = input.float(1.5603239212082, step = 0.01, title = 'EMA 64 Acceleration Scalar', group = GRP_AC)
 
 // Breakout
 GRP_BO     = 'Breakout Settings'
-bo20Scalar = input.float(0.877314405196011, step = 0.01, title = 'Breakout 20 Scalar', group = GRP_BO)
-bo40Scalar = input.float(0.905659905666164, step = 0.01, title = 'Breakout 40 Scalar', group = GRP_BO)
-bo80Scalar = input.float(0.90727932542929, step = 0.01, title = 'Breakout 80 Scalar', group = GRP_BO)
+bo20Scalar = input.float(0.876786482829955, step = 0.01, title = 'Breakout 20 Scalar', group = GRP_BO)
+bo40Scalar = input.float(0.904273670037043, step = 0.01, title = 'Breakout 40 Scalar', group = GRP_BO)
+bo80Scalar = input.float(0.909221813983699, step = 0.01, title = 'Breakout 80 Scalar', group = GRP_BO)
 
 // Breadth Level
 GRP_BR       = 'Breadth Settings'
@@ -39,9 +39,16 @@ brScalar := syminfo.ticker == "IAU" or syminfo.ticker == "GLD" or syminfo.ticker
 
 // Skew
 GRP_SK      = 'Skew Settings'
-sk60Scalar  = input.float(21.6244169693619,  step = 0.1, title = 'Skew 60 Scalar',  group = GRP_SK)
-sk120Scalar = input.float(22.8683563340164, step = 0.1, title = 'Skew 120 Scalar', group = GRP_SK)
-sk240Scalar = input.float(22.7542102670474, step = 0.1, title = 'Skew 240 Scalar', group = GRP_SK)
+sk60Scalar  = input.float(21.6092248822864,  step = 0.1, title = 'Skew 60 Scalar',  group = GRP_SK)
+sk120Scalar = input.float(23.014133310933, step = 0.1, title = 'Skew 120 Scalar', group = GRP_SK)
+sk240Scalar = input.float(22.6957696605146, step = 0.1, title = 'Skew 240 Scalar', group = GRP_SK)
+
+// Carry
+GRP_CR           = 'Carry Settings'
+crScalar         = input.float(30, step = 0.01, title = 'Carry Scalar', group = GRP_CR)
+dividendSchedule = input.string('Quarterly', title = 'Dividend Payment Frequency', options = ['Annual', 'Semi-Annual', 'Quarterly', 'Monthly'], group = GRP_CR)
+manDiv           = input.float(0.02, step = 0.01, title = 'Manual Dividend Yield (%)', group = GRP_CR)
+enableManDiv     = input(false, title = 'Enable Manual Dividend Yield', group = GRP_CR)
 
 // Breadth / Omen / Ehlers — RISK FILTER (not a forecast)
 GRP_OE       = 'Omen+Ehlers Filter'
@@ -53,16 +60,9 @@ flSlowEhLen  = input.int(256, title = 'Ehlers Slow Length', group = GRP_OE)
 flOmenHold   = input.int(30, title = 'Omen Hold (bars active)', group = GRP_OE)
 flNlhThresh  = input.float(2.2, step = 0.1, title = 'Omen New L/H Threshold %', group = GRP_OE)
 flPosTrend   = input.int(50, title = 'Omen Positive Trend Lookback', group = GRP_OE)
-flSellScalar = input.float(0.5, minval = 0.0, maxval = 1.0, step = 0.1, title = 'Sell-State Scalar (1=hold, <1=bleed)', group = GRP_OE)
+flSellScalar = input.float(0.25, minval = 0.0, maxval = 1.0, step = 0.1, title = 'Sell-State Scalar (1=hold, <1=bleed)', group = GRP_OE)
 flBuyFloor   = input.float(1.0, minval = 0.0, maxval = 2.0, step = 0.1, title = 'Oversold Buy Floor (forecast units, max 2.0)', group = GRP_OE)
 flConfirm    = input.int(0, minval = 0, title = 'Filter Confirm Bars', group = GRP_OE)
-
-// Carry
-GRP_CR           = 'Carry Settings'
-crScalar         = input.float(30, step = 0.01, title = 'Carry Scalar', group = GRP_CR)
-dividendSchedule = input.string('Quarterly', title = 'Dividend Payment Frequency', options = ['Annual', 'Semi-Annual', 'Quarterly', 'Monthly'], group = GRP_CR)
-manDiv           = input.float(0.02, step = 0.01, title = 'Manual Dividend Yield (%)', group = GRP_CR)
-enableManDiv     = input(false, title = 'Enable Manual Dividend Yield', group = GRP_CR)
 
 // Risk
 GRP_RK                = 'Risk Settings'
@@ -507,12 +507,12 @@ plot(cappedForcSk, title = 'Skew Forecast',          linestyle = plot.linestyle_
 plot(cappedForcCr, title = 'Carry Forecast',         linestyle = plot.linestyle_dotted, color = color.rgb(242, 54, 69, 30), linewidth = 2)
 
 // Filter-state shading: red = strongSell (flatten), green = oversold buy-floor, orange = sell (freeze/bleed)
-bgcolor(flStrongSell ? color.new(color.red, 78) : (flOversold and not flStrongSell) ? color.new(color.teal, 82) : flBlock ? color.new(color.orange, 88) : na, title = 'Filter State')
-plot(cappedCombForc, title = 'Combined Forecast',    linestyle = plot.linestyle_solid,  color = lineColor,                  linewidth = 2)
+bgcolor(flStrongSell ? color.rgb(242, 54, 69, 80) : (flOversold and not flStrongSell) ? color.rgb(8, 153, 129, 90) : flBlock ? color.rgb(242, 54, 69, 90) : na, title = 'Filter State')
+plot(cappedCombForc, title = 'Combined Forecast',    linestyle = plot.linestyle_solid,  color = lineColor, linewidth = 2)
 plot(0, title = 'Zero Line', linestyle = plot.linestyle_dashed, color = regimeColor, linewidth = 1)
 
 // Alert
 if buySignal and inTimeWindow
-    alert('Buy | Proportion: ' + str.tostring(currentProportion * 100, format.percent), alert.freq_once_per_bar_close)
+    alert('{"secret":"YQjdZ6S7p9zivK6JmLPU9D-imvYHDpkc","ticker":"' + syminfo.ticker + '","action":"buy","proportion":' + str.tostring(currentProportion) + ',"price":' + str.tostring(close) + '}', alert.freq_once_per_bar_close)
 else if (trimLong or exitLong) and inTimeWindow
-    alert('Trim/Exit | Proportion: ' + str.tostring(currentProportion * 100, format.percent), alert.freq_once_per_bar_close)
+    alert('{"secret":"YQjdZ6S7p9zivK6JmLPU9D-imvYHDpkc","ticker":"' + syminfo.ticker + '","action":"trim_exit","proportion":' + str.tostring(currentProportion) + ',"price":' + str.tostring(close) + '}', alert.freq_once_per_bar_close)
