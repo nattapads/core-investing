@@ -513,6 +513,6 @@ plot(0, title = 'Zero Line', linestyle = plot.linestyle_dashed, color = regimeCo
 
 // Alert
 if buySignal and inTimeWindow
-    alert('{"secret":"YQjdZ6S7p9zivK6JmLPU9D-imvYHDpkc","ticker":"' + syminfo.ticker + '","action":"buy","proportion":' + str.tostring(currentProportion) + ',"price":' + str.tostring(close) + '}', alert.freq_once_per_bar_close)
+    alert('{"secret":"0000","ticker":"' + syminfo.ticker + '","action":"buy","proportion":' + str.tostring(currentProportion) + ',"price":' + str.tostring(close) + '}', alert.freq_once_per_bar_close)
 else if (trimLong or exitLong) and inTimeWindow
-    alert('{"secret":"YQjdZ6S7p9zivK6JmLPU9D-imvYHDpkc","ticker":"' + syminfo.ticker + '","action":"trim_exit","proportion":' + str.tostring(currentProportion) + ',"price":' + str.tostring(close) + '}', alert.freq_once_per_bar_close)
+    alert('{"secret":"0000","ticker":"' + syminfo.ticker + '","action":"trim_exit","proportion":' + str.tostring(currentProportion) + ',"price":' + str.tostring(close) + '}', alert.freq_once_per_bar_close)
