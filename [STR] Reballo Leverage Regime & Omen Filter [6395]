@@ -131,15 +131,23 @@ spyLow    = request.security(signalTicker, timeframe.period, low,      barmerge.
 // INSTRUMENT RISK (SPY-based)
 //=============================================================================
 
-ret                   = (spyClose - spyPClose) / spyPClose
-dailyPercentVolRecent = math.sqrt(ta.ema(math.pow(ret, 2), expoStdLength))
-dailyPercentVol8Yr    = nz(ta.sma(dailyPercentVolRecent, avgStdLength), dailyPercentVolRecent)
-dailyPercentVol       = 0.7 * dailyPercentVolRecent + 0.3 * dailyPercentVol8Yr
-instRisk              = math.round(dailyPercentVol * 16, 6)
+// Blended daily % vol: 70% recent (EWMA) + 30% long-run average
+f_blendVol(float _ret) =>
+    recent  = math.sqrt(ta.ema(math.pow(_ret, 2), expoStdLength))
+    longRun = nz(ta.sma(recent, avgStdLength), recent)
+    0.7 * recent + 0.3 * longRun
 
-// Two vol measures: SPY-space for forecasts, SSO-space for position sizing
-dailyPriceVolSpy  = dailyPercentVol * spyClose   // forecast denominators
-dailyPriceVolExec = dailyPercentVol * close       // position sizing (SSO price)
+// Two return series: signal instrument (SPY) and execution instrument (chart symbol, e.g. SSO)
+ret     = (spyClose - spyPClose) / spyPClose
+retExec = (close - close[1]) / close[1]
+
+dailyPercentVol     = f_blendVol(ret)       // SPY-space  → forecast denominators
+dailyPercentVolExec = f_blendVol(retExec)   // exec-space → position sizing
+instRisk            = math.round(dailyPercentVol * 16, 6)
+instRiskExec        = math.round(dailyPercentVolExec * 16, 6)
+
+dailyPriceVolSpy  = dailyPercentVol * spyClose       // forecast denominators (SPY % vol × SPY price)
+dailyPriceVolExec = dailyPercentVolExec * close      // position sizing (exec % vol × exec price)
 
 // Precomputed return moments — shared by all three capforecastSk calls
 ret2 = ret * ret
@@ -492,7 +500,7 @@ table.cell(table_data, 0, 1, str.tostring(math.round(sharpeRatio, 3)),          
 table.cell(table_data, 0, 2, str.tostring(avgTradeDD * 100, format.percent),               text_size = size.normal, bgcolor = color.rgb(242, 54, 69, 30),   text_color = color.white, text_halign = text.align_center, tooltip = 'Average Drawdown per Trade')
 string forecastText = str.tostring(math.round(adjCombForc, 2)) + (regimeTrending <= regimeReverse ? " ❄️" : "🔥")
 table.cell(table_data, 0, 3, forecastText, text_size = size.normal, bgcolor = color.rgb(255, 255, 255, 90), text_color = color.white, tooltip = 'Forecast' + (regimeTrending <= regimeReverse ? ' (Range-bound)' : ' (Trending)'))
-table.cell(table_data, 0, 4, str.tostring(instRisk * 100, format.percent),            text_size = size.normal, bgcolor = color.rgb(242, 54, 70, 70),    text_color = color.white, text_halign = text.align_center, tooltip = 'Instrument Risk')
+table.cell(table_data, 0, 4, str.tostring(instRiskExec * 100, format.percent),        text_size = size.normal, bgcolor = color.rgb(242, 54, 70, 70),    text_color = color.white, text_halign = text.align_center, tooltip = 'Instrument Risk')
 table.cell(table_data, 0, 5, str.tostring(currentProportion * 100, format.percent),   text_size = size.normal, bgcolor = color.rgb(255, 255, 255, 90),  text_color = color.white, tooltip = 'Percent Risk')
 
 // Forecast Plots
