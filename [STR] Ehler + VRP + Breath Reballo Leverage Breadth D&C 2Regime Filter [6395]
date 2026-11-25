@@ -549,12 +549,6 @@ bgcolor(flStrongSell ? color.rgb(242, 54, 69, 80) : (flOversold and not flStrong
 plot(cappedCombForc, title = 'Combined Forecast',    linestyle = plot.linestyle_solid,  color = lineColor, linewidth = 2)
 plot(0, title = 'Zero Line', linestyle = plot.linestyle_dashed, color = regimeColor, linewidth = 1)
 
-// Alert
-//if buySignal and inTimeWindow
-//    alert('{"secret":"YQjdZ6S7p9zivK6JmLPU9D-imvYHDpkc","ticker":"' + syminfo.ticker + '","action":"buy","proportion":' + str.tostring(currentProportion) + ',"price":' + str.tostring(instRiskExec) + '}', alert.freq_once_per_bar_close)
-//else if (trimLong or exitLong) and inTimeWindow
-//    alert('{"secret":"YQjdZ6S7p9zivK6JmLPU9D-imvYHDpkc","ticker":"' + syminfo.ticker + '","action":"trim_exit","proportion":' + str.tostring(currentProportion) + ',"price":' + str.tostring(instRiskExec) + '}', alert.freq_once_per_bar_close)
-
 string action = buySignal ? "buy" : (trimLong or exitLong) ? "trim_exit" : "hold"
 if inTimeWindow
-    alert('{"secret":"YQjdZ6S7p9zivK6JmLPU9D-imvYHDpkc","ticker":"' + syminfo.ticker + '","action":"' + action + '","proportion":' + str.tostring(currentProportion) + ',"forecast":' + str.tostring(adjCombForc) + ',"instRisk":' + str.tostring(instRiskExec) + '}', alert.freq_once_per_bar_close)
+    alert('{"secret":"secret","ticker":"' + syminfo.ticker + '","action":"' + action + '","proportion":' + str.tostring(currentProportion) + ',"forecast":' + str.tostring(adjCombForc) + ',"instRisk":' + str.tostring(instRiskExec) + '}', alert.freq_once_per_bar_close)
